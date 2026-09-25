@@ -1,44 +1,7 @@
-import { categoryLabels } from './data.js';
+import { parseReceiptText } from './receiptParser.js';
+export { inferCategory, parseReceiptText } from './receiptParser.js';
 
-const categoryHints = {
-  fuel: /\bgas\b|gasoline|fuel|petrol|shell|exxon|chevron/i,
-  lodging: /hotel|inn|lodging|folio|suite/i,
-  rental_car: /rental|enterprise|hertz|avis/i,
-  airfare: /airline|airways|flight|ticket/i,
-  parking: /parking|garage/i,
-  ground_transport: /taxi|cab|uber|lyft/i,
-  baggage: /baggage|checked bag/i,
-  meals: /restaurant|cafe|diner|meal/i
-};
-
-export function inferCategory(text) {
-  return Object.entries(categoryHints).find(([, pattern]) => pattern.test(text || ''))?.[0] || 'other';
-}
-
-export function extractReceiptText(text) {
-  const lines = text.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
-  const dateMatch = text.match(/\b(20\d{2})[-/](\d{1,2})[-/](\d{1,2})\b|\b(\d{1,2})[/-](\d{1,2})[/-](20\d{2})\b/);
-  let date = '';
-  if (dateMatch) {
-    const [year, month, day] = dateMatch[1] ? [dateMatch[1], dateMatch[2], dateMatch[3]] : [dateMatch[6], dateMatch[4], dateMatch[5]];
-    date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-  }
-  const money = line => line?.match(/\b[\d,]+[.,]\d{2}\b/)?.[0];
-  const totalIndex = lines.findIndex(line => /^(?:[^a-z]*)(?:grand\s+)?total\b|^amount paid\b|^balance due\b/i.test(line));
-  const adjacentTotal = totalIndex >= 0 && !/[a-z]/i.test(lines[totalIndex + 1] || '') ? money(lines[totalIndex + 1]) : null;
-  const amountText = totalIndex >= 0 ? money(lines[totalIndex]) || adjacentTotal : null;
-  const fallbackAmount = [...text.matchAll(/\b[\d,]+[.,]\d{2}\b/g)].at(-1)?.[0];
-  const rawAmount = amountText || fallbackAmount;
-  const amount = rawAmount ? Number(rawAmount.includes('.') ? rawAmount.replace(/,/g, '') : rawAmount.replace(',', '.')) : null;
-  const category = inferCategory(text);
-  const headerEnd = lines.findIndex(line => /^ad(?:d)?r|^tel|^phone|^date\b|\b\d{1,2}[/-]\d{1,2}[/-]20\d{2}\b/i.test(line));
-  const header = lines.slice(0, headerEnd >= 0 ? headerEnd : Math.min(lines.length, 4));
-  const merchant = header.find(line => /[A-Za-z]{3}/.test(line) && !/\b(receipt|invoice|cash|thank you|order|transaction)\b/i.test(line) && !/^\d+\s/.test(line)) || '';
-  const paymentMethod = /(?:government|gtcc|travel card)/i.test(text) ? 'gtcc' : /(?:personal|cash)/i.test(text) ? 'personal' : '';
-  const currency = /\b(EUR|GBP|CAD)\b/i.exec(text)?.[1]?.toUpperCase() || 'USD';
-  const location = lines.find(line => /\b[A-Z][a-z]+,\s*[A-Z]{2}\b/.test(line)) || '';
-  return { merchant, date, amount, currency, category, paymentMethod, location, categoryLabel: categoryLabels[category] };
-}
+export function extractReceiptText(text) { return parseReceiptText(text).fields; }
 
 export async function readReceipt(file) {
   let text = '';
@@ -53,7 +16,9 @@ export async function readReceipt(file) {
   } else if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
     text = await readPdf(file);
   } else if (file.type === 'text/plain') text = await file.text();
-  return { fields: extractReceiptText(text), text, receipt: { name: file.name, type: file.type, dataUrl: await fileToDataUrl(file) } };
+  const parsed = parseReceiptText(text);
+  const extraction = { rawText: text, fields: parsed.fields, confidence: parsed.confidence, candidates: parsed.candidates };
+  return { ...parsed, text, extraction, receipt: { name: file.name, type: file.type, dataUrl: await fileToDataUrl(file) } };
 }
 
 async function readPdf(file) {
