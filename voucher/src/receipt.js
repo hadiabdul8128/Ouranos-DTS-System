@@ -1,11 +1,11 @@
 import { categoryLabels } from './data.js';
 
 const categoryHints = {
+  fuel: /\bgas\b|gasoline|fuel|petrol|shell|exxon|chevron/i,
   lodging: /hotel|inn|lodging|folio|suite/i,
   rental_car: /rental|enterprise|hertz|avis/i,
   airfare: /airline|airways|flight|ticket/i,
   parking: /parking|garage/i,
-  fuel: /shell|exxon|fuel|gasoline/i,
   ground_transport: /taxi|cab|uber|lyft/i,
   baggage: /baggage|checked bag/i,
   meals: /restaurant|cafe|diner|meal/i
@@ -23,11 +23,17 @@ export function extractReceiptText(text) {
     const [year, month, day] = dateMatch[1] ? [dateMatch[1], dateMatch[2], dateMatch[3]] : [dateMatch[6], dateMatch[4], dateMatch[5]];
     date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
   }
-  const totalLine = lines.findLast(line => /\b(total|amount paid|balance due)\b/i.test(line) && /\$?\d+[.,]\d{2}/.test(line));
-  const amountMatches = (totalLine || text).match(/(?:\$|USD\s*)?([\d,]+\.\d{2})\b/g) || [];
-  const amount = amountMatches.length ? Number(amountMatches.at(-1).replace(/[^\d.]/g, '')) : null;
+  const money = line => line?.match(/\b[\d,]+[.,]\d{2}\b/)?.[0];
+  const totalIndex = lines.findIndex(line => /^(?:[^a-z]*)(?:grand\s+)?total\b|^amount paid\b|^balance due\b/i.test(line));
+  const adjacentTotal = totalIndex >= 0 && !/[a-z]/i.test(lines[totalIndex + 1] || '') ? money(lines[totalIndex + 1]) : null;
+  const amountText = totalIndex >= 0 ? money(lines[totalIndex]) || adjacentTotal : null;
+  const fallbackAmount = [...text.matchAll(/\b[\d,]+[.,]\d{2}\b/g)].at(-1)?.[0];
+  const rawAmount = amountText || fallbackAmount;
+  const amount = rawAmount ? Number(rawAmount.includes('.') ? rawAmount.replace(/,/g, '') : rawAmount.replace(',', '.')) : null;
   const category = inferCategory(text);
-  const merchant = lines.find(line => /[A-Za-z]/.test(line) && !/receipt|invoice|date|total|amount/i.test(line)) || '';
+  const headerEnd = lines.findIndex(line => /^ad(?:d)?r|^tel|^phone|^date\b|\b\d{1,2}[/-]\d{1,2}[/-]20\d{2}\b/i.test(line));
+  const header = lines.slice(0, headerEnd >= 0 ? headerEnd : Math.min(lines.length, 4));
+  const merchant = header.find(line => /[A-Za-z]{3}/.test(line) && !/\b(receipt|invoice|cash|thank you|order|transaction)\b/i.test(line) && !/^\d+\s/.test(line)) || '';
   const paymentMethod = /(?:government|gtcc|travel card)/i.test(text) ? 'gtcc' : /(?:personal|cash)/i.test(text) ? 'personal' : '';
   const currency = /\b(EUR|GBP|CAD)\b/i.exec(text)?.[1]?.toUpperCase() || 'USD';
   const location = lines.find(line => /\b[A-Z][a-z]+,\s*[A-Z]{2}\b/.test(line)) || '';
@@ -37,9 +43,12 @@ export function extractReceiptText(text) {
 export async function readReceipt(file) {
   let text = '';
   if (file.type.startsWith('image/')) {
-    const { createWorker } = await import('tesseract.js');
+    const { createWorker, PSM } = await import('tesseract.js');
     const worker = await createWorker('eng', 1, localOcrOptions());
-    try { text = (await worker.recognize(file)).data.text; }
+    try {
+      await worker.setParameters({ tessedit_pageseg_mode: PSM.SPARSE_TEXT });
+      text = (await worker.recognize(file)).data.text;
+    }
     finally { await worker.terminate(); }
   } else if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
     text = await readPdf(file);
@@ -61,8 +70,11 @@ async function readPdf(file) {
       const content = await page.getTextContent();
       let pageText = content.items.map(item => `${item.str || ''}${item.hasEOL ? '\n' : ' '}`).join('');
       if (pageText.trim().length < 20) {
-        const { createWorker } = await import('tesseract.js');
-        ocrWorker ||= await createWorker('eng', 1, localOcrOptions());
+        const { createWorker, PSM } = await import('tesseract.js');
+        if (!ocrWorker) {
+          ocrWorker = await createWorker('eng', 1, localOcrOptions());
+          await ocrWorker.setParameters({ tessedit_pageseg_mode: PSM.SPARSE_TEXT });
+        }
         const viewport = page.getViewport({ scale: 2 });
         const canvas = document.createElement('canvas');
         canvas.width = Math.ceil(viewport.width);

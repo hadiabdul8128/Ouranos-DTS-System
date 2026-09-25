@@ -123,8 +123,7 @@ function expenseForm() {
       <label>Category<select name="category">${Object.entries(categoryLabels).map(([key, label]) => `<option value="${key}" ${expense.category === key ? 'selected' : ''}>${label}</option>`).join('')}</select></label>
       <label>Payment method<select name="paymentMethod"><option value="">Not found on receipt</option><option value="gtcc" ${expense.paymentMethod === 'gtcc' ? 'selected' : ''}>GTCC</option><option value="personal" ${expense.paymentMethod === 'personal' ? 'selected' : ''}>Personal</option></select></label>
       ${trip ? `<label>Authorized item<select name="authorizationItemId"><option value="">No match</option>${options}</select></label>` : ''}
-      <label>Hotel check-in<input name="serviceStartDate" type="date" value="${escapeHtml(expense.serviceStartDate || '')}"></label>
-      <label>Hotel check-out<input name="serviceEndDate" type="date" value="${escapeHtml(expense.serviceEndDate || '')}"></label>
+      <div class="lodging-fields" data-lodging-fields ${expense.category === 'lodging' ? '' : 'hidden'}><label>Lodging check-in<input name="serviceStartDate" type="date" value="${escapeHtml(expense.serviceStartDate || '')}"></label><label>Lodging check-out<input name="serviceEndDate" type="date" value="${escapeHtml(expense.serviceEndDate || '')}"></label></div>
       <label>Location<input name="location" value="${escapeHtml(expense.location || '')}" placeholder="City, state"></label>
       <label>Notes<input name="notes" value="${escapeHtml(expense.notes || '')}" placeholder="Optional"></label>
     </div></details>${receipt || expense.receipt ? `<p class="attached">✓ Receipt attached: ${escapeHtml((receipt || expense.receipt).name)}</p>` : ''}<div class="form-actions">${expense.id ? `<button type="button" class="button button-secondary delete-expense" data-action="delete-expense" data-expense="${escapeHtml(expense.id)}">Delete expense</button>` : ''}<button type="button" class="button button-secondary" data-action="cancel">Cancel</button><button class="button button-primary" type="submit">${existingExpenseId ? 'Attach to expense' : 'Save expense'}</button></div>
@@ -144,6 +143,7 @@ function bindEvents() {
     log(`Explained ${expense.merchant} overage`); save(); render(); toast('Explanation saved.');
   }));
   app.querySelector('#expense-form')?.addEventListener('submit', saveExpense);
+  app.querySelector('#expense-form [name="category"]')?.addEventListener('change', event => toggleCategoryFields(event.currentTarget.form));
   if (state.pending?.extracted) app.querySelector('#expense-form [name="purpose"]')?.addEventListener('input', updatePurposeSuggestion);
   app.querySelector('#new-file').addEventListener('change', event => processNewReceipt(event.target.files[0]));
   app.querySelector('#camera-file').addEventListener('change', event => processNewReceipt(event.target.files[0]));
@@ -156,10 +156,15 @@ function updatePurposeSuggestion(event) {
   const pending = state.pending;
   const suggestion = suggestAssignment(trip, pending.expense, event.currentTarget.value, state.expenses);
   form.elements.category.value = suggestion.category;
+  toggleCategoryFields(form);
   if (form.elements.authorizationItemId) form.elements.authorizationItemId.value = suggestion.authorizationItemId;
   form.elements.existingExpenseId.value = suggestion.existingExpenseId;
   form.querySelector('#match-reason').textContent = suggestion.reason;
   form.querySelector('[type="submit"]').textContent = suggestion.existingExpenseId ? 'Attach to expense' : 'Save expense';
+}
+
+function toggleCategoryFields(form) {
+  form.querySelector('[data-lodging-fields]').hidden = form.elements.category.value !== 'lodging';
 }
 
 function log(label) { state.audit.push({ label, at: new Date().toISOString() }); }
@@ -228,7 +233,8 @@ function saveExpense(event) {
     merchant, date, amount,
     currency: form.get('currency'), category: form.get('category'), paymentMethod: form.get('paymentMethod'),
     authorizationItemId: form.get('authorizationItemId') || '', location: form.get('location').trim(), notes: form.get('notes').trim(), purpose: form.get('purpose').trim(),
-    serviceStartDate: form.get('serviceStartDate') || undefined, serviceEndDate: form.get('serviceEndDate') || undefined,
+    serviceStartDate: form.get('category') === 'lodging' ? form.get('serviceStartDate') || undefined : undefined,
+    serviceEndDate: form.get('category') === 'lodging' ? form.get('serviceEndDate') || undefined : undefined,
     receipt: state.pending.receipt || old.receipt || null
   };
   const index = state.expenses.findIndex(e => e.id === expense.id);

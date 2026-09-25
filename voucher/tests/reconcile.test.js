@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { trip, seedExpenses } from './fixtures.js';
 import { reconcile } from '../src/reconcile.js';
-import { extractReceiptText } from '../src/receipt.js';
+import { extractReceiptText, inferCategory } from '../src/receipt.js';
 
 test('seed trip has exactly the three intended exceptions and auditable totals', () => {
   const result = reconcile(trip, seedExpenses);
@@ -40,6 +40,16 @@ test('receipt text extraction produces editable structured fields', () => {
   assert.equal(fields.amount, 92);
   assert.equal(fields.category, 'parking');
   assert.equal(fields.paymentMethod, 'personal');
+});
+
+test('generic cash receipt leaves merchant unfilled and reads a split total', () => {
+  const fields = extractReceiptText('CASH RECEIPT\nAdres\nTel: 123-456-7890\nDace: 01-01-2018\nTotal\n84.80\nSub-total\n76.80\nBalance\n24.80');
+  assert.equal(fields.merchant, '');
+  assert.equal(fields.date, '2018-01-01');
+  assert.equal(fields.amount, 84.8);
+  assert.equal(fields.paymentMethod, 'personal');
+  assert.equal(inferCategory('Gas for the rental car'), 'fuel');
+  assert.equal(extractReceiptText('7-Eleven\nDate 09/18/2026\nTotal $24.10').merchant, '7-Eleven');
 });
 
 test('split charges are compared against the total authorized item', () => {
