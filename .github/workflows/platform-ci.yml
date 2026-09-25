@@ -38,6 +38,13 @@ jobs:
         run: npm run platform:contracts -- --check
       - name: Typecheck and unit tests
         run: npm run platform:check
+      - name: Build Vercel frontend
+        # Match Vercel's clean install: the standalone app is not installed yet.
+        env:
+          NEXT_PUBLIC_OURANOS_API_URL: ""
+          NEXT_PUBLIC_SUPABASE_URL: ""
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ""
+        run: npm run build:vercel
       - name: Install preserved voucher module
         run: npm --prefix voucher ci --include=dev --include=optional --no-audit --no-fund
       - name: Check preserved voucher module
@@ -51,12 +58,6 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ""
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ""
         run: npm run build
-      - name: Build Vercel frontend
-        env:
-          NEXT_PUBLIC_OURANOS_API_URL: ""
-          NEXT_PUBLIC_SUPABASE_URL: ""
-          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ""
-        run: npm run build:vercel
       - name: Build backend container
         run: docker build --file Dockerfile.platform --tag ouranos-platform:ci .
       - name: Build optional receipt provider

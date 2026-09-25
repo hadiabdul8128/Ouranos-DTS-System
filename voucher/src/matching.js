@@ -1,4 +1,4 @@
-import { inferCategory } from './receipt.js';
+import { inferCategory } from './receiptParser.js';
 
 const tokens = value => new Set(String(value || '').toLowerCase().match(/[a-z0-9]+/g)?.filter(word => word.length > 2) || []);
 const overlap = (a, b) => [...tokens(a)].filter(word => tokens(b).has(word)).length;
