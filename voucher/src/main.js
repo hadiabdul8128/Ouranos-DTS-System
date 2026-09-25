@@ -6,6 +6,7 @@ import { normalizeAuthorization } from './authorization.js';
 import { loadAuthorization } from './authorizationHandoff.js';
 import { suggestAssignment } from './matching.js';
 import { buildConfirmation } from './confirmation.js';
+import { confirmScannedReceipt, prepareReceipt } from './receiptWorkflow.js';
 
 const storageKey = 'ouranos:voucher:v3';
 const showDeveloperImport = import.meta.env.DEV || new URLSearchParams(location.search).has('dev');
@@ -239,9 +240,8 @@ async function processNewReceipt(file) {
   if (!file) return;
   toast('Reading receipt…');
   try {
-    const { fields, extraction, receipt } = await readReceipt(file);
-    const suggestion = suggestAssignment(trip, fields, '', state.expenses);
-    state.pending = { receipt, extraction, extracted: true, editing: false, suggestion, existingExpenseId: suggestion.existingExpenseId, expense: { ...fields, purpose: '', category: suggestion.category, authorizationItemId: suggestion.authorizationItemId } };
+    const { extraction, receipt } = await readReceipt(file);
+    state.pending = prepareReceipt(trip, extraction, receipt, state.expenses);
     save(); render(); app.querySelector('.scan-confirm').scrollIntoView({ behavior: 'smooth', block: 'center' });
     toast('Receipt read. Confirm it or edit any uncertain details.');
   } catch (error) { toast(`Could not read receipt: ${error.message}`); }
@@ -274,10 +274,14 @@ function saveExpense(event) {
 }
 
 function confirmPendingReceipt() {
-  const pending = state.pending;
-  const preview = buildConfirmation(trip, { ...pending.expense, receipt: pending.receipt }, state.expenses, pending.existingExpenseId);
-  if (!preview.canConfirm) return toast('Edit the missing receipt details before confirming.');
-  commitExpense({ ...pending.expense, existingExpenseId: pending.existingExpenseId });
+  try {
+    const result = confirmScannedReceipt(trip, state.expenses, state.pending, crypto.randomUUID());
+    state.expenses = result.expenses;
+    state.intakeComplete = false;
+    for (const key of Object.keys(state.resolutions)) if (key.startsWith(`${result.expense.id}:`)) delete state.resolutions[key];
+    log(`${result.attachedToExisting ? 'Attached receipt to' : 'Added'} ${result.expense.merchant}`);
+    state.pending = null; save(); render(); toast(result.attachedToExisting ? 'Receipt attached to the existing expense.' : 'Expense saved.');
+  } catch (error) { toast(error.message); }
 }
 
 function commitExpense(values) {
@@ -364,7 +368,9 @@ async function loadAuthorizationById(id) {
   try {
     const response = await fetch(`/api/authorizations/${encodeURIComponent(id)}`, { credentials: 'same-origin' });
     if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) throw new Error(`Authorization ${id} is not available yet. Import an approved authorization JSON file when you have one.`);
-    applyAuthorization(await response.json(), 'api');
+    const authorization = await response.json();
+    if (normalizeAuthorization(authorization).authorizationId !== id) throw new Error('The returned authorization ID does not match the requested trip.');
+    applyAuthorization(authorization, 'api');
   } catch (error) { toast(error.message); }
 }
 
