@@ -48,6 +48,21 @@ The preferred handoff is the `TravelAuthorization` contract described in [AUTHOR
 
 The OCR assets are copied from the installed `tesseract.js`, `tesseract.js-core`, and `@tesseract.js-data/eng` packages by `scripts/prepare-ocr.mjs` before development and production builds. They are served from `/ocr` so scans do not depend on a third-party OCR endpoint.
 
+## Companion MVP (v0.1 in the DTS module brief)
+
+- **Manual trip setup** (`src/tripSetup.js`): with no Authorization handoff, the traveler types the facts from their approved DTS authorization. No orders image is captured, because orders can carry PII/CUI. Lodging and M&IE lines come from the per-diem engine.
+- **Per-diem engine** (`src/perDiem.js`): CONUS lodging cap by night and season, and M&IE with first/last day at 75%. Provided meals are deducted using the GSA breakdown. Trips crossing Oct 1 use both fiscal-year tables. Long-term TDY (Lodging-Plus), the Government Meal Rate, OCONUS, and unknown localities are flagged, never estimated. Every day carries its source row.
+- **Rate tables** (`src/rates/conus-fy*.js`) are generated from the official GSA Per Diem API. Refresh them with `GSA_API_KEY=... node scripts/fetch-gsa-rates.mjs 2027 2028` (DEMO_KEY works but is rate-limited). DTMO's lookup is authoritative for DoD, so the UI tells travelers to confirm there.
+- **Policy checks** (`src/reconcile.js`, citations in `src/rules.js`):
+  - Receipts per JTR 010301, or a lost-receipt statement (`src/lostReceipt.js`).
+  - Duplicates per JTR 010302.
+  - CONUS lodging tax split out of the room cost and never counted against the cap (`src/lodging.js`).
+  - Room cost over the nightly cap.
+  - Meals claimed above the M&IE allowance.
+  - Valid-receipt heuristics at capture (`src/receiptValidity.js`) that flag reservation confirmations and card slips.
+- **DTS entry checklist + evidence package** (`src/dtsChecklist.js`, `src/evidencePackage.js`): per diem, lodging (room and tax lines), other expenses, justifications, split disbursement, and receipts labeled R1…Rn with their SHA-256 capture hashes. Opens as a page to print or save as PDF. DTS category names are shown only where DTMO has confirmed them.
+- **Encrypted backup** (`src/backup.js`): AES-256-GCM with a PBKDF2 passphrase, plus restore and delete-all. Storage stays in the session, so the backup is how a traveler keeps a copy.
+
 ## Verify
 
 ```sh
