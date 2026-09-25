@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { PlatformProvider } from "@/components/platform/provider";
 
 export const metadata: Metadata = {
   title: "Ouranos | Your operational workspace",
@@ -17,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased"><PlatformProvider>{children}</PlatformProvider></body>
     </html>
   );
 }

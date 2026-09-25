@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { ArrowRight, LogOut } from "lucide-react";
+import { SyncIndicator, usePlatform } from "@/components/platform/provider";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export default function Workspace() {
+  const platform = usePlatform();
   const [request, setRequest] = useState("");
   const [message, setMessage] = useState("");
   const [opening, setOpening] = useState(false);
@@ -40,7 +42,7 @@ export default function Workspace() {
     }
   }
   return <main className="quiet-page prompt-page">
-    <header className="quiet-header"><a href="/dashboard" className="quiet-brand">Ouranos</a><a href="/" className="exit-link" aria-label="Return to login"><LogOut size={17}/></a></header>
+    <header className="quiet-header"><a href="/dashboard" className="quiet-brand">Ouranos</a><button onClick={() => void platform.signOut()} className="exit-link" aria-label="Sign out"><LogOut size={17}/></button></header>
     <section className="intent-stage" aria-labelledby="intent-heading">
       <h1 id="intent-heading">What do you want to do?</h1>
       <form className="intent-input" onSubmit={submit}>
@@ -49,6 +51,6 @@ export default function Workspace() {
       </form>
       <p className={`intent-hint ${message ? "has-message" : ""}`} role="status">{opening ? "Opening travel…" : message || 'Try “I need to travel”.'}</p>
     </section>
-    <footer className="quiet-footer"><span/><span>Preview</span></footer>
+    <footer className="quiet-footer"><span/><SyncIndicator/></footer>
   </main>;
 }

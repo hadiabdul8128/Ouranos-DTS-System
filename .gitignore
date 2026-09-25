@@ -44,3 +44,13 @@ next-env.d.ts
 /.codex/
 /outputs/
 /work/
+
+# Platform local state and credentials
+!.env.example
+!.env.platform.example
+supabase/.temp/
+supabase/.branches/
+platform/.runtime/
+*.tsbuildinfo
+playwright-report/
+test-results/

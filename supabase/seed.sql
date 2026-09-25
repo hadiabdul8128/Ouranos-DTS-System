@@ -1,0 +1,2 @@
+-- Intentionally no cloud users or organizations. Local synthetic data is created
+-- by `npm run platform:seed` against a verified loopback Supabase endpoint only.

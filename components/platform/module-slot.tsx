@@ -1,0 +1,6 @@
+'use client';
+import {useEffect,useState} from 'react';
+import {Button} from '@/components/ui/button';
+import {usePlatform,SyncIndicator} from './provider';
+import {useLiveQuery} from 'dexie-react-hooks';
+export function ModuleSlot({module}:{module:'planning'|'vouchers'}){const p=usePlatform();const [tripId,setTripId]=useState('');useEffect(()=>{setTripId(new URLSearchParams(window.location.search).get('tripId')||'')},[]);const trip=useLiveQuery(()=>p.repository?.db.entities.get(`trip:${tripId}`),[p.repository,tripId]);return <main className="quiet-page"><header className="quiet-header"><a className="quiet-brand" href="/dashboard">Ouranos</a><a href="/dashboard/platform">Workspace</a></header><section className="platform-panel"><h1>{module==='planning'?'Travel planning':'Expenses and vouchers'}</h1><p>{trip?.local.data.destination as string||'Select a trip in your workspace.'}</p><div className="platform-block"><h2>Module integration point</h2><p>The shared trip, account, storage, and synchronization services are ready for your partner’s {module} interface. Its forms and business validation are not installed yet.</p><Button variant="outline" asChild><a href="/dashboard/platform">Back to saved trips</a></Button></div><SyncIndicator/></section></main>}
