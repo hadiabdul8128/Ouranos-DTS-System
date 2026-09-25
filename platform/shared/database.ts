@@ -1,6 +1,6 @@
 import pg, { type PoolClient } from 'pg';
 import { type PlatformConfig } from './config';
-export const makePool=(config:PlatformConfig)=>new pg.Pool({connectionString:config.DATABASE_URL,max:10,connectionTimeoutMillis:10000,ssl:config.DATABASE_SSL==='verify-full'?{rejectUnauthorized:true}:false});
+export const makePool=(config:PlatformConfig)=>new pg.Pool({connectionString:config.DATABASE_URL,max:10,connectionTimeoutMillis:10000,ssl:config.DATABASE_SSL==='verify-full'?{rejectUnauthorized:true,...(config.DATABASE_CA_CERT?{ca:config.DATABASE_CA_CERT}:{})}:false});
 export async function withActor<T>(pool:pg.Pool,userId:string,organizationId:string|undefined,fn:(db:PoolClient)=>Promise<T>):Promise<T>{
  const db=await pool.connect();
  try{

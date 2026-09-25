@@ -1,6 +1,6 @@
 # Hosted Ouranos
 
-The frontend is [ouranos-fawn.vercel.app](https://ouranos-fawn.vercel.app), deployed from GitHub `main`. The planned backend uses Railway for the API, worker and receipt services, and Supabase for PostgreSQL, Auth and private receipt storage. These configuration files prepare that deployment. Their presence does not mean services are live.
+The frontend is [ouranos-fawn.vercel.app](https://ouranos-fawn.vercel.app), deployed from GitHub `main`. The backend uses Railway for the API, worker and receipt services, and Supabase for PostgreSQL, Auth and private receipt storage. Supabase migrations are applied to the existing paid project `mtjtggfacdkdncogxlvj` in `hadiabdul8128's Org`. Railway activation and the frontend cutover remain pending; configuration files alone do not mean services are live.
 
 ## Railway services
 
@@ -24,11 +24,22 @@ railway usage limit status --target workspace --workspace WORKSPACE_ID --json
 
 ## Database and authentication
 
-Verify the Supabase CLI account and organization before provisioning; a signed-in browser and CLI can use different accounts. Create a dedicated Ouranos project in the intended owner's organization, close to the API region. Confirm any additional database compute charge before creation. Do not reuse another application's project. Apply all checked-in `supabase/migrations` with the Supabase CLI. Do not run the local fixture seed script against a hosted project. Verify the `ouranos_api` role, `pgmq.q_ouranos_jobs` queue and private `ouranos-documents` bucket exist.
+The owner selected the existing paid Supabase project. Ouranos tables live in the `ouranos` schema, alongside the other application's unchanged `public` tables. Auth users and email delivery settings are shared at the Supabase project level; Ouranos memberships and row policies determine access to Ouranos data.
 
-Use the project's direct database or session-pooler connection for the worker. Transaction pooling cannot preserve its job advisory locks. Require verified TLS. The connection password and Supabase server key belong only in Railway service variables; never in browser variables, Git, Docker build arguments or logs.
+For this shared project, use the separate checksum ledger in `ouranos.schema_migrations`. Do not use `supabase db reset` or change the existing application's `supabase_migrations` history. Export and review the atomic batch before applying it:
 
-Set the Supabase Auth site URL to `https://ouranos-fawn.vercel.app` and allow the exact callback `https://ouranos-fawn.vercel.app/auth/callback`. Keep email confirmation enabled. Set up a verified SMTP sender for team-wide sign-in; the built-in Supabase email service is limited to project-team recipients and low-volume testing.
+```sh
+node platform/scripts/shared-project-migrations.mjs work/shared-project-migrations.sql
+supabase db query --linked --file work/shared-project-migrations.sql
+```
+
+For a fresh, dedicated project or local development, the standard Supabase CLI migration workflow still applies. Never run local fixture seeds against a hosted project.
+
+Use separate API and worker database logins. The API login has `NOINHERIT` and membership in `ouranos_api`; API transactions explicitly enter that restricted role. The worker login inherits `ouranos_worker`, which grants access to Ouranos tables and its queue without global RLS bypass or access to the other application's tables. Neither runtime uses the shared project's administrator password.
+
+Use the project's direct database or session-pooler connection (port 5432) for the worker. Transaction pooling cannot preserve its job advisory locks. Require verified TLS. Credentials and the Supabase server key belong only in Railway service variables; never in browser variables, Git, Docker build arguments or logs.
+
+The exact callback `https://ouranos-fawn.vercel.app/auth/callback` is allowed. Keep the existing site's primary URL and email settings unchanged. This project currently uses Supabase's built-in email delivery, which is limited to project-team recipients and low-volume testing. General-user sign-in requires a verified SMTP sender configured with the project owner.
 
 ## Service variables
 
@@ -37,6 +48,7 @@ Both `api` and `worker` need:
 - `NODE_ENV=production`
 - `DATABASE_URL` with the hosted session-pooler connection
 - `DATABASE_SSL=verify-full`
+- `DATABASE_CA_CERT`: the PEM CA certificate downloaded from Supabase Database Settings; certificate and hostname verification remain enabled.
 - `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`
 - `ALLOWED_ORIGINS=https://ouranos-fawn.vercel.app`
 - `DTS_PROVIDER=disabled`

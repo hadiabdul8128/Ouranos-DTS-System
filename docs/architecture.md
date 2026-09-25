@@ -31,7 +31,7 @@ Redis is not a dependency; PostgreSQL supplies the durable queue. Docker images 
 
 ## Authority and data flow
 
-The browser sends a verified identity token and an organization id. The API derives the user from Supabase, starts a transaction as the restricted `ouranos_api` database role, and supplies the verified identity to row-level security. An organization id or a cached browser record never grants access. The worker has trusted database and storage access and must remain server-side.
+The browser sends a verified identity token and an organization id. The API derives the user from Supabase, starts a transaction as the restricted `ouranos_api` database role, and supplies the verified identity to row-level security. An organization id or a cached browser record never grants access. Ouranos tables live in their own `ouranos` schema. A separate worker login inherits `ouranos_worker`, with grants scoped to those tables and the Ouranos queue. It has no global RLS bypass. The worker and storage server key must remain server-side.
 
 Roles are traveler, reviewer, approver, admin and auditor. A traveler edits their own trip. Administrators manage membership and routing; reviewers and approvers act on assigned steps. Trip visibility includes the owner, active admins/auditors, and assigned approval participants. Changes to one's own membership are prohibited through the API.
 

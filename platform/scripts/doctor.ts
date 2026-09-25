@@ -9,7 +9,7 @@ const client=createClient(config.SUPABASE_URL,config.SUPABASE_SECRET_KEY,{auth:{
 let failed=false;
 async function check(name:string,fn:()=>Promise<unknown>){try{await fn();console.log(`OK    ${name}`)}catch{failed=true;console.log(`FAIL  ${name}`)}}
 try{
- await check('Database and workflow migrations',async()=>{await pool.query('select id from public.submission_revisions limit 0');await pool.query("select rolname from pg_roles where rolname='ouranos_api'")});
+ await check('Database and workflow migrations',async()=>{await pool.query('select id from ouranos.submission_revisions limit 0');await pool.query("select rolname from pg_roles where rolname='ouranos_api'")});
  await check('Authentication service and server key',async()=>{const {error}=await client.auth.admin.listUsers({page:1,perPage:1});if(error)throw error});
  await check('Private receipt bucket',async()=>{const {data,error}=await client.storage.getBucket('ouranos-documents');if(error||!data||data.public)throw new Error('Invalid bucket')});
  await check('Durable job queue',async()=>{await pool.query('select msg_id from pgmq.q_ouranos_jobs limit 0')});

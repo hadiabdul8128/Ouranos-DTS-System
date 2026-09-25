@@ -10,8 +10,8 @@ import {buildEvidenceHtml} from '../../voucher/src/evidencePackage.js';
 export async function loadVoucherPackage(db:PoolClient,org:string,id:string){
  const voucher=await loadEntity(db,'voucher',id,org);
  check(['in_review','approved'].includes(voucher.status),'INVALID_STATE_TRANSITION','Submit the voucher before downloading its package',409);
- const revision=(await db.query(`select r.id,r.sha256,r.snapshot,r.created_at from public.submission_revisions r
-  join public.approval_requests a on a.revision_id=r.id
+ const revision=(await db.query(`select r.id,r.sha256,r.snapshot,r.created_at from ouranos.submission_revisions r
+  join ouranos.approval_requests a on a.revision_id=r.id
   where r.organization_id=$1 and r.voucher_id=$2 and a.status=$3 order by r.created_at desc limit 1`,[org,id,voucher.status])).rows[0];
  check(revision?.snapshot?.authorizationRevision,'INVALID_STATE_TRANSITION','This revision has no connected travel package',409);
  const snapshot=revision.snapshot;

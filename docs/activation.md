@@ -45,9 +45,9 @@ Until hosted services are configured, Vercel serves the existing preview mode. I
 
 ## Cloud backend activation still requires an environment
 
-The selected deployment layout is Vercel for the frontend, Railway for the API/worker/receipt services, and a dedicated Supabase project for database/Auth/storage. Service configurations and the activation sequence are in [cloud-deployment.md](cloud-deployment.md). Verify hosting account access and the approved spending limit before starting services.
+The selected deployment layout is Vercel for the frontend, Railway for the API/worker/receipt services, and the existing paid Supabase project with an isolated Ouranos schema for database/Auth/storage. Service configurations and the activation sequence are in [cloud-deployment.md](cloud-deployment.md). Verify hosting account access and the approved spending limit before starting services.
 
-Local services are not a hosted deployment. The existing published frontend preview does not reach this computer's database. A cloud environment needs a dedicated Supabase project, verified email configuration, and reachable API, worker and receipt services. Verify the intended owner's Supabase organization before provisioning or uploading credentials.
+Local services are not a hosted deployment. The existing published frontend preview does not reach this computer's database. The Supabase schema is provisioned in the selected paid project. Cloud activation still needs email delivery configuration and reachable API, worker and receipt services. Verify the intended owner's Supabase organization before provisioning or uploading credentials.
 
 Use production TLS, exact CORS/callback origins and server-only secrets. The worker requires direct PostgreSQL or **session pooling**, because per-job locks depend on a stable database session. Do not use a transaction pooler for workers. Build the frontend with the deployed API URL and public Auth settings only.
 

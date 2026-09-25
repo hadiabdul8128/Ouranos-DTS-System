@@ -27,10 +27,10 @@ async function ownsMessage(db:PoolClient,message:Message){
  return Boolean((await db.query('select 1 from pgmq.q_ouranos_jobs where msg_id=$1 and read_ct=$2 and vt>clock_timestamp() for update',[message.msg_id,message.read_ct])).rowCount);
 }
 async function archive(db:PoolClient,message:Message){await db.query("select pgmq.archive('ouranos_jobs',$1::bigint)",[message.msg_id])}
-async function completed(db:PoolClient,job:Job){return Boolean((await db.query('select 1 from public.job_results where job_key=$1',[job.jobKey])).rowCount)}
+async function completed(db:PoolClient,job:Job){return Boolean((await db.query('select 1 from ouranos.job_results where job_key=$1',[job.jobKey])).rowCount)}
 async function loadRecord(db:PoolClient,job:Job):Promise<RecordSnapshot|undefined>{
  const table=job.type==='receipt.process'?'documents':'integration_deliveries';
- return (await db.query(`select * from public.${table} where organization_id=$1 and id=$2 for update`,[job.organizationId,job.entityId])).rows[0];
+ return (await db.query(`select * from ouranos.${table} where organization_id=$1 and id=$2 for update`,[job.organizationId,job.entityId])).rows[0];
 }
 function runnable(job:Job,row:RecordSnapshot){
  return job.type==='receipt.process'
@@ -83,7 +83,7 @@ export async function runOne(pool:Pool,storage:SupabaseClient,config:PlatformCon
  const job=parsed.success?parsed.data:undefined;
  try{
   if(!job){
-   await transaction(db,async()=>{if(!await ownsMessage(db,message))return;await db.query('insert into public.failed_jobs(message,error_code) values($1,$2)',[message.message,'INVALID_JOB']);await archive(db,message)});
+   await transaction(db,async()=>{if(!await ownsMessage(db,message))return;await db.query('insert into ouranos.failed_jobs(message,error_code) values($1,$2)',[message.message,'INVALID_JOB']);await archive(db,message)});
    return true;
   }
   // A per-job session lock prevents duplicate provider requests. Unlike the
@@ -116,12 +116,12 @@ export async function runOne(pool:Pool,storage:SupabaseClient,config:PlatformCon
    if(await completed(db,job)){await archive(db,message);return}
    const current=await loadRecord(db,job);
    if(!unchanged(current,snapshot!)||!runnable(job,current!)){await archive(db,message);return}
-   if(outcome.extraction)await db.query('insert into public.extraction_runs(organization_id,document_id,provider,model_version,result) values($1,$2,$3,$4,$5)',[job.organizationId,job.entityId,'http',outcome.extraction.modelVersion,outcome.extraction]);
+   if(outcome.extraction)await db.query('insert into ouranos.extraction_runs(organization_id,document_id,provider,model_version,result) values($1,$2,$3,$4,$5)',[job.organizationId,job.entityId,'http',outcome.extraction.modelVersion,outcome.extraction]);
    const table=job.type==='receipt.process'?'documents':'integration_deliveries';
-   const updated=(await db.query(`update public.${table} set status=$3,version=version+1,updated_at=now(),data=data||$4::jsonb where organization_id=$1 and id=$2 and version=$5 returning *`,[job.organizationId,job.entityId,outcome.status,JSON.stringify(outcome.data||{}),snapshot!.version])).rows[0];
+   const updated=(await db.query(`update ouranos.${table} set status=$3,version=version+1,updated_at=now(),data=data||$4::jsonb where organization_id=$1 and id=$2 and version=$5 returning *`,[job.organizationId,job.entityId,outcome.status,JSON.stringify(outcome.data||{}),snapshot!.version])).rows[0];
    await publishChange(db,job.type==='receipt.process'?'document':'integration',updated);
-   await db.query('insert into public.audit_events(organization_id,trip_id,action,entity_id,details) values($1,$2,$3,$4,$5)',[job.organizationId,snapshot!.trip_id,job.type,job.entityId,{jobKey:job.jobKey,blocked:outcome.blocked}]);
-   if(!outcome.blocked)await db.query('insert into public.job_results(job_key,result) values($1,$2) on conflict do nothing',[job.jobKey,{processed:true}]);
+   await db.query('insert into ouranos.audit_events(organization_id,trip_id,action,entity_id,details) values($1,$2,$3,$4,$5)',[job.organizationId,snapshot!.trip_id,job.type,job.entityId,{jobKey:job.jobKey,blocked:outcome.blocked}]);
+   if(!outcome.blocked)await db.query('insert into ouranos.job_results(job_key,result) values($1,$2) on conflict do nothing',[job.jobKey,{processed:true}]);
    await archive(db,message);
   },job.organizationId);
   return true;
@@ -135,10 +135,10 @@ export async function runOne(pool:Pool,storage:SupabaseClient,config:PlatformCon
    // A late failed attempt has no authority over newer successful processing.
    if(snapshot&&(!unchanged(current,snapshot)||!runnable(job,current!))){await archive(db,message);return}
    if(message.read_ct>=5){
-    await db.query('insert into public.failed_jobs(message,error_code) values($1,$2)',[job,code]);
+    await db.query('insert into ouranos.failed_jobs(message,error_code) values($1,$2)',[job,code]);
     if(snapshot){
      const table=job.type==='receipt.process'?'documents':'integration_deliveries';
-     const updated=(await db.query(`update public.${table} set status='failed',version=version+1,updated_at=now() where organization_id=$1 and id=$2 and version=$3 returning *`,[job.organizationId,job.entityId,snapshot.version])).rows[0];
+     const updated=(await db.query(`update ouranos.${table} set status='failed',version=version+1,updated_at=now() where organization_id=$1 and id=$2 and version=$3 returning *`,[job.organizationId,job.entityId,snapshot.version])).rows[0];
      if(updated)await publishChange(db,job.type==='receipt.process'?'document':'integration',updated);
     }
     await archive(db,message);

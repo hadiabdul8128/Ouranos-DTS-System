@@ -45,7 +45,7 @@ try {
     }
   }
 
-  if (!(await pool.query('select id from public.organizations where id=$1', [organizationId])).rowCount) {
+  if (!(await pool.query('select id from ouranos.organizations where id=$1', [organizationId])).rowCount) {
     await withActor(pool, users.admin, undefined, async db => {
       await db.query('select ouranos.create_organization($1,$2)', [organizationId, 'Ouranos local workspace']);
     });
@@ -53,14 +53,14 @@ try {
   // Reruns preserve existing memberships, drafts, and administrator choices.
   for (const role of fixtureRoles) {
     await pool.query(
-      'insert into public.memberships(organization_id,user_id,role,active) values($1,$2,$3,true) on conflict(organization_id,user_id) do nothing',
+      'insert into ouranos.memberships(organization_id,user_id,role,active) values($1,$2,$3,true) on conflict(organization_id,user_id) do nothing',
       [organizationId, users[role], role],
     );
   }
 
   const deviceId = randomUUID();
   for (const kind of ['authorization', 'voucher'] as const) {
-    const exists = await pool.query('select id from public.workflow_definitions where organization_id=$1 and kind=$2', [organizationId, kind]);
+    const exists = await pool.query('select id from ouranos.workflow_definitions where organization_id=$1 and kind=$2', [organizationId, kind]);
     if (!exists.rowCount) await run(users.admin, {
       commandId: randomUUID(), organizationId, deviceId, schemaVersion: 1,
       entityId: randomUUID(), expectedVersion: 0, type: 'workflow.configure',
@@ -71,7 +71,7 @@ try {
     });
   }
 
-  if (!(await pool.query('select id from public.trips where id=$1', [tripId])).rowCount) {
+  if (!(await pool.query('select id from ouranos.trips where id=$1', [tripId])).rowCount) {
     await run(users.traveler, {
       commandId: randomUUID(), organizationId, deviceId: randomUUID(), schemaVersion: 1,
       entityId: tripId, expectedVersion: 0, type: 'trip.save',

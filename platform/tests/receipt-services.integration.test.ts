@@ -29,12 +29,12 @@ it.skipIf(!enabled)('uploads, scans, extracts, and confirms a real receipt throu
   async function send(type:string,entityId:string,expectedVersion:number,payload:unknown){const result=await executeCommand(pool,storage,userId,{commandId:randomUUID(),organizationId,entityId,deviceId,schemaVersion:1,expectedVersion,type,payload} as Command,true);if(!result.ok)throw new Error(result.error.message);return result.entity}
   await send('trip.save',tripId,0,{destination:'Washington',departure:'2026-10-12',returnDate:'2026-10-15',purpose:'Synthetic service test'});
   const bytes=receiptPdf();await send('document.register',documentId,0,{tripId,filename:'synthetic-receipt.pdf',mediaType:'application/pdf',byteSize:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});
-  const doc=(await pool.query('select * from public.documents where id=$1',[documentId])).rows[0];
+  const doc=(await pool.query('select * from ouranos.documents where id=$1',[documentId])).rows[0];
   const upload=await storage.storage.from('ouranos-documents').upload(doc.storage_key,bytes,{contentType:'application/pdf'});expect(upload.error).toBeNull();
   const finalized=await send('document.finalize',documentId,1,{});
   await runOne(pool,storage,config,undefined,{organizationId,jobKey:`receipt:${documentId}:${finalized.version}`});
-  const processed=(await pool.query('select * from public.documents where id=$1',[documentId])).rows[0];expect(processed.status).toBe('needs_review');
-  const extraction=(await pool.query('select result from public.extraction_runs where document_id=$1',[documentId])).rows[0].result;
+  const processed=(await pool.query('select * from ouranos.documents where id=$1',[documentId])).rows[0];expect(processed.status).toBe('needs_review');
+  const extraction=(await pool.query('select result from ouranos.extraction_runs where document_id=$1',[documentId])).rows[0].result;
   expect(JSON.stringify(extraction)).toContain('182.00');
   expect((await send('document.confirm',documentId,processed.version,{})).status).toBe('ready');
  }finally{await pool.end()}

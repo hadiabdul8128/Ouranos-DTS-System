@@ -5,6 +5,7 @@ const environment=z.object({
  NODE_ENV:z.enum(['development','test','production']).default('development'),
  PORT:z.coerce.number().default(4100),HOST:z.string().default('127.0.0.1'),
  DATABASE_URL:z.string().min(1),DATABASE_SSL:z.enum(['disable','verify-full']).default('verify-full'),
+ DATABASE_CA_CERT:z.string().optional(),
  SUPABASE_URL:z.string().url(),SUPABASE_PUBLISHABLE_KEY:z.string().min(1),SUPABASE_SECRET_KEY:z.string().min(1),
  ALLOWED_ORIGINS:z.string().default('http://localhost:5173,http://127.0.0.1:5173'),
  OCR_PROVIDER:z.enum(['disabled','http']).default('disabled'),OCR_URL:z.string().url().optional(),OCR_TOKEN:z.string().optional(),
