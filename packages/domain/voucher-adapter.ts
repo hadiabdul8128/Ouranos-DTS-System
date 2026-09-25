@@ -1,5 +1,7 @@
+import {parseReceiptText} from '../../voucher/src/receiptParser.js';
+import {suggestAssignment} from '../../voucher/src/matching.js';
 import type {Entity} from '../contracts';
-import {planningModuleSchema, PLANNING_SCHEMA_VERSION} from '../contracts/planning-module';
+import {planningModuleSchema, PLANNING_SCHEMA_VERSION, travelCategories} from '../contracts/planning-module';
 import {normalizeAuthorization} from '../../voucher/src/authorization.js';
 import {reconcile} from '../../voucher/src/reconcile.js';
 import {computePerDiem} from '../../voucher/src/perDiem.js';
@@ -24,6 +26,23 @@ export function approvedTravel(revision:ApprovedRevision){
     purpose:trip.data.purpose,currency:data.currency,
     approvedExpenseItems:data.approvedExpenseItems.map(({authorizedAmountMinor,...item})=>({...item,authorizedAmount:authorizedAmountMinor/100})),
   });
+}
+/** Suggest an approved item using the immutable approval and the receipt's reviewed OCR fields.
+ * Only structured paid totals are used; an uncertain OCR amount stays blank. */
+export function suggestReceiptAllocation(revision:ApprovedRevision,fields:Record<string,string>,hint=''){
+  const parsed=parseReceiptText(fields.rawText||'').fields;
+  const amount=/^\d+(?:\.\d{1,2})?$/.test(fields.amount||'')?Number(fields.amount):null;
+  const category=travelCategories.includes(fields.category as typeof travelCategories[number])&&fields.category!=='other'?fields.category:parsed.category;
+  return suggestAssignment(approvedTravel(revision),{
+    merchant:fields.merchant||parsed.merchant,
+    date:/^\d{4}-\d{2}-\d{2}$/.test(fields.date||'')?fields.date:'',
+    amount,
+    category,
+    location:fields.location||parsed.location,
+    serviceStartDate:fields.serviceStartDate||parsed.serviceStartDate,
+    serviceEndDate:fields.serviceEndDate||parsed.serviceEndDate,
+    paymentMethod:fields.paymentMethod||parsed.paymentMethod,
+  },hint,[]);
 }
 export function planAllowance(trip:Entity,data:PlanningModuleInput):Allowance|null{
   if(!data.allowance?.enabled)return null;
