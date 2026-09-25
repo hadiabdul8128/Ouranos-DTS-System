@@ -3,10 +3,12 @@ import { categoryLabels } from './data.js';
 import { reconcile, formatDate } from './reconcile.js';
 import { inferCategory, readReceipt } from './receipt.js';
 import { normalizeAuthorization } from './authorization.js';
+import { loadAuthorization } from './authorizationHandoff.js';
 import { suggestAssignment } from './matching.js';
 import { buildConfirmation } from './confirmation.js';
 
 const storageKey = 'ouranos:voucher:v3';
+const showDeveloperImport = import.meta.env.DEV || new URLSearchParams(location.search).has('dev');
 const initial = () => ({ trip: null, source: null, intakeComplete: false, expenses: [], resolutions: {}, audit: [], pending: null });
 let state;
 try {
@@ -48,7 +50,7 @@ function render() {
       <div class="backline"><span>Travel</span><span class="chevron">›</span><strong>Finish my voucher</strong></div>
       <section class="trip-head">
         <div><div class="eyebrow">APPROVED TRIP · ${escapeHtml(trip.authorizationId)}</div><h1>Finish your ${escapeHtml(trip.destination)} trip</h1><p class="subhead">${escapeHtml(trip.origin)} → ${escapeHtml(trip.destination)} · ${formatDate(trip.startDate)}–${formatDate(trip.endDate)}</p></div>
-        <div class="trip-actions"><div class="trip-status"><span class="status-dot"></span> Authorization approved</div><button class="reset-link" data-action="load-authorization">Use another authorization</button></div>
+        <div class="trip-actions"><div class="trip-status"><span class="status-dot"></span> Authorization approved</div>${showDeveloperImport ? '<button class="reset-link" data-action="load-authorization">Import another authorization JSON</button>' : ''}</div>
       </section>
       <section class="hero ${readyForReview ? 'hero-ready' : ''}" aria-live="polite">
         <div class="hero-icon">${readyForReview ? '✓' : !started ? '↑' : '!'}</div>
@@ -85,7 +87,7 @@ function renderStart() {
       <div class="start-actions"><button class="button button-primary" data-action="upload-new">↑ &nbsp;Upload receipt</button><button class="button button-secondary" data-action="camera">▣ &nbsp;Take a photo</button><button class="button button-secondary" data-action="add">＋ &nbsp;Add expense</button></div>
       ${state.pending ? state.pending.extracted && !state.pending.editing ? confirmationCard() : expenseForm() : ''}
       ${state.expenses.length ? `<section class="section"><div class="section-title"><div><div class="eyebrow">SAVED LOCALLY</div><h2>Expenses waiting for a trip</h2></div><span class="muted">${state.expenses.length} items</span></div><div class="staged-list">${state.expenses.map(expense => `<div class="staged-row"><div><strong>${escapeHtml(expense.merchant)}</strong><small>${escapeHtml(formatDate(expense.date))} · ${escapeHtml(expense.purpose)} · ${expense.receipt ? 'Receipt attached' : 'No receipt'}</small></div><strong>${currency(expense.amount)}</strong><button class="row-edit" data-action="edit" data-expense="${escapeHtml(expense.id)}" aria-label="Edit ${escapeHtml(expense.merchant)}">⋯</button></div>`).join('')}</div></section>` : ''}
-      <section class="authorization-start"><div><div class="eyebrow">APPROVED AUTHORIZATION</div><h2>Bring in your trip when it’s ready</h2><p>Load an approved authorization to match these expenses and check for exceptions. You can scan receipts first.</p></div><div class="authorization-actions"><button class="button button-secondary" data-action="load-authorization">Import authorization JSON</button></div></section>
+      <section class="authorization-start"><div><div class="eyebrow">APPROVED AUTHORIZATION</div><h2>Bring in your trip when it’s ready</h2><p>Your approved trip will appear here automatically. You can scan receipts while you wait.</p></div>${showDeveloperImport ? '<div class="authorization-actions"><button class="button button-secondary" data-action="load-authorization">Import authorization JSON for testing</button></div>' : ''}</section>
     </main><div id="toast" class="toast" hidden></div>
     <input id="new-file" type="file" accept="image/*,application/pdf,text/plain" hidden><input id="camera-file" type="file" accept="image/*" capture="environment" hidden><input id="attach-file" type="file" accept="image/*,application/pdf,text/plain" hidden><input id="authorization-file" type="file" accept="application/json,.json" hidden>`;
   bindEvents();
@@ -329,20 +331,11 @@ function exportPackage() {
 
 function applyAuthorization(input, source = 'imported') {
   const approved = normalizeAuthorization(input);
-  if (trip && trip.id !== approved.id && state.expenses.length && !confirm('Replace this trip and its voucher expenses? Download the review package first if you need a copy.')) return;
-  const keepExpenses = !trip || trip.id === approved.id;
-  const expenses = keepExpenses ? state.expenses.map(expense => {
-    const suggestion = suggestAssignment(approved, expense, expense.purpose, []);
-    const existingMatch = approved.authorizedItems.some(item => item.id === expense.authorizationItemId) ? expense.authorizationItemId : '';
-    const authorizationItemId = existingMatch || suggestion.authorizationItemId;
-    return { ...expense, tripId: approved.id, authorizationItemId,
-      assignmentSource: existingMatch ? expense.assignmentSource : authorizationItemId ? 'auto' : expense.assignmentSource,
-      matching: existingMatch ? expense.matching : authorizationItemId ? { confidence: suggestion.confidence, score: suggestion.score, signals: suggestion.signals } : expense.matching };
-  }) : [];
-  state = { trip: approved, source, intakeComplete: false, expenses, resolutions: keepExpenses ? state.resolutions : {}, audit: keepExpenses ? state.audit : [], pending: null };
-  trip = approved;
-  log(`Loaded approved authorization ${approved.authorizationId}`);
-  save(); render(); toast(expenses.length ? 'Approved trip loaded. Saved expenses were matched to it.' : 'Approved trip loaded. Scan a receipt to begin.');
+  const replaceTrip = Boolean(trip && trip.id !== approved.id && state.expenses.length && confirm('Replace this trip and its voucher expenses? Download the review package first if you need a copy.'));
+  if (trip && trip.id !== approved.id && state.expenses.length && !replaceTrip) return;
+  state = loadAuthorization(state, approved, { source, replaceTrip });
+  trip = state.trip;
+  save(); render(); toast(state.expenses.length ? 'Approved trip loaded. Saved expenses were matched to it.' : 'Approved trip loaded. Scan a receipt to begin.');
 }
 
 async function importAuthorizationFile(file) {
@@ -353,8 +346,17 @@ async function importAuthorizationFile(file) {
 
 async function loadAuthorizationFromRoute() {
   const id = new URLSearchParams(location.search).get('authorizationId');
-  if (!id) return;
+  if (!id || trip?.authorizationId === id) return;
   await loadAuthorizationById(id);
+}
+
+function loadAuthorizationFromSessionHandoff() {
+  const key = 'ouranos:approved-authorization:v1';
+  const raw = sessionStorage.getItem(key);
+  if (!raw) return;
+  sessionStorage.removeItem(key);
+  try { applyAuthorization(JSON.parse(raw), 'handoff'); }
+  catch (error) { toast(`Could not load authorization handoff: ${error.message}`); }
 }
 
 async function loadAuthorizationById(id) {
@@ -367,6 +369,7 @@ async function loadAuthorizationById(id) {
 }
 
 render();
+loadAuthorizationFromSessionHandoff();
 loadAuthorizationFromRoute();
 window.addEventListener('ouranos:authorization-approved', event => {
   try { applyAuthorization(event.detail, 'handoff'); }
