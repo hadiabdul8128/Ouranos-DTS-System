@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Ouranos | Your operational workspace",
-  description: "Your work, connected. Explore the Ouranos travel and DTS workspace.",
+  description: "One place for the work you need to do.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",

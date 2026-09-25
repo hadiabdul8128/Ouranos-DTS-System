@@ -1,2 +1,2 @@
-import Workspace from "@/components/workspace";
-export default function Travel(){return <Workspace travel/>;}
+import TravelRequest from "@/components/travel-request";
+export default function Travel(){return <TravelRequest/>;}
