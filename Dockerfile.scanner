@@ -1,0 +1,4 @@
+# The same official, pinned scanner used by the local receipt pipeline.
+FROM clamav/clamav@sha256:0e31ce089574268aefa0b543767d66b70240ab51ed49eec53e07f18d5629d817
+USER clamav
+ENTRYPOINT ["/init-unprivileged"]
