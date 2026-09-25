@@ -1,26 +1,26 @@
-/** Approved trip passed to the Voucher by the Authorization feature. Dates use YYYY-MM-DD. */
+/** Authorization -> Voucher handoff. Dates use YYYY-MM-DD; amounts are USD numbers. */
 export interface TravelAuthorization {
-  id: string;
+  tripId: string;
   authorizationId: string;
-  authorizationStatus: 'Approved';
-  traveler?: string;
+  status: 'Approved';
+  traveler: string;
   origin: string;
   destination: string;
-  startDate: string; // departure date
-  endDate: string; // return date
+  departureDate: string;
+  returnDate: string;
   currency: 'USD';
   purpose?: string;
-  authorizedItems: AuthorizedExpenseItem[];
+  approvedExpenseItems: ApprovedExpenseItem[];
 }
 
 export type ExpenseCategory = 'airfare' | 'lodging' | 'rental_car' | 'fuel' | 'meals' | 'parking' | 'ground_transport' | 'baggage' | 'other';
 export type PaymentMethod = 'gtcc' | 'personal';
 
-export interface AuthorizedExpenseItem {
+export interface ApprovedExpenseItem {
   id: string;
   category: ExpenseCategory;
-  label: string;
-  amount: number;
+  description: string;
+  authorizedAmount: number;
   merchant?: string;
   location?: string;
   expectedPaymentMethod?: PaymentMethod;
@@ -28,4 +28,13 @@ export interface AuthorizedExpenseItem {
   startDate?: string;
   endDate?: string;
   nights?: number;
+}
+
+/** Internal aliases keep the existing Voucher rules and JSON imports compatible. */
+export interface NormalizedTravelAuthorization extends TravelAuthorization {
+  id: string;
+  startDate: string;
+  endDate: string;
+  authorizationStatus: 'Approved';
+  authorizedItems: (ApprovedExpenseItem & { label: string; amount: number })[];
 }
