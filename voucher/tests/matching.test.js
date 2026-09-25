@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { trip, seedExpenses } from '../src/data.js';
+import { trip, seedExpenses } from './fixtures.js';
 import { suggestAssignment } from '../src/matching.js';
 
 test('scanned parking receipt matches an existing expense without creating a duplicate', () => {
@@ -21,4 +21,13 @@ test('ambiguous receipt is left for traveler review', () => {
   assert.equal(suggestion.authorizationItemId, '');
   assert.equal(suggestion.existingExpenseId, '');
   assert.equal(suggestion.confidence, 'review');
+});
+
+test('a receipt can be categorized before an authorization is available', () => {
+  const receipt = { merchant: 'Metro Parking Garage', date: '2026-09-18', amount: 18.5, category: 'other' };
+  const staged = suggestAssignment(null, receipt, 'Parking at the meeting', []);
+  assert.equal(staged.category, 'parking');
+  assert.equal(staged.authorizationItemId, '');
+  const assigned = suggestAssignment(trip, { ...receipt, category: staged.category }, 'Parking at the meeting', []);
+  assert.equal(assigned.authorizationItemId, 'parking');
 });

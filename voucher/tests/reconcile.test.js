@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { trip, seedExpenses } from '../src/data.js';
+import { trip, seedExpenses } from './fixtures.js';
 import { reconcile } from '../src/reconcile.js';
 import { extractReceiptText } from '../src/receipt.js';
 

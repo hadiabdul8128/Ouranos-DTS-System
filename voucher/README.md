@@ -10,7 +10,7 @@ npm install
 npm run dev
 ```
 
-The page opens with a clearly labeled sample trip. Use **Use another authorization** to import an approved authorization JSON file. Importing a trip starts a new, empty voucher; it never carries the sample expenses over.
+The page starts empty. Scan a real receipt or enter an expense before an authorization is available; saved expenses wait locally for an approved trip. Import an approved authorization JSON file later. The Voucher suggests matches for saved expenses when the trip loads. No trip or expenses are preloaded into the app.
 
 ## Authorization handoff
 
@@ -42,7 +42,7 @@ The Voucher expects an approved trip with this shape:
 3. The matching engine uses that answer plus the scanned fields to suggest an approved item, or to attach the receipt to an existing expense without creating a duplicate. Ambiguous suggestions remain editable. Missing payment method or other facts are never invented.
 4. Once all actual expenses are entered, mark intake complete. The voucher checks any approved items with no actual expense and asks the traveler to confirm they were unused.
 
-`src/reconcile.js` makes deterministic, auditable demo decisions. The matching and text extraction are currently local heuristics plus OCR, not an LLM or a final reimbursement decision. Receipt data and voucher edits are kept in this browser tab's session storage and can be downloaded with the review package. This prototype has no DTS/Citi connection or approved storage and authentication controls for operational travel records.
+`src/reconcile.js` makes deterministic, auditable validation decisions. The matching and text extraction are currently local heuristics plus OCR, not an LLM or a final reimbursement decision. Extraction quality varies with the receipt, so the traveler reviews each prefilled field before saving. Receipt data and voucher edits are kept in this browser tab's session storage and can be downloaded with the review package after an authorization is loaded and exceptions are resolved. This prototype has no DTS/Citi connection or approved storage and authentication controls for operational travel records. Do not use sensitive operational travel records for testing yet.
 
 The OCR assets are copied from the installed `tesseract.js`, `tesseract.js-core`, and `@tesseract.js-data/eng` packages by `scripts/prepare-ocr.mjs` before development and production builds. They are served from `/ocr` so scans do not depend on a third-party OCR endpoint.
 

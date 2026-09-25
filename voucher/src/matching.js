@@ -18,7 +18,7 @@ export function suggestAssignment(trip, fields, purpose = '', expenses = []) {
   }).sort((a, b) => b.score - a.score);
   const existingExpenseId = existing[0]?.score >= 8 && existing[0].score - (existing[1]?.score || 0) >= 2 ? existing[0].id : '';
 
-  const matches = trip.authorizedItems.map(item => {
+  const matches = (trip?.authorizedItems || []).map(item => {
     let score = 0;
     if (category !== 'other' && category === item.category) score += 5;
     if (purpose) score += Math.min(4, overlap(purpose, item.label) * 2);
@@ -36,6 +36,6 @@ export function suggestAssignment(trip, fields, purpose = '', expenses = []) {
     existingExpenseId,
     authorizationItemId: existingExpenseId ? expenses.find(e => e.id === existingExpenseId)?.authorizationItemId || authorizationItemId : authorizationItemId,
     confidence: existingExpenseId || authorizationItemId ? 'high' : 'review',
-    reason: existingExpenseId ? 'Matches an expense already in the ledger.' : authorizationItemId ? 'Matched to an approved authorization item.' : 'Choose the approved item before saving.'
+    reason: existingExpenseId ? 'Matches an expense already in the ledger.' : authorizationItemId ? 'Matched to an approved authorization item.' : trip ? 'Choose the approved item before saving.' : 'Load an approved authorization to allocate this expense.'
   };
 }

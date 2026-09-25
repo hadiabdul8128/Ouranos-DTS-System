@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { normalizeAuthorization } from '../src/authorization.js';
-import { trip } from '../src/data.js';
+import { trip } from './fixtures.js';
 import { reconcile } from '../src/reconcile.js';
 
 test('approved authorization can become an empty voucher trip', () => {
