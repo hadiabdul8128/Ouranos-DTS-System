@@ -75,7 +75,10 @@ export function computePerDiem({ startDate, endDate, destination, mealsProvided 
     supported = false;
     warnings.push('A Government mess is available, so the Government Meal Rate applies. This version does not compute GMR; confirm M&IE with your DTA.');
   }
-  if (dates.length === 1) warnings.push('Same-day travel: M&IE applies only when travel lasts more than 12 hours, at 75%. Confirm with your DTA.');
+  if (dates.length === 1) {
+    supported = false;
+    warnings.push('Same-day travel: M&IE applies only when travel lasts more than 12 hours, at 75%. Confirm with your DTA.');
+  }
 
   const localities = new Map();
   for (const [index, date] of dates.entries()) {

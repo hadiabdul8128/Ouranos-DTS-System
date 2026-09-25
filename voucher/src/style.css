@@ -3,6 +3,7 @@
 .main-column{min-width:0}
 @media(max-width:960px){.content-grid{grid-template-columns:minmax(0,1fr)}}
 .trip-actions{display:flex;align-items:flex-end;flex-direction:column;gap:7px}.trip-actions .reset-link{font-size:12px}
+.trip-status-unverified{color:#845b1a;background:#fff4de;border-color:#eddbb5}.trip-status-unverified .status-dot{background:#bd8b35}
 .purpose-label{display:grid;gap:8px;font-size:12px;font-weight:750;color:#274635;margin-bottom:15px}.purpose-label input{height:42px;font-size:13px}
 .match-box{background:#f2f7f3;border:1px solid #dce9df;border-radius:9px;padding:13px 15px;margin-bottom:15px;font-size:12px}.match-box strong{display:block;color:#285941}.match-box p{margin:4px 0 11px;color:#5b7163}.match-box label{display:grid;gap:6px;font-weight:700;color:#40574a}
 .receipt-details{border-top:1px solid #e5ece7;padding-top:13px}.receipt-details summary{color:#285b44;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:13px}.receipt-details[open] summary{margin-bottom:17px}

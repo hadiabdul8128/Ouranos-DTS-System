@@ -31,10 +31,13 @@ export interface ApprovedExpenseItem {
 }
 
 /** Internal aliases keep the existing Voucher rules and JSON imports compatible. */
-export interface NormalizedTravelAuthorization extends TravelAuthorization {
+export interface NormalizedTravelAuthorization extends Omit<TravelAuthorization, 'status'> {
+  status: 'Approved' | 'TravelerEntered';
+  /** Set only for a traveler-entered reference; its estimates have not been verified against DTS. */
+  entrySource?: 'traveler';
   id: string;
   startDate: string;
   endDate: string;
-  authorizationStatus: 'Approved';
+  authorizationStatus: 'Approved' | 'TravelerEntered';
   authorizedItems: (ApprovedExpenseItem & { label: string; amount: number })[];
 }

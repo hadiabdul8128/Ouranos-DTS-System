@@ -33,7 +33,7 @@ export function buildDtsChecklist({ trip, expenses, perDiem, resolutions = {} })
 
   if (perDiem?.days?.length) {
     steps.push({
-      title: 'Per diem entitlements',
+      title: trip.entrySource === 'traveler' ? 'Per diem estimates to verify' : 'Per diem entitlements',
       items: [
         { text: `Check the locality is ${perDiem.locality?.name || trip.destination} and the rates match the table below.` },
         ...perDiem.days.map(day => ({

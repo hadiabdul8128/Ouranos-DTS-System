@@ -1,14 +1,15 @@
 import { computePerDiem } from './perDiem.js';
 
 /**
- * Companion-mode trip setup: the traveler types the few facts from their approved DTS authorization
- * (no orders image is captured). Lodging and M&IE estimates come from the per-diem engine, never guessed.
+ * Companion-mode trip setup: the traveler types a reference from their DTS authorization
+ * (no orders image is captured). These amounts are not verified approved amounts.
  */
 export function buildManualAuthorization(input) {
   const text = key => String(input[key] ?? '').trim();
   const amount = key => input[key] === '' || input[key] == null ? 0 : Number(input[key]);
   const perDiem = computePerDiem({ startDate: text('startDate'), endDate: text('endDate'), destination: text('destination') });
   if (!perDiem.days.length) throw new Error(perDiem.warnings[0] || 'Check the trip dates.');
+  if (!perDiem.supported) throw new Error(`${perDiem.warnings[0] || 'Per-diem rates are unavailable for this trip.'} Scan receipts now and wait for an approved authorization handoff.`);
   const items = [];
   if (perDiem.totals.nights && input.lodging !== false) {
     const caps = perDiem.days.filter(day => day.lodgingCap != null);
@@ -22,13 +23,13 @@ export function buildManualAuthorization(input) {
     if (!Number.isFinite(value) || value < 0) throw new Error(`${description} estimate must be a positive number.`);
     if (value > 0) items.push({ id: key, category, description, authorizedAmount: value, ...(category === 'airfare' || category === 'rental_car' || category === 'fuel' ? { expectedPaymentMethod: 'gtcc' } : {}) });
   }
-  if (!items.length) throw new Error('Add at least one approved expense.');
+  if (!items.length) throw new Error('Add at least one estimated expense.');
   return {
     authorization: {
       tripId: `TRIP-${text('startDate')}-${text('destination').replace(/[^A-Za-z]+/g, '').slice(0, 12).toUpperCase()}`,
-      authorizationId: text('authorizationId') || 'DTS-AUTH',
-      status: 'Approved', traveler: text('traveler') || 'Traveler', origin: text('origin'), destination: text('destination'),
-      departureDate: text('startDate'), returnDate: text('endDate'), currency: 'USD', purpose: 'Entered by traveler from approved DTS authorization',
+      authorizationId: text('authorizationId') || 'Not provided',
+      status: 'TravelerEntered', entrySource: 'traveler', traveler: text('traveler') || 'Traveler', origin: text('origin'), destination: text('destination'),
+      departureDate: text('startDate'), returnDate: text('endDate'), currency: 'USD', purpose: 'Traveler-entered trip reference; approval and amounts not verified',
       approvedExpenseItems: items
     },
     perDiem

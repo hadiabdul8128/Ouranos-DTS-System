@@ -9,15 +9,30 @@ import { buildLostReceiptStatement } from '../src/lostReceipt.js';
 import { reconcile } from '../src/reconcile.js';
 
 const { authorization, perDiem } = buildManualAuthorization({ destination: 'San Diego, CA', origin: 'Fayetteville, NC', startDate: '2026-10-12', endDate: '2026-10-15', traveler: 'Alex Morgan', authorizationId: 'AUTH-77', airfare: '620', rentalCar: '' });
-const trip = normalizeAuthorization(authorization);
+const trip = normalizeAuthorization(authorization, { allowTravelerEntry: true });
 
-test('manual setup builds a valid authorization from per-diem math, not guesses', () => {
+test('manual setup keeps its unverified source alongside per-diem estimates', () => {
+  assert.equal(trip.entrySource, 'traveler');
+  assert.equal(trip.status, 'TravelerEntered');
+  assert.throws(() => normalizeAuthorization(authorization), /Only approved/);
+  assert.equal(authorization.authorizationId, 'AUTH-77');
   assert.deepEqual(trip.authorizedItems.map(item => [item.id, item.amount]), [['lodging', 624], ['mie', 301], ['airfare', 620]]);
   assert.equal(trip.authorizedItems[0].nights, 3);
   const unaccounted = reconcile(trip, [], {}, { intakeComplete: true, perDiem }).issues.map(issue => issue.authorizationItemId);
   assert.deepEqual(unaccounted, ['lodging', 'airfare'], 'M&IE is computed, so it never asks to be confirmed unused');
   assert.throws(() => buildManualAuthorization({ destination: 'San Diego, CA', startDate: '2026-10-15', endDate: '2026-10-12' }), /dates/);
   assert.throws(() => buildManualAuthorization({ destination: 'San Diego, CA', startDate: '2026-10-12', endDate: '2026-10-15', airfare: '-5' }), /positive/);
+  assert.throws(() => buildManualAuthorization({ destination: 'San Diego, CA', startDate: '2026-10-12', endDate: '2026-10-12', airfare: '620' }), /Same-day travel/);
+  assert.throws(() => buildManualAuthorization({ destination: 'London, UK', startDate: '2026-10-12', endDate: '2026-10-15', airfare: '620' }), /not a listed locality|looked up|No .* rate/);
+});
+
+test('manual estimates are labeled in reconciliation and evidence exports', () => {
+  const airfare = { id: 'over', merchant: 'Airline', date: '2026-10-12', amount: 700, currency: 'USD', category: 'airfare', paymentMethod: 'gtcc', authorizationItemId: 'airfare', receipt: { name: 'ticket.pdf' } };
+  const overage = reconcile(trip, [airfare]).issues.find(issue => issue.code === 'over_authorization');
+  assert.match(overage.message, /above the entered estimate of \$620\.00/);
+  const html = buildEvidenceHtml({ trip, expenses: [airfare], perDiem });
+  assert.match(html, /Traveler-entered reference AUTH-77/);
+  assert.match(html, /has not verified authorization approval or approved amounts/);
 });
 
 const expenses = [
@@ -30,7 +45,7 @@ const resolutions = { 'p:receipt_missing': { type: 'lost_receipt_statement', val
 
 test('DTS checklist splits lodging tax, labels evidence, and states split disbursement', () => {
   const { steps, receiptLabels, gtcc } = buildDtsChecklist({ trip, expenses, perDiem, resolutions });
-  assert.deepEqual(steps.map(step => step.title), ['Per diem entitlements', 'Lodging', 'Other expenses', 'Pre-audit justifications', 'Method of reimbursement', 'Substantiating documents']);
+  assert.deepEqual(steps.map(step => step.title), ['Per diem estimates to verify', 'Lodging', 'Other expenses', 'Pre-audit justifications', 'Method of reimbursement', 'Substantiating documents']);
   const lodging = steps[1].items;
   assert.match(lodging[0].text, /room cost \$570\.00 for 3 nights \(\$190\.00\/night\)/);
   assert.match(lodging[1].text, /Lodging tax \$51\.00 goes on its own line/);

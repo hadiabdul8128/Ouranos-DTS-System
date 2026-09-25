@@ -6,6 +6,7 @@ const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '
 
 /** Printable evidence package: DTS checklist first, then every receipt in label order. Save as PDF from the print dialog. */
 export function buildEvidenceHtml({ trip, expenses, perDiem, resolutions = {}, generatedAt = new Date().toISOString() }) {
+  const travelerEntered = trip.entrySource === 'traveler';
   const { steps, receiptLabels } = buildDtsChecklist({ trip, expenses, perDiem, resolutions });
   const labeled = expenses.filter(expense => receiptLabels[expense.id]).sort((a, b) => Number(receiptLabels[a.id].slice(1)) - Number(receiptLabels[b.id].slice(1)));
   const receiptPage = expense => {
@@ -27,7 +28,8 @@ export function buildEvidenceHtml({ trip, expenses, perDiem, resolutions = {}, g
     .page{break-before:page}@media print{body{margin:0}}
   </style></head><body>
     <h1>Voucher package · ${escapeHtml(trip.destination)}</h1>
-    <p class="meta">${escapeHtml(trip.traveler)} · Authorization ${escapeHtml(trip.authorizationId)} · ${escapeHtml(formatDate(trip.startDate))}–${escapeHtml(formatDate(trip.endDate))} · generated ${escapeHtml(new Date(generatedAt).toLocaleString())}</p>
+    <p class="meta">${escapeHtml(trip.traveler)} · ${travelerEntered ? 'Traveler-entered reference' : 'Authorization'} ${escapeHtml(trip.authorizationId)} · ${escapeHtml(formatDate(trip.startDate))}–${escapeHtml(formatDate(trip.endDate))} · generated ${escapeHtml(new Date(generatedAt).toLocaleString())}</p>
+    ${travelerEntered ? '<p class="disclaimer">Trip and expense estimates were entered by the traveler. Ouranos has not verified authorization approval or approved amounts. Compare this package with the approved DTS authorization before review.</p>' : ''}
     <p class="disclaimer">${escapeHtml(disclaimer)} This is a checklist for entering your voucher in DTS. It is not a DTS submission.</p>
     ${steps.map((step, index) => `<h2>${index + 1}. ${escapeHtml(step.title)}</h2><ol>${step.items.map(item => `<li class="${item.warning ? 'warn' : ''}">${escapeHtml(item.text)}${item.evidence ? ` <span class="ev">[${escapeHtml(item.evidence)}]</span>` : ''}${item.rule ? ` <span class="src">${escapeHtml(item.rule)}</span>` : ''}${item.source ? `<span class="src">${escapeHtml(item.source)}</span>` : ''}</li>`).join('')}</ol>`).join('')}
     ${labeled.map(receiptPage).join('')}

@@ -10,6 +10,7 @@ const authorizedBasis = expense => expense.category === 'lodging' && Number.isFi
 export function reconcile(trip, expenses, resolutions = {}, options = {}) {
   const issues = [];
   const checks = [];
+  const reference = trip.entrySource === 'traveler' ? 'entered estimate' : 'authorized amount';
   const authorized = new Map(trip.authorizedItems.map(item => [item.id, item]));
   const grouped = new Map();
   for (const expense of expenses) {
@@ -58,7 +59,7 @@ export function reconcile(trip, expenses, resolutions = {}, options = {}) {
       add(expense, 'payment_expectation', `${item.label} expects ${item.expectedPaymentMethod === 'gtcc' ? 'GTCC' : 'personal'} payment.`, 'Review payment method');
     }
 
-    if (!item || item.category !== expense.category) add(expense, 'unauthorized', `${expense.merchant} is not matched to an approved ${expense.category.replaceAll('_', ' ')} item.`, 'Review expense');
+    if (!item || item.category !== expense.category) add(expense, 'unauthorized', `${expense.merchant} is not matched to ${trip.entrySource === 'traveler' ? 'an entered' : 'an approved'} ${expense.category.replaceAll('_', ' ')} item.`, 'Review expense');
     else {
       checks.push({ expenseId: expense.id, code: 'authorized_category' });
       const group = grouped.get(item.id);
@@ -69,7 +70,7 @@ export function reconcile(trip, expenses, resolutions = {}, options = {}) {
         const overCap = item.category === 'lodging' && options.perDiem && group.some(row => analyzeLodging(row, options.perDiem)?.overCap > 0);
         if (difference > 25 && difference / item.amount > 0.05 && !overCap) {
           const basis = item.category === 'lodging' && group.some(row => authorizedBasis(row) !== row.amount) ? ' (room cost, excluding lodging tax)' : '';
-          add(expense, 'over_authorization', `${item.label} is ${money(difference)} above the authorized ${money(item.amount)}${basis}.`, 'Add explanation', { difference, authorizedAmount: item.amount });
+          add(expense, 'over_authorization', `${item.label} is ${money(difference)} above the ${reference} of ${money(item.amount)}${basis}.`, 'Add explanation', { difference, authorizedAmount: item.amount });
         } else checks.push({ expenseId: expense.id, code: 'amount_within_tolerance' });
       }
     }
@@ -92,10 +93,10 @@ export function reconcile(trip, expenses, resolutions = {}, options = {}) {
 
     const returnFlight = item?.category === 'airfare' && /return|inbound|home/i.test(item.label) && Boolean(item.date);
     if (returnFlight && expense.date !== item.date) add(expense, 'itinerary_changed', `Return flight was ${formatDate(expense.date)}; authorization says ${formatDate(item.date)}.`, 'Confirm return date', { authorizedDate: item.date, actualDate: expense.date });
-    else if (expense.date < trip.startDate || (expense.date > trip.endDate && !returnFlight)) add(expense, 'outside_dates', `${formatDate(expense.date)} is outside the approved travel dates.`, 'Review date');
+    else if (expense.date < trip.startDate || (expense.date > trip.endDate && !returnFlight)) add(expense, 'outside_dates', `${formatDate(expense.date)} is outside the ${trip.entrySource === 'traveler' ? 'entered' : 'approved'} travel dates.`, 'Review date');
     else checks.push({ expenseId: expense.id, code: 'travel_dates' });
 
-    if (expense.category === 'lodging' && item?.startDate && item?.endDate && (expense.serviceStartDate !== item.startDate || expense.serviceEndDate !== item.endDate)) add(expense, 'lodging_dates', 'Hotel stay dates differ from the authorized nights or need confirmation.', 'Review stay dates');
+    if (expense.category === 'lodging' && item?.startDate && item?.endDate && (expense.serviceStartDate !== item.startDate || expense.serviceEndDate !== item.endDate)) add(expense, 'lodging_dates', `Hotel stay dates differ from the ${trip.entrySource === 'traveler' ? 'entered' : 'authorized'} nights or need confirmation.`, 'Review stay dates');
     else if (expense.category === 'lodging') checks.push({ expenseId: expense.id, code: 'lodging_dates' });
 
     const key = `${expense.date}|${String(expense.merchant || '').trim().toLowerCase()}|${Number.isFinite(expense.amount) ? expense.amount.toFixed(2) : 'invalid'}`;
