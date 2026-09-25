@@ -19,8 +19,14 @@ export async function readReceipt(file, extractor = localReceiptExtractor) {
   return {
     fields: extraction.fields, confidence: extraction.confidence, candidates: extraction.candidates,
     text: extraction.rawText, extraction,
-    receipt: { name: file.name, type: file.type, dataUrl: await fileToDataUrl(file) }
+    receipt: { name: file.name, type: file.type, dataUrl: await fileToDataUrl(file), sha256: await sha256(file), capturedAt: new Date().toISOString() }
   };
+}
+
+/** Evidence hash taken at capture; the image, not the OCR output, is the ground truth. */
+async function sha256(file) {
+  const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
+  return [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
 function fileToDataUrl(file) {
