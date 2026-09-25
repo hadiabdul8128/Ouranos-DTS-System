@@ -42,3 +42,18 @@ test('a revised approval reopens prior resolutions for deterministic review', ()
   assert.deepEqual(reloaded.resolutions, {});
   assert.equal(reloaded.intakeComplete, false);
 });
+
+test('official handoff replaces a traveler reference and reopens its resolutions', () => {
+  const entered = loadAuthorization({ expenses: [], audit: [], resolutions: {} }, { ...approved, status: 'TravelerEntered', entrySource: 'traveler' }, { source: 'manual' });
+  assert.throws(() => loadAuthorization({ expenses: [], audit: [], resolutions: {} }, entered.trip), /Only approved/);
+  assert.equal(entered.trip.entrySource, 'traveler');
+  assert.equal(entered.trip.status, 'TravelerEntered');
+  assert.match(entered.audit.at(-1).label, /Entered trip reference/);
+  entered.intakeComplete = true;
+  entered.resolutions = { 'hotel-expense:over_authorization': { type: 'explanation', value: 'Before official handoff' } };
+  const official = loadAuthorization(entered, approved, { source: 'handoff' });
+  assert.equal(official.trip.entrySource, undefined);
+  assert.deepEqual(official.resolutions, {});
+  assert.equal(official.intakeComplete, false);
+  assert.match(official.audit.at(-1).label, /Loaded approved authorization/);
+});
