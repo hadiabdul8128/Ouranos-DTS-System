@@ -1,4 +1,6 @@
 "use client";
+import {useRouter} from 'next/navigation';
+import Link from 'next/link';
 
 import { useEffect, useState } from "react";
 import { ArrowRight, LogOut } from "lucide-react";
@@ -7,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export default function Workspace() {
+  const router=useRouter();
   const platform = usePlatform();
   const [request, setRequest] = useState("");
   const [message, setMessage] = useState("");
@@ -23,33 +26,33 @@ export default function Workspace() {
         annotations: {readOnlyHint: false},
         execute(input: unknown) {
           if (!input || typeof input !== "object" || Array.isArray(input) || Object.keys(input).length) throw new Error("Expected an empty object");
-          window.location.assign("/dashboard/travel");
+          router.push("/dashboard/travel");
           return {status: "navigation_started", destination: "/dashboard/travel"};
         },
       }, {signal: lifecycle.signal})).catch(() => {});
     } catch {}
     return () => lifecycle.abort();
-  }, []);
+  }, [router]);
   function submit(event: React.FormEvent) {
     event.preventDefault();
     const text = request.trim();
     if (!text) return;
     if (/\b(travel(?:ing|ling)?|trip|trips|dts|flight|flights|voucher|reimbursement|tdy)\b/i.test(text) && !/\b(don't|do not|not|no|cancel)\b/i.test(text)) {
       setOpening(true);
-      window.location.assign("/dashboard/travel");
+      router.push("/dashboard/travel");
     } else {
       setMessage("Travel is available now. Other workflows are on the way.");
     }
   }
   return <main className="quiet-page prompt-page">
-    <header className="quiet-header"><a href="/dashboard" className="quiet-brand">Ouranos</a><button onClick={() => void platform.signOut()} className="exit-link" aria-label="Sign out"><LogOut size={17}/></button></header>
+    <header className="quiet-header"><Link href="/dashboard" className="quiet-brand">Ouranos</Link><button onClick={() => void platform.signOut()} className="exit-link" aria-label="Sign out"><LogOut size={17}/></button></header>
     <section className="intent-stage" aria-labelledby="intent-heading">
       <h1 id="intent-heading">What do you want to do?</h1>
       <form className="intent-input" onSubmit={submit}>
         <Input aria-label="What do you want to do?" placeholder="Tell us what you need…" value={request} onChange={event => {setRequest(event.target.value); setMessage("");}} autoComplete="off" maxLength={500} disabled={opening}/>
         <Button type="submit" aria-label="Continue with your request" className="intent-submit" disabled={!request.trim() || opening}><ArrowRight size={20}/></Button>
       </form>
-      <p className={`intent-hint ${message ? "has-message" : ""}`} role="status">{opening ? "Opening travel…" : message || 'Try “I need to travel”.'}</p>
+      <p className={`intent-hint ${message ? "has-message" : ""}`} role="status">{opening ? "Opening travel…" : message || ''}</p>
     </section>
     <footer className="quiet-footer"><span/><SyncIndicator/></footer>
   </main>;

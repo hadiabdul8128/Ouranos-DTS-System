@@ -65,3 +65,8 @@ test('out-of-scope cases are flagged instead of estimated', () => {
   assert.match(bad.warnings[0], /City, ST/);
   assert.ok(plan('San Diego, CA', '2026-10-12', '2026-10-12').warnings.some(warning => /12 hours/.test(warning)));
 });
+
+test('provided meals do not remove the incidental allowance on travel days', () => {
+  const result = plan('San Diego, CA', '2026-10-12', '2026-10-15', { mealsProvided: { '2026-10-12': { breakfast: true, lunch: true, dinner: true } } });
+  assert.equal(result.days[0].mie, 5);
+});

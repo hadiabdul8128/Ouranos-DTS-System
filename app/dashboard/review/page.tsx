@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 
 import {useCallback, useEffect, useRef, useState, type ReactNode} from 'react';
 import {ArrowLeft, ArrowUpRight, CheckCircle2, FileText, RefreshCw} from 'lucide-react';
@@ -8,6 +9,9 @@ import {Textarea} from '@/components/ui/textarea';
 import type {Entity, Role} from '@/packages/contracts';
 import {planningModuleSchema, PLANNING_SCHEMA_VERSION, type PlanningModuleInput} from '@/packages/contracts/planning-module';
 import {voucherModuleSchema, VOUCHER_MODULE_SCHEMA_VERSION, type VoucherModuleInput} from '@/packages/contracts/voucher-module';
+import {AllowanceDetails} from '@/components/travel/allowance';
+import {TravelPackagePanel} from '@/components/travel/package-panel';
+import type {Allowance} from '@/packages/domain/voucher-adapter';
 import type {OuranosClient} from '@/packages/sdk';
 
 type RevisionDetail = Awaited<ReturnType<OuranosClient['revision']>>;
@@ -84,6 +88,7 @@ function FrozenExpenses({snapshot, plan}: {snapshot: Row; plan: PlanningModuleIn
         {expenseData.description ? <p>{string(expenseData.description)}</p> : null}
         <dl className="connected-review-summary">
           <Field name="Payment">{payment(expenseData.paymentMethod)}</Field>
+          {expenseData.category==='lodging'&&<><Field name="Tax">{money(expenseData.taxesMinor||0)}</Field><Field name="Fees">{money(expenseData.feesMinor||0)}</Field></>}
           <Field name="Budget item">{item?.description || 'Not available in this revision'}</Field>
           {(expenseData.serviceStartDate || expenseData.serviceEndDate) ? <Field name="Service dates">{date(expenseData.serviceStartDate)} – {date(expenseData.serviceEndDate)}</Field> : null}
         </dl>
@@ -115,7 +120,7 @@ function FrozenResolutions({form, snapshot, plan}: {form: VoucherModuleInput; sn
       return <article className="connected-review-item" key={id}>
         <h4>{issueNames[issue] || label(issue)}</h4>
         {subject && <p className="connected-review-meta">{subject}</p>}
-        <p>{resolution.type === 'confirmed_date' ? `Confirmed travel date: ${date(resolution.value)}` : resolution.type === 'not_used' ? 'The traveler confirmed this budget item was not used.' : resolution.value}</p>
+        <p>{resolution.type === 'confirmed_date' ? `Confirmed travel date: ${date(resolution.value)}` : resolution.type === 'not_used' ? 'The traveler confirmed this budget item was not used.' : resolution.type === 'lost_receipt_statement' ? resolution.value.reason : resolution.value}</p>
         {resolution.at && <p className="connected-review-meta">Recorded {timestamp(resolution.at)}</p>}
       </article>;
     })}</div> : <p className="platform-muted">No exception explanations or confirmations were included.</p>}
@@ -147,6 +152,8 @@ function Submission({detail, kind}: {detail: RevisionDetail; kind: string}) {
       </dl>
       <p className="connected-review-meta">Purpose</p><p>{string(trip.purpose)}</p>
     </section>
+    <AllowanceDetails value={(kind==='authorization'?snapshot.perDiem:record(approvedRevision.snapshot).perDiem) as Allowance|null||null}/>
+    {voucher&&<TravelPackagePanel voucherId={string(record(snapshot.entity).id)}/>}
     {plan && <PlannedBudget plan={plan} approved={kind === 'voucher'}/>}
     {voucher && <>
       <section className="connected-review-section">
@@ -167,8 +174,8 @@ function Submission({detail, kind}: {detail: RevisionDetail; kind: string}) {
       </section>
     </>}
     <section className="connected-review-section">
-      <h3>Revision evidence</h3>
-      <p className="platform-muted">This is the frozen submission, including receipt metadata. Later edits do not change the revision under review.</p>
+      <details className="cw-disclosure"><summary>Revision details</summary>
+
       <dl className="connected-review-summary">
         <Field name="Revision"><code>{detail.revision.id}</code></Field>
         <Field name="Form version"><code>{string(data(snapshot.entity).formSchemaVersion)}</code></Field>
@@ -176,6 +183,7 @@ function Submission({detail, kind}: {detail: RevisionDetail; kind: string}) {
       </dl>
       <p className="connected-review-fingerprint">SHA-256 <code>{detail.revision.sha256}</code></p>
       {kind === 'voucher' && approvedRevision.id ? <details><summary>Approved authorization reference</summary><p><code>{string(approvedRevision.id)}</code></p><p className="connected-review-fingerprint">SHA-256 <code>{string(approvedRevision.sha256)}</code></p></details> : null}
+      </details>
     </section>
   </>;
 }
@@ -184,9 +192,9 @@ export default function Review() {
   const platform = usePlatform();
   const actorId = platform.session?.user.id;
   const role = platform.memberships.find(membership => membership.organizationId === platform.organizationId)?.role;
-  return <main className="quiet-page"><header className="quiet-header"><a href="/dashboard" className="quiet-brand">Ouranos</a><a href="/dashboard/platform">Workspace</a></header>
+  return <main className="quiet-page"><header className="quiet-header"><Link href="/dashboard" className="quiet-brand">Ouranos</Link><Link href="/dashboard/platform">Workspace</Link></header>
     <section className="platform-panel connected-review">
-      {platform.client && platform.organizationId && actorId ? <ReviewInbox key={`${platform.organizationId}:${actorId}:${role || ''}`} client={platform.client} organizationId={platform.organizationId} actorId={actorId} role={role}/> : <><h1>Review inbox</h1><p className="platform-muted">Sign in to a connected workspace to review submitted travel.</p><a href="/dashboard/platform">Open workspace <ArrowUpRight size={14} aria-hidden="true"/></a></>}
+      {platform.client && platform.organizationId && actorId ? <ReviewInbox key={`${platform.organizationId}:${actorId}:${role || ''}`} client={platform.client} organizationId={platform.organizationId} actorId={actorId} role={role}/> : <><h1>Review inbox</h1><p className="platform-muted">Sign in to a connected workspace to review submitted travel.</p><Link href="/dashboard/platform">Open workspace <ArrowUpRight size={14} aria-hidden="true"/></Link></>}
     </section>
   </main>;
 }

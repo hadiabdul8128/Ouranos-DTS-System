@@ -228,4 +228,28 @@ describe('connected planning and Voucher Copilot',()=>{
   const expense=await saveMeal(1800,crypto.randomUUID());
   await expectSubmissionRejected(await saveVoucher(expense),/not matched to an approved/);
  });
+ it('freezes companion rates and exports the receipt statement through the authenticated API',async()=>{
+  const companionId=crypto.randomUUID(),fuelItem=crypto.randomUUID();
+  expectSuccess(await send('traveler','authorization.save',companionId,0,{tripId,formSchemaVersion:PLANNING_SCHEMA_VERSION,formData:{...planning,allowance:{enabled:true,governmentMess:false,mealsProvided:{}},approvedExpenseItems:[{id:fuelItem,category:'fuel',description:'Fuel',authorizedAmountMinor:10000,expectedPaymentMethod:'gtcc'}]}}));
+  expectSuccess(await send('traveler','authorization.submit',companionId,1,{}));
+  const approval=await approvalFor(companionId);
+  const reviewed=expectSuccess(await send('reviewer','approval.decide',approval.id,approval.version,{decision:'approved',comment:''}));
+  expectSuccess(await send('approver','approval.decide',approval.id,reviewed.version,{decision:'approved',comment:''}));
+  const approved=await request('traveler','GET',`/v1/authorizations/${companionId}/approved?organizationId=${organizationId}`);
+  expect(approved.body.revision.snapshot.perDiem.supported).toBe(true);
+  const expense=expectSuccess(await send('traveler','expense.save',crypto.randomUUID(),0,{tripId,merchant:'Companion fuel',incurredOn:'2026-10-12',amountMinor:10000,currency:'USD',category:'fuel',authorizationItemId:fuelItem,paymentMethod:'gtcc',documentIds:[],description:'Fuel'}));
+  const form:VoucherModuleInput={...voucherForm(expense),authorizationId:companionId,resolutions:{[`${expense.id}:receipt_missing`]:{type:'lost_receipt_statement',value:{reason:'Paper receipt lost during travel.',expenseVersion:expense.version}}}};
+  const voucher=expectSuccess(await send('traveler','voucher.save',crypto.randomUUID(),0,{tripId,authorizationId:companionId,expenseIds:[expense.id],formSchemaVersion:VOUCHER_MODULE_SCHEMA_VERSION,formData:form}));
+  const url=`/v1/vouchers/${voucher.id}/package?organizationId=${organizationId}`;
+  expect((await request('traveler','GET',url)).status).toBe(409);
+  expectSuccess(await send('traveler','voucher.submit',voucher.id,voucher.version,{}));
+  const exported=await request('traveler','GET',url);expect(exported.status,JSON.stringify(exported.body)).toBe(200);
+  expect(exported.body.html).toContain('LOST RECEIPT STATEMENT');
+  expect(exported.body.html).toContain('Companion fuel');
+  expect(exported.body.snapshot.statements[`${expense.id}:receipt_missing`].value.amount).toBe(100);
+  for(const user of ['outsider','peer'] as const)expect((await request(user,'GET',url)).status).toBe(404);
+  expectSuccess(await send('traveler','expense.save',expense.id,expense.version,{...expense.data,tripId,merchant:'Changed live merchant'} as PayloadOf<'expense.save'>));
+  const frozen=await request('traveler','GET',url);expect(frozen.body).toEqual(exported.body);
+ });
+
 });

@@ -19,6 +19,7 @@ export class OuranosClient {
  get(kind:EntityKind,id:string,organizationId:string){return this.request<{entity:Entity}>(`/v1/entities/${kind}/${id}?organizationId=${organizationId}`)}
  revision(id:string,organizationId:string){return this.request<{revision:{id:string;snapshot:Record<string,unknown>;sha256:string};steps:unknown[];decisions:unknown[]}>(`/v1/approvals/${id}/revision?organizationId=${organizationId}`)}
  approvedAuthorization(id:string,organizationId:string){return this.request<{revision:ApprovedRevision}>(`/v1/authorizations/${id}/approved?organizationId=${organizationId}`)}
+ voucherPackage(id:string,organizationId:string){return this.request<import('../domain/travel-package').TravelPackage>(`/v1/vouchers/${id}/package?organizationId=${organizationId}`)}
  prepareUpload(id:string,organizationId:string){return this.request<{documentId:string;path:string;token:string;signedUrl:string}>(`/v1/documents/${id}/upload`,{method:'POST',body:JSON.stringify({organizationId})})}
  download(id:string,organizationId:string){return this.request<{url:string;expiresIn:number}>(`/v1/documents/${id}/download`,{method:'POST',body:JSON.stringify({organizationId})})}
  extractions(id:string,organizationId:string){return this.request<{runs:unknown[]}>(`/v1/documents/${id}/extractions?organizationId=${organizationId}`)}

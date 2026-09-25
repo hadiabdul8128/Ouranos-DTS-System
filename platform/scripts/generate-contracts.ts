@@ -44,6 +44,7 @@ const models = {
   MembershipUpdated:z.object({updated:z.literal(true)}),
   Health:z.object({status:z.literal('ok'),contractVersion:z.string()}),
   Ready:z.object({status:z.literal('ready')}),
+  TravelPackage:record,
   ApprovedAuthorization:z.object({revision:z.object({id:uuid,sha256:z.string(),snapshot:z.object({entity,trip:entity}).passthrough()})}),
 };
 
@@ -82,6 +83,7 @@ const paths:Record<string,Record<string,SpecObject>> = {
   '/v1/entities/{kind}/{id}':{get:operation('getEntity','Load one visible entity','EntityResponse',{parameters:[kind,pathId,organization]})},
   '/v1/approvals/{id}/revision':{get:operation('approvalRevision','Read an immutable submission and its approval history','RevisionResponse',{description:'The id is an approval request id. The returned revision, steps and decisions retain database snake_case field names.',parameters:[pathId,organization]})},
   '/v1/authorizations/{id}/approved':{get:operation('approvedAuthorization','Load the approved immutable authorization for a voucher','ApprovedAuthorization',{parameters:[pathId,organization]})},
+  '/v1/vouchers/{id}/package':{get:operation('voucherPackage','Read a frozen submission and DTS preparation package','TravelPackage',{parameters:[pathId,organization]})},
   '/v1/trips/{id}/audit':{get:operation('tripAudit','Read up to 500 trip audit events','AuditResponse',{description:'Events are ordered by ascending id. This endpoint does not provide pagination.',parameters:[pathId,organization]})},
   '/v1/documents/{id}/upload':{post:operation('prepareUpload','Create a signed upload URL for a registered document','UploadResponse',{description:'Only the document creator may upload while status is registered. Upload bytes to signedUrl, then issue document.finalize. Finalization verifies the stored size, media signature and SHA-256 digest.',parameters:[pathId],requestBody:request('DocumentScope')})},
   '/v1/documents/{id}/download':{post:operation('prepareDownload','Create a short-lived signed download URL','DownloadResponse',{description:'Requires document status needs_review or ready and current trip visibility. The URL expires after 60 seconds.',parameters:[pathId],requestBody:request('DocumentScope')})},
@@ -94,7 +96,7 @@ const schemas = Object.fromEntries(Object.entries(models).map(([name,schema])=>{
 }));
 const document = {
   openapi:'3.0.3',
-  info:{title:'Ouranos platform API',version:CONTRACT_VERSION,description:'Travel platform skeleton. Supabase bearer authentication, organization isolation, versioned commands, synchronization and immutable approval revisions. Planning/voucher form validators and external providers require integration. A successful Ouranos command is not DTS acceptance.'},
+  info:{title:'Ouranos platform API',version:CONTRACT_VERSION,description:'Connected travel platform. Supabase bearer authentication, organization isolation, versioned commands, synchronization and immutable approval revisions. Planning, companion checks and frozen voucher packages share server-validated records. A successful Ouranos command is not DTS acceptance.'},
   servers:[{url:'http://localhost:4100',description:'Local development; replace with your configured API origin.'}],
   security:[{bearerAuth:[]}],
   paths,

@@ -2,7 +2,7 @@ import { rules } from './rules.js';
 import { formatDate } from './reconcile.js';
 
 /** Build the lost-receipt statement the JTR allows, carrying the same facts the receipt would have. */
-export function buildLostReceiptStatement(expense, { reason, traveler = '', signedAt = new Date().toISOString() } = {}) {
+export function buildLostReceiptStatement(expense, { reason = '', traveler = '', signedAt = new Date().toISOString() } = {}) {
   const why = String(reason || '').trim();
   if (why.length < 8) throw new Error('Explain briefly how the receipt was lost (at least 8 characters).');
   if (!expense?.merchant || !expense?.date || !(Number(expense.amount) > 0)) throw new Error('The expense needs a vendor, date, and amount before a statement can be written.');

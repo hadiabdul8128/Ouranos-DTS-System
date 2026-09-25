@@ -19,6 +19,7 @@ export const voucherResolutionSchema=z.discriminatedUnion('type',[
  z.object({type:z.literal('explanation'),value:z.string().trim().min(8).max(4000),at:z.string().datetime({offset:true}).optional()}).strict(),
  z.object({type:z.literal('confirmed_date'),value:dateOnly,at:z.string().datetime({offset:true}).optional()}).strict(),
  z.object({type:z.literal('not_used'),value:uuid,at:z.string().datetime({offset:true}).optional()}).strict(),
+ z.object({type:z.literal('lost_receipt_statement'),value:z.object({reason:z.string().trim().min(8).max(2000),expenseVersion:z.number().int().positive()}).strict(),at:z.string().datetime({offset:true}).optional()}).strict(),
 ]);
 
 /**

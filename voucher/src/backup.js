@@ -35,6 +35,8 @@ export async function decryptBackup(text, passphrase) {
   let envelope;
   try { envelope = JSON.parse(text); } catch { throw new Error('This is not an Ouranos backup file.'); }
   if (envelope?.format !== 'ouranos-voucher-backup' || envelope.version !== 1) throw new Error('This is not an Ouranos backup file.');
+  if (envelope.kdf?.name !== 'PBKDF2' || envelope.kdf?.hash !== 'SHA-256' || envelope.cipher?.name !== 'AES-GCM' || envelope.kdf.iterations !== iterations || typeof envelope.data !== 'string' || envelope.data.length > 140 * 1024 * 1024) throw new Error('Unsupported backup format.');
+  if (fromBase64(envelope.kdf.salt).length !== 16 || fromBase64(envelope.cipher.iv).length !== 12) throw new Error('Invalid backup parameters.');
   const key = await deriveKey(passphrase, fromBase64(envelope.kdf.salt), envelope.kdf.iterations);
   try {
     const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromBase64(envelope.cipher.iv) }, key, fromBase64(envelope.data));

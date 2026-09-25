@@ -10,7 +10,7 @@ import {validatePlanning} from '../../modules/planning/validator';
 import {validateVoucher} from '../../modules/vouchers/validator';
 import {PLANNING_SCHEMA_VERSION,planningModuleSchema} from '../../packages/contracts/planning-module';
 import {VOUCHER_MODULE_SCHEMA_VERSION,voucherModuleSchema} from '../../packages/contracts/voucher-module';
-import {reconcileStoredExpenses} from '../../packages/domain/voucher-adapter';
+import {reconcileStoredExpenses,planAllowance,resolvedStatements} from '../../packages/domain/voucher-adapter';
 import {loadApprovedAuthorization} from './approved';
 
 export const canonical=(v:unknown):string=>JSON.stringify(v,(_key,value)=>value&&typeof value==='object'&&!Array.isArray(value)?Object.fromEntries(Object.entries(value).sort(([a],[b])=>a.localeCompare(b))):value);
@@ -114,6 +114,8 @@ async function submit(db:PoolClient,c:Extract<Command,{type:'authorization.submi
  if(kind==='authorization'&&entity.data.formSchemaVersion===PLANNING_SCHEMA_VERSION){
   const form=planningModuleSchema.parse(entity.data.formData);
   for(const item of form.approvedExpenseItems)for(const date of [item.date,item.startDate,item.endDate].filter(Boolean))check(date!>=trip.data.departure&&date!<=trip.data.returnDate,'VALIDATION_FAILED','Budget item dates must fall within the trip');
+  for(const date of Object.keys(form.allowance?.mealsProvided||{}))check(date>=trip.data.departure&&date<=trip.data.returnDate,'VALIDATION_FAILED','Meal dates must fall within the trip');
+  snapshot.perDiem=planAllowance(toEntity('trip',trip),form);
  }
  if(kind==='voucher'){
   // withActor serializes organization writes, so concurrent submissions cannot
@@ -141,6 +143,7 @@ async function submit(db:PoolClient,c:Extract<Command,{type:'authorization.submi
    const actualTotal=snapshot.expenses.reduce((sum:number,e:Entity)=>sum+Number(e.data.amountMinor),0);
    check(Number.isSafeInteger(actualTotal)&&actualTotal===form.reconciliation.totalAmountMinor,'VALIDATION_FAILED','Voucher total does not match saved expenses');
    snapshot.reconciliation=reconciliation;
+   snapshot.statements=resolvedStatements(approved,snapshot.expenses,form.resolutions);
   }
  }
  const rev=(await db.query('insert into public.submission_revisions(organization_id,trip_id,authorization_id,voucher_id,entity_version,snapshot,sha256,submitted_by) values($1,$2,$3,$4,$5,$6,$7,$8) returning *',[org,entity.trip_id,kind==='authorization'?entity.id:null,kind==='voucher'?entity.id:null,entity.version,snapshot,hash(snapshot),userId])).rows[0];

@@ -61,3 +61,5 @@ The runtime schema in `platform/worker/providers.ts` bounds field count, names, 
 ## Validation to add with a real module
 
 Add shared-schema tests for actual form versions, server submission rejection tests, a complete authorized approval path, and receipt/expense dependencies for vouchers. Include malformed dates, currency totals, access separation, stale versions, duplicate command delivery and reconnect recovery. Run the existing platform checks and local integration suite after the module joins the shared flow.
+
+The companion MVP is merged through `a78b559`. Connected forms share the branch logic through `packages/domain/voucher-adapter.ts`; submitted package exports use `/v1/vouchers/:id/package`. See `docs/activation.md` for the full connected flow and supported boundaries.

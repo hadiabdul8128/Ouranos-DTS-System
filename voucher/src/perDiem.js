@@ -62,7 +62,8 @@ export function findLocality(table, destination) {
 export function computePerDiem({ startDate, endDate, destination, mealsProvided = {}, governmentMess = false }, tables = bundledTables) {
   const warnings = [];
   const days = [];
-  if (!startDate || !endDate || startDate > endDate) return { supported: false, days, totals: { mie: 0, lodgingCap: 0, nights: 0 }, warnings: ['Trip dates are missing or out of order.'] };
+  const validDate = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0,10) === value;
+  if (!validDate(startDate) || !validDate(endDate) || startDate > endDate || (Date.parse(endDate)-Date.parse(startDate))/86400000 > 366) return { supported: false, days, totals: { mie: 0, lodgingCap: 0, nights: 0 }, warnings: ['Use valid trip dates within one year for a rate estimate.'] };
   const dates = [];
   for (let date = startDate; date <= endDate; date = addDays(date, 1)) dates.push(date);
   const nights = dates.length - 1;
@@ -99,11 +100,12 @@ export function computePerDiem({ startDate, endDate, destination, mealsProvided 
     const provided = meals.filter(meal => mealsProvided[date]?.[meal]);
     const deductions = tier ? provided.reduce((sum, meal) => sum + tier[meal], 0) : 0;
     if (provided.length && !tier) warnings.push(`No M&IE breakdown for $${row.meals} in FY${fy}; provided meals on ${date} were not deducted.`);
-    if (base - deductions < 0) warnings.push(`Provided meals on ${date} exceed the travel-day M&IE; allowance set to $0. Confirm with your DTA.`);
+    const incidental = Number(tier?.incidental || 0);
+    if (base - deductions < incidental) warnings.push(`Provided meals on ${date} leave only incidentals. Verify the travel-day treatment with your DTA.`);
     days.push({
       date, fiscalYear: fy, travelDay, provided,
       lodgingCap: index < dates.length - 1 ? row.lodging[monthIndex(date)] : null,
-      mieRate: row.meals, mieBase: base, deductions, mie: Math.max(0, round(base - deductions)),
+      mieRate: row.meals, mieBase: base, deductions, mie: Math.max(incidental, round(base - deductions)),
       source: `${table.source} · ${row.city}, ${row.state} · ${table.monthOrder[monthIndex(date)]}`
     });
   }

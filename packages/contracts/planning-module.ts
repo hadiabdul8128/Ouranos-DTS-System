@@ -14,6 +14,7 @@ export const plannedExpenseSchema = z.object({
 export const planningModuleSchema = z.object({
   traveler:z.string().trim().min(1).max(200), origin:z.string().trim().min(1).max(120),
   currency:z.literal('USD'), approvedExpenseItems:z.array(plannedExpenseSchema).min(1).max(100),
+  allowance:z.object({enabled:z.boolean(),governmentMess:z.boolean().default(false),mealsProvided:z.record(dateOnly,z.object({breakfast:z.boolean().optional(),lunch:z.boolean().optional(),dinner:z.boolean().optional()}).strict()).default({})}).strict().optional(),
 }).strict().refine(v=>new Set(v.approvedExpenseItems.map(i=>i.id)).size===v.approvedExpenseItems.length, 'Budget item IDs must be unique');
 export type PlanningModuleInput = z.infer<typeof planningModuleSchema>;
 export type PlannedExpense = z.infer<typeof plannedExpenseSchema>;

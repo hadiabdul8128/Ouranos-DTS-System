@@ -3,7 +3,7 @@
   "info": {
     "title": "Ouranos platform API",
     "version": "1.0.0",
-    "description": "Travel platform skeleton. Supabase bearer authentication, organization isolation, versioned commands, synchronization and immutable approval revisions. Planning/voucher form validators and external providers require integration. A successful Ouranos command is not DTS acceptance."
+    "description": "Connected travel platform. Supabase bearer authentication, organization isolation, versioned commands, synchronization and immutable approval revisions. Planning, companion checks and frozen voucher packages share server-validated records. A successful Ouranos command is not DTS acceptance."
   },
   "servers": [
     {
@@ -920,6 +920,74 @@
         ]
       }
     },
+    "/v1/vouchers/{id}/package": {
+      "get": {
+        "operationId": "voucherPackage",
+        "summary": "Read a frozen submission and DTS preparation package",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelPackage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "organizationId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
     "/v1/trips/{id}/audit": {
       "get": {
         "operationId": "tripAudit",
@@ -1363,6 +1431,19 @@
           "serviceEndDate": {
             "type": "string",
             "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "taxesMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000000
+          },
+          "feesMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000000
+          },
+          "bookedOnline": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1810,6 +1891,19 @@
                   "serviceEndDate": {
                     "type": "string",
                     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  },
+                  "taxesMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000000
+                  },
+                  "feesMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000000
+                  },
+                  "bookedOnline": {
+                    "type": "boolean"
                   }
                 },
                 "required": [
@@ -2831,6 +2925,19 @@
                         "serviceEndDate": {
                           "type": "string",
                           "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                        },
+                        "taxesMinor": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 1000000000
+                        },
+                        "feesMinor": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 1000000000
+                        },
+                        "bookedOnline": {
+                          "type": "boolean"
                         }
                       },
                       "required": [
@@ -4945,6 +5052,10 @@
           "status"
         ],
         "additionalProperties": false
+      },
+      "TravelPackage": {
+        "type": "object",
+        "additionalProperties": {}
       },
       "ApprovedAuthorization": {
         "type": "object",
