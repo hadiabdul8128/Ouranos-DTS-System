@@ -13,8 +13,8 @@ export function normalizeAuthorization(input) {
   const authorizationId = String(raw.authorizationId || raw.id || '').trim();
   const origin = String(raw.origin || '').trim();
   const destination = String(raw.destination || '').trim();
-  const startDate = raw.startDate;
-  const endDate = raw.endDate;
+  const startDate = raw.startDate || raw.departureDate;
+  const endDate = raw.endDate || raw.returnDate;
   const currency = String(raw.currency || 'USD').toUpperCase();
   if (!id || !authorizationId || !origin || !destination || !validDate(startDate) || !validDate(endDate) || startDate > endDate) {
     throw new Error('Authorization needs an ID, origin, destination, and valid travel dates.');
@@ -31,8 +31,13 @@ export function normalizeAuthorization(input) {
       throw new Error(`Approved item ${index + 1} needs a unique ID, known category, and valid amount.`);
     }
     seen.add(itemId);
+    const expectedPaymentMethod = item.expectedPaymentMethod || item.paymentMethodExpectation;
+    if (expectedPaymentMethod && !['gtcc', 'personal'].includes(expectedPaymentMethod)) throw new Error(`Approved item ${index + 1} has an invalid expected payment method.`);
     return {
       id: itemId, category, label: String(item.label || categoryLabels[category]).trim(), amount,
+      ...(item.merchant ? { merchant: String(item.merchant).trim() } : {}),
+      ...(item.location ? { location: String(item.location).trim() } : {}),
+      ...(expectedPaymentMethod ? { expectedPaymentMethod } : {}),
       ...(validDate(item.date) ? { date: item.date } : {}),
       ...(validDate(item.startDate) ? { startDate: item.startDate } : {}),
       ...(validDate(item.endDate) ? { endDate: item.endDate } : {}),

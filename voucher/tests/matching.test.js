@@ -31,3 +31,23 @@ test('a receipt can be categorized before an authorization is available', () => 
   const assigned = suggestAssignment(trip, { ...receipt, category: staged.category }, 'Parking at the meeting', []);
   assert.equal(assigned.authorizationItemId, 'parking');
 });
+
+test('Marriott folio matches lodging despite an authorized overage', () => {
+  const approved = { ...trip, authorizedItems: [{ id: 'marriott', category: 'lodging', label: 'Lodging — Marriott San Diego', merchant: 'Marriott', location: 'San Diego, CA', amount: 570, startDate: '2026-10-12', endDate: '2026-10-15' }] };
+  const suggestion = suggestAssignment(approved, { merchant: 'Marriott San Diego', location: 'San Diego, CA', date: '2026-10-15', serviceStartDate: '2026-10-12', serviceEndDate: '2026-10-15', amount: 621, category: 'lodging' });
+  assert.equal(suggestion.authorizationItemId, 'marriott');
+  assert.equal(suggestion.confidence, 'high');
+  assert.ok(suggestion.signals.includes('stay dates'));
+});
+
+test('rental receipt matches a unique authorized rental item', () => {
+  const suggestion = suggestAssignment(trip, { merchant: 'Hertz', date: trip.startDate, amount: 284, category: 'rental_car' });
+  assert.equal(suggestion.authorizationItemId, 'rental');
+  assert.equal(suggestion.confidence, 'high');
+});
+
+test('two equal category matches remain unassigned', () => {
+  const suggestion = suggestAssignment(trip, { merchant: '', date: '', amount: null, category: 'airfare' });
+  assert.equal(suggestion.authorizationItemId, '');
+  assert.equal(suggestion.confidence, 'review');
+});

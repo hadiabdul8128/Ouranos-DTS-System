@@ -28,12 +28,12 @@ The Voucher expects an approved trip with this shape:
   "endDate": "2026-10-04",
   "currency": "USD",
   "authorizedItems": [
-    { "id": "hotel-1", "category": "lodging", "label": "Hotel", "amount": 540, "startDate": "2026-10-01", "endDate": "2026-10-04" }
+    { "id": "hotel-1", "category": "lodging", "label": "Marriott lodging", "amount": 540, "merchant": "Marriott", "location": "San Diego, CA", "expectedPaymentMethod": "gtcc", "startDate": "2026-10-01", "endDate": "2026-10-04" }
   ]
 }
 ```
 
-`src/authorization.js` validates and normalizes the handoff. For integration, the Dashboard can navigate to `/voucher/?authorizationId=AUTH-123`; the Voucher requests `GET /api/authorizations/AUTH-123` from the same origin. The Authorization flow may also dispatch `window.dispatchEvent(new CustomEvent('ouranos:authorization-approved', { detail: approvedTrip }))` when mounted in the same page. The API and event producer do not exist in this repository yet.
+`src/travelAuthorization.d.ts` defines the handoff contract. `src/authorization.js` validates and normalizes it. `departureDate` and `returnDate` are accepted as aliases for `startDate` and `endDate`. Per-item `merchant`, `location`, and `expectedPaymentMethod` are optional and improve matching or validation when known. For integration, the Dashboard can navigate to `/voucher/?authorizationId=AUTH-123`; the Voucher requests `GET /api/authorizations/AUTH-123` from the same origin. The Authorization flow may also dispatch `window.dispatchEvent(new CustomEvent('ouranos:authorization-approved', { detail: approvedTrip }))` when mounted in the same page. JSON import remains available during development. The API and event producer do not exist in this repository yet.
 
 ## Receipt flow
 

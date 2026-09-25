@@ -45,6 +45,9 @@ export function reconcile(trip, expenses, resolutions = {}, options = {}) {
 
     if (!expense.paymentMethod || !['gtcc', 'personal'].includes(expense.paymentMethod)) add(expense, 'payment', 'Choose GTCC or personal payment.', 'Set payment method');
     else checks.push({ expenseId: expense.id, code: 'payment' });
+    if (item?.expectedPaymentMethod && expense.paymentMethod && expense.paymentMethod !== item.expectedPaymentMethod) {
+      add(expense, 'payment_expectation', `${item.label} expects ${item.expectedPaymentMethod === 'gtcc' ? 'GTCC' : 'personal'} payment.`, 'Review payment method');
+    }
 
     if (!item || item.category !== expense.category) add(expense, 'unauthorized', `${expense.merchant} is not matched to an approved ${expense.category.replaceAll('_', ' ')} item.`, 'Review expense');
     else {

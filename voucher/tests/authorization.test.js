@@ -25,3 +25,16 @@ test('finished intake accounts for authorized items with no actual expense', () 
   const resolutions = Object.fromEntries(imported.authorizedItems.slice(1).map(item => [`auth:${item.id}:not_used`, { type: 'not_used', value: item.id }]));
   assert.equal(reconcile(imported, oneExpense, resolutions, { intakeComplete: true }).ready, true);
 });
+
+test('authorization handoff keeps matching details and accepts departure aliases', () => {
+  const { startDate, endDate, ...source } = trip;
+  const imported = normalizeAuthorization({
+    ...source, departureDate: startDate, returnDate: endDate,
+    authorizedItems: [{ id: 'rental', category: 'rental_car', label: 'Rental car', amount: 284, merchant: 'Hertz', location: 'San Diego, CA', expectedPaymentMethod: 'gtcc' }]
+  });
+  assert.equal(imported.startDate, startDate);
+  assert.equal(imported.endDate, endDate);
+  assert.deepEqual(imported.authorizedItems[0], { id: 'rental', category: 'rental_car', label: 'Rental car', amount: 284, merchant: 'Hertz', location: 'San Diego, CA', expectedPaymentMethod: 'gtcc' });
+  const mismatched = [{ id: 'rental-actual', tripId: imported.id, date: imported.startDate, merchant: 'Hertz', amount: 284, currency: 'USD', category: 'rental_car', paymentMethod: 'personal', receipt: { name: 'rental.pdf' }, authorizationItemId: 'rental' }];
+  assert.ok(reconcile(imported, mismatched).issues.some(issue => issue.code === 'payment_expectation'));
+});
