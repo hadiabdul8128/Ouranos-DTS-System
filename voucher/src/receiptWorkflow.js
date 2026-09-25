@@ -1,8 +1,10 @@
 import { buildConfirmation } from './confirmation.js';
 import { suggestAssignment } from './matching.js';
+import { assessReceipt } from './receiptValidity.js';
 
 /** Prepare the same one-click confirmation shown after an upload or photo scan. */
 export function prepareReceipt(trip, extraction, receipt, expenses = [], purpose = '') {
+  extraction = { ...extraction, validity: assessReceipt(extraction.rawText, extraction.fields) };
   const suggestion = suggestAssignment(trip, extraction.fields, purpose, expenses);
   return {
     receipt, extraction, extracted: true, editing: false, suggestion,

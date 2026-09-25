@@ -61,6 +61,6 @@ export function suggestAssignment(trip, fields, purpose = '', expenses = []) {
     confidence,
     score: top?.score || 0,
     signals: top?.signals || [],
-    reason: existingExpenseId ? 'Matches an expense already in the ledger.' : matchedItem ? `Matched to ${matchedItem.label}.` : trip ? 'Choose the approved item before saving.' : 'Load an approved authorization to allocate this expense.'
+    reason: existingExpenseId ? 'Matches an expense already in the ledger.' : matchedItem ? `Matched to ${matchedItem.label}.` : trip ? trip.entrySource === 'traveler' ? 'Choose the entered trip item before saving.' : 'Choose the approved item before saving.' : 'Load an approved authorization to allocate this expense.'
   };
 }

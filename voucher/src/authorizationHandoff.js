@@ -3,10 +3,14 @@ import { suggestAssignment } from './matching.js';
 
 /** One entry point for API, page event, route, or JSON-imported authorizations. */
 export function loadAuthorization(current, authorization, { source = 'handoff', replaceTrip = false } = {}) {
-  const trip = normalizeAuthorization(authorization);
+  const trip = normalizeAuthorization(authorization, { allowTravelerEntry: source === 'manual' });
   const previousTripId = current.trip?.id || current.trip?.tripId;
   const changingTrip = Boolean(previousTripId && previousTripId !== trip.id);
-  const changedApproval = Boolean(previousTripId === trip.id && current.trip && JSON.stringify(current.trip.authorizedItems) !== JSON.stringify(trip.authorizedItems));
+  const changedApproval = Boolean(previousTripId === trip.id && current.trip && (
+    JSON.stringify(current.trip.authorizedItems) !== JSON.stringify(trip.authorizedItems)
+    || current.trip.entrySource !== trip.entrySource
+    || (current.source === 'manual') !== (source === 'manual')
+  ));
   if (changingTrip && current.expenses?.length && !replaceTrip) throw new Error('Replacing a trip with expenses requires an explicit confirmation.');
   const keptExpenses = changingTrip ? [] : current.expenses || [];
   const expenses = keptExpenses.map(expense => {
@@ -32,6 +36,6 @@ export function loadAuthorization(current, authorization, { source = 'handoff', 
   return {
     ...current, trip, source, intakeComplete: changingTrip || changedApproval ? false : Boolean(current.intakeComplete && previousTripId),
     expenses, pending, resolutions: changingTrip || changedApproval ? {} : current.resolutions || {},
-    audit: [...(changingTrip ? [] : current.audit || []), { label: `Loaded approved authorization ${trip.authorizationId}`, at: new Date().toISOString() }]
+    audit: [...(changingTrip ? [] : current.audit || []), { label: trip.entrySource === 'traveler' ? `Entered trip reference ${trip.authorizationId}` : `Loaded approved authorization ${trip.authorizationId}`, at: new Date().toISOString() }]
   };
 }

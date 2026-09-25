@@ -15,12 +15,13 @@ function sameAlias(primary, legacy, label) {
 }
 
 /** Validate the canonical handoff while accepting the existing JSON format. */
-export function normalizeAuthorization(input) {
+export function normalizeAuthorization(input, { allowTravelerEntry = false } = {}) {
   const raw = input?.trip || input?.authorization || input;
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Authorization must contain an object.');
   const canonical = raw.tripId != null || raw.approvedExpenseItems != null;
   const status = text(sameAlias(raw.status, raw.authorizationStatus, 'Authorization status'));
-  if (status.toLowerCase() !== 'approved') throw new Error('Only approved authorizations can start a voucher.');
+  const travelerEntered = allowTravelerEntry && status === 'TravelerEntered' && raw.entrySource === 'traveler';
+  if (!travelerEntered && (status.toLowerCase() !== 'approved' || raw.entrySource === 'traveler')) throw new Error('Only approved authorizations can start a voucher.');
   const id = text(sameAlias(raw.tripId, raw.id, 'Trip ID'));
   const authorizationId = text(raw.authorizationId || (canonical ? '' : raw.id));
   const traveler = text(raw.traveler);
@@ -71,9 +72,10 @@ export function normalizeAuthorization(input) {
     };
   });
   return {
-    tripId: id, authorizationId, status: 'Approved', traveler, origin, destination,
+    tripId: id, authorizationId, status: travelerEntered ? 'TravelerEntered' : 'Approved', traveler, origin, destination,
     departureDate: startDate, returnDate: endDate, currency, purpose: text(raw.purpose),
+    ...(travelerEntered ? { entrySource: 'traveler' } : {}),
     approvedExpenseItems: authorizedItems,
-    id, startDate, endDate, authorizationStatus: 'Approved', authorizedItems
+    id, startDate, endDate, authorizationStatus: travelerEntered ? 'TravelerEntered' : 'Approved', authorizedItems
   };
 }
