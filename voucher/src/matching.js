@@ -8,8 +8,8 @@ const daysApart = (a, b) => a && b ? Math.abs((Date.parse(`${a}T12:00:00`) - Dat
 export function suggestAssignment(trip, fields, purpose = '', expenses = []) {
   const purposeCategory = inferCategory(purpose);
   const category = purposeCategory !== 'other' ? purposeCategory : fields.category || 'other';
-  const existing = expenses.map(expense => {
-    let score = expense.receipt ? -4 : 0;
+  const existing = expenses.filter(expense => !expense.receipt).map(expense => {
+    let score = 0;
     if (fields.amount != null && Math.abs(Number(fields.amount) - Number(expense.amount)) <= 0.01) score += 5;
     if (fields.date && fields.date === expense.date) score += 3;
     if (fields.merchant) score += Math.min(3, overlap(fields.merchant, expense.merchant) * 2);

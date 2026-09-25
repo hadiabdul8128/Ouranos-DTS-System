@@ -51,3 +51,8 @@ test('two equal category matches remain unassigned', () => {
   assert.equal(suggestion.authorizationItemId, '');
   assert.equal(suggestion.confidence, 'review');
 });
+
+test('a second receipt cannot silently replace one already attached', () => {
+  const suggestion = suggestAssignment(trip, { merchant: 'American Airlines', date: '2026-09-15', amount: 380, category: 'airfare' }, 'outbound flight', seedExpenses);
+  assert.equal(suggestion.existingExpenseId, '');
+});
