@@ -103,13 +103,15 @@ export function parseReceiptText(rawText) {
   const date = distinctDates.length === 1 ? distinctDates[0] : '';
   const dateConfidence = !date ? 'low' : transactionDates.length ? 'high' : 'medium';
 
+  const labeledMerchant = lines.map(line => /^(?:merchant|store|sold by|vendor|business|billed by)\s*[:#-]\s*(.+)$/i.exec(line)?.[1]?.trim()).find(Boolean) || '';
   const headerEnd = lines.findIndex(line => /^ad(?:d)?r|^tel|^phone|^date\b|\b\d{1,2}[/-]\d{1,2}[/-]20\d{2}\b/i.test(line));
   const header = lines.slice(0, headerEnd >= 0 ? headerEnd : Math.min(lines.length, 4));
   const merchantIndex = header.findIndex(line => /[A-Za-z]{3}/.test(line) && !/\b(receipt|invoice|cash|thank you|order|transaction)\b/i.test(line) && !/^\d+\s/.test(line));
-  const merchant = merchantIndex >= 0 ? header[merchantIndex] : '';
+  const merchant = labeledMerchant || (merchantIndex >= 0 ? header[merchantIndex] : '');
   const location = lines.find(line => /\b[A-Z][a-z]+,\s*[A-Z]{2}\b/.test(line)) || '';
   const address = lines.find(line => /^\d+\s+[^\n]*(?:st(?:reet)?|ave(?:nue)?|road|rd|blvd|boulevard|drive|dr|lane|ln)\b/i.test(line)) || '';
-  const category = inferCategory(`${merchant}\n${rawText}`);
+  const merchantCategory = inferCategory(merchant);
+  const category = merchantCategory !== 'other' ? merchantCategory : inferCategory(rawText);
   const paymentMethod = /\b(?:gtcc|government travel (?:charge )?card)\b/i.test(rawText) ? 'gtcc'
     : /\b(?:cash|personal card|paid personally)\b/i.test(rawText) ? 'personal' : '';
   const currencyMatch = /\b(EUR|GBP|CAD|USD)\b/i.exec(rawText);
@@ -123,7 +125,7 @@ export function parseReceiptText(rawText) {
   const serviceEndDate = labeledDate(lines, /check[ -]?out|departure/i);
   const fields = { merchant, date, amount, taxes: taxes.value, fees: fees.value, subtotal: subtotal.value, tip: tip.value, currency, location, address, category, paymentMethod, serviceStartDate, serviceEndDate, categoryLabel: categoryLabels[category] };
   const confidence = {
-    merchant: merchant ? merchantIndex === 0 ? 'high' : 'medium' : 'low', date: dateConfidence, amount: amountConfidence,
+    merchant: merchant ? labeledMerchant || merchantIndex === 0 ? 'high' : 'medium' : 'low', date: dateConfidence, amount: amountConfidence,
     taxes: taxes.confidence, fees: fees.confidence, subtotal: subtotal.confidence, tip: tip.confidence,
     currency: currencyMatch ? 'high' : symbol ? 'medium' : 'low', location: location ? 'high' : 'low', address: address ? 'medium' : 'low',
     category: category === 'other' ? 'low' : 'medium', categoryLabel: category === 'other' ? 'low' : 'medium', paymentMethod: paymentMethod ? 'high' : 'low',

@@ -53,3 +53,12 @@ test('day-month dates and an explicit service fee are extracted', () => {
   assert.equal(parsed.fields.amount, 20);
   assert.equal(parsed.confidence.fees, 'high');
 });
+
+test('labeled merchants are read and merchant context wins over incidental fee words', () => {
+  const parsed = parseReceiptText('RECEIPT\nMerchant: Marriott San Diego\nDate 10/15/2026\nFuel surcharge $5.00\nTotal paid $121.00');
+  assert.equal(parsed.fields.merchant, 'Marriott San Diego');
+  assert.equal(parsed.confidence.merchant, 'high');
+  assert.equal(parsed.fields.category, 'lodging');
+  assert.equal(parsed.fields.amount, 121);
+  assert.equal(parsed.fields.fees, 5);
+});
