@@ -37,7 +37,13 @@ Repository: [hadiabdul8128/Ouranos-DTS-System](https://github.com/hadiabdul8128/
 
 GitHub Actions checks contracts, types, unit tests, frontend and container builds, the standalone voucher module, and an isolated local Supabase integration suite. It receives no production credentials. Local integration additionally exercises real scan/OCR services when their loopback URLs are configured.
 
-## Cloud activation still requires an environment
+## Vercel frontend
+
+The `ouranos` Vercel project is connected to this GitHub repository, with `main` as its production branch. `vercel.json` selects the native Next.js build (`npm run build:vercel`), while the existing local preview commands remain available. The Vercel project uses Node.js 24. `.vercelignore` excludes local credentials, service state and generated artifacts from CLI uploads. GitHub Actions checks both frontend builds.
+
+Until hosted services are configured, Vercel serves the existing preview mode. It does not authenticate email addresses or sync to the local backend. Configure `NEXT_PUBLIC_OURANOS_API_URL`, `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in Vercel only when their hosted services are available, then redeploy. Add the actual Vercel origin to the API CORS allowlist and its `/auth/callback` URL to Supabase's allowed redirects. Database and service secrets belong to backend hosting, never these public variables.
+
+## Cloud backend activation still requires an environment
 
 Local services are not a hosted deployment. The existing published frontend preview does not reach this computer's database. A cloud environment needs a dedicated Supabase project, verified email configuration, and reachable API, worker and receipt services. The Ouranos Supabase organization exists; a cloud project/runtime must be selected before provisioning or uploading credentials.
 

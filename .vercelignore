@@ -1,0 +1,25 @@
+# Credentials and machine-local state must never be uploaded.
+.env*
+.git
+node_modules
+.next
+.vinext
+.wrangler
+.sites-runtime
+.agents
+.codex
+outputs
+work
+dist
+coverage
+playwright-report
+test-results
+supabase/.temp
+supabase/.branches
+platform/.runtime
+voucher/node_modules
+voucher/dist
+*.tsbuildinfo
+*.pem
+.DS_Store
+npm-debug.log*

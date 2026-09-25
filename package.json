@@ -23,7 +23,8 @@
     "platform:dev": "node platform/scripts/dev.mjs",
     "platform:doctor": "tsx platform/scripts/doctor.ts",
     "platform:receipts": "node platform/scripts/receipts-local.mjs",
-    "voucher:test": "npm --prefix voucher test"
+    "voucher:test": "npm --prefix voucher test",
+    "build:vercel": "next build"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
