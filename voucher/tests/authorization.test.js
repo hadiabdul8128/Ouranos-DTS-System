@@ -34,7 +34,28 @@ test('authorization handoff keeps matching details and accepts departure aliases
   });
   assert.equal(imported.startDate, startDate);
   assert.equal(imported.endDate, endDate);
-  assert.deepEqual(imported.authorizedItems[0], { id: 'rental', category: 'rental_car', label: 'Rental car', amount: 284, merchant: 'Hertz', location: 'San Diego, CA', expectedPaymentMethod: 'gtcc' });
+  assert.deepEqual(imported.authorizedItems[0], { id: 'rental', category: 'rental_car', description: 'Rental car', authorizedAmount: 284, label: 'Rental car', amount: 284, merchant: 'Hertz', location: 'San Diego, CA', expectedPaymentMethod: 'gtcc' });
   const mismatched = [{ id: 'rental-actual', tripId: imported.id, date: imported.startDate, merchant: 'Hertz', amount: 284, currency: 'USD', category: 'rental_car', paymentMethod: 'personal', receipt: { name: 'rental.pdf' }, authorizationItemId: 'rental' }];
   assert.ok(reconcile(imported, mismatched).issues.some(issue => issue.code === 'payment_expectation'));
+});
+
+test('canonical TravelAuthorization is validated and keeps existing Voucher aliases', () => {
+  const input = {
+    tripId: 'TDY-123', authorizationId: 'AUTH-123', traveler: 'Alex Morgan', status: 'Approved',
+    origin: 'Raleigh, NC', destination: 'San Diego, CA', departureDate: '2026-10-12', returnDate: '2026-10-15', currency: 'USD',
+    approvedExpenseItems: [{ id: 'lodging', category: 'lodging', description: 'Marriott lodging', authorizedAmount: 570, merchant: 'Marriott', startDate: '2026-10-12', endDate: '2026-10-15' }]
+  };
+  const normalized = normalizeAuthorization(input);
+  assert.equal(normalized.tripId, input.tripId);
+  assert.equal(normalized.id, input.tripId);
+  assert.equal(normalized.startDate, input.departureDate);
+  assert.equal(normalized.authorizedItems[0].amount, 570);
+  assert.equal(normalized.approvedExpenseItems[0].description, 'Marriott lodging');
+  assert.throws(() => normalizeAuthorization({ ...input, status: 'Draft' }), /approved/);
+  assert.throws(() => normalizeAuthorization({ ...input, traveler: '' }), /traveler/);
+  assert.throws(() => normalizeAuthorization({ ...input, departureDate: '2026-02-30' }), /valid travel dates/);
+  assert.throws(() => normalizeAuthorization({ ...input, approvedExpenseItems: [{ ...input.approvedExpenseItems[0], authorizedAmount: '570' }] }), /authorized amount/);
+  assert.throws(() => normalizeAuthorization({ ...input, approvedExpenseItems: [{ ...input.approvedExpenseItems[0], endDate: '2026-02-30' }] }), /invalid endDate/);
+  assert.throws(() => normalizeAuthorization({ ...input, approvedExpenseItems: [{ ...input.approvedExpenseItems[0], merchant: 42 }] }), /invalid merchant/);
+  assert.throws(() => normalizeAuthorization({ ...input, approvedExpenseItems: [...input.approvedExpenseItems, input.approvedExpenseItems[0]] }), /unique ID/);
 });
