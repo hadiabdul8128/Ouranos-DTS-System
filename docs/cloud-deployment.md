@@ -1,21 +1,23 @@
 # Hosted Ouranos
 
-The frontend is [ouranos-fawn.vercel.app](https://ouranos-fawn.vercel.app), deployed from GitHub `main`. The backend uses Railway for the API, worker and receipt services, and Supabase for PostgreSQL, Auth and private receipt storage. Supabase migrations are applied to the existing paid project `mtjtggfacdkdncogxlvj` in `hadiabdul8128's Org`. Railway activation and the frontend cutover remain pending; configuration files alone do not mean services are live.
+The frontend is [ouranos-fawn.vercel.app](https://ouranos-fawn.vercel.app), deployed from GitHub `main`. The backend uses Railway for the API, worker and receipt services, and Supabase for PostgreSQL, Auth and private receipt storage. Supabase migrations are applied to the existing paid project `mtjtggfacdkdncogxlvj` in `hadiabdul8128's Org`. The four Railway services are live. Vercel production is configured with the hosted API and public Supabase Auth settings.
 
 ## Railway services
 
-Create one Ouranos project with four services. All source builds use the repository root and `main`. Set each service's config-file path explicitly; these are separate service configurations, not four replicas of the frontend.
+The `ouranos` Railway project contains four services in its `production` environment, in San Francisco. All source builds use the repository root and GitHub `main`; `main` is also the repository default branch. Infrastructure is declared in [`.railway/railway.ts`](../.railway/railway.ts) using the pinned Railway SDK. The old per-service JSON format is deprecated and is no longer used.
 
-| Service | Config file | Network | Initial memory limit |
+Run `railway config plan` before applying infrastructure changes. Existing variables use `preserve()` so secrets stay in Railway. GitHub pushes deploy only services whose watched paths changed. Infrastructure changes require a separate reviewed `railway config apply`; pushing the TypeScript file alone does not apply infrastructure.
+
+| Service | Dockerfile | Network | Memory limit |
 | --- | --- | --- | --- |
-| api | `/deploy/railway/api.json` | Public HTTPS; readiness `/ready` | 512 MB |
-| worker | `/deploy/railway/worker.json` | No public domain | 512 MB |
-| receipts | `/deploy/railway/receipts.json` | Public HTTPS with bearer authentication; readiness `/ready` | 1 GB |
-| scanner | `/deploy/railway/scanner.json` | Private TCP 3310 only | 4 GB |
+| api | `Dockerfile.platform` | [HTTPS API](https://api-production-e1e8.up.railway.app); readiness `/ready` | 500 MB |
+| worker | `Dockerfile.platform` | No public domain | 500 MB |
+| receipts | `Dockerfile.receipts` | [HTTPS receipt adapter](https://receipts-production-91b7.up.railway.app); bearer authentication; readiness `/ready` | 1 GB |
+| scanner | `Dockerfile.scanner` | `scanner.railway.internal:3310`, private only | 4 GB |
 
 Keep one replica per service and automatic sleeping off for the worker and scanner. The scanner image is the same pinned official ClamAV image used locally. It refreshes definitions at runtime. Receipt readiness rejects signatures older than seven days; it must become healthy before receipts are accepted. No public domain or TCP proxy is needed for the scanner. Its definitions are disposable, so it does not need a persistent user-data volume.
 
-Apply a workspace compute hard limit before starting deployments. For a $50 monthly budget, use a conservative $40 compute limit and $30 alert to leave headroom for subscription/tax charges; verify the current billing terms. Railway stops workloads at its hard limit. Do not deploy until the limit is confirmed active. Workspace limits affect every project in that workspace.
+The paid Hobby workspace has a verified **$40 usage hard limit and $30 alert**, leaving room within the approved $50 monthly budget for the subscription and other charges. Railway stops workloads at its hard limit; this budget does not guarantee uninterrupted month-long service. Workspace limits affect every project in that workspace. Memory limits are maximums, not measurements of actual usage.
 
 ```sh
 railway usage limit set --target workspace --soft 30 --hard 40 --workspace WORKSPACE_ID --json
@@ -61,20 +63,27 @@ The `receipts` service receives that same token as `RECEIPT_PROVIDER_TOKEN`, wit
 
 ## Frontend cutover
 
-Only after the API passes `/ready`, configure these Vercel production variables and redeploy:
+After API readiness and hosted workflow checks passed, these Vercel production variables were configured and the site was redeployed:
 
-- `NEXT_PUBLIC_OURANOS_API_URL`: the API's public HTTPS origin.
-- `NEXT_PUBLIC_SUPABASE_URL`: the hosted Supabase project URL.
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: that project's publishable key.
+- `NEXT_PUBLIC_OURANOS_API_URL=https://api-production-e1e8.up.railway.app`.
+- `NEXT_PUBLIC_SUPABASE_URL=https://mtjtggfacdkdncogxlvj.supabase.co`.
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: the project's working public `anon` key. This existing project rejected the newer key format, so the verified legacy public/server key pair is used.
 
-Until then, leave the existing frontend in its explicitly labeled preview mode. Do not connect the public website to a localhost URL or tunnel the development database.
+Only public API/Auth settings are supplied to Vercel. Database passwords, provider tokens and the Supabase server key remain server-side. Development and preview environments are separate from this production configuration.
 
 Sign in using a real email link, create the Ouranos workspace, and assign actual reviewer/approver memberships and routes. These are application roles, separate from cloud-provider project membership. A traveler cannot approve their own request.
 
-## Verify the deployment
+## Verification on 2026-09-25
 
+Hosted smoke checks used four synthetic Auth users in an isolated Ouranos organization, through the public API. They passed persistent trip retrieval, cross-tenant denial, rejection of self/out-of-order approval, sequential planning approval, and the frozen approved handoff. A signed PDF upload passed the live background queue, ClamAV scan, Tesseract extraction, user confirmation and a hash-verified original download. A separate receipt-exempt meal passed voucher reconciliation, two-person approval and HTML package export. All synthetic users were disabled after the check. No real DTS submission was attempted.
+
+API readiness returned 200; unauthenticated API/provider access returned 401. CORS allowed the canonical Vercel origin and did not allow an unrelated origin. All four Railway deployments succeeded from `main`.
+
+Inbox delivery and the real owner’s email callback still need an interactive sign-in check. Built-in Supabase email restrictions remain in effect; password-authenticated synthetic API checks do not verify email delivery.
+
+For future releases:
 Check API readiness, rejection of an unauthenticated `/v1/session`, private receipt storage, successful email callback, and persistent trip state after refresh. Exercise planning review and approval with distinct assigned users, then upload a synthetic receipt and observe scan → extraction → confirmation → expense → voucher review → package download. Check tenant isolation and original receipt hashes. Verify worker logs and Railway usage limits without printing tokens or document contents.
 
 Real DTS submission remains disabled until an authorized DTS interface is separately configured.
 
-References: [Railway service configuration](https://docs.railway.com/config-as-code/reference), [Railway usage limits](https://docs.railway.com/cli/usage), [Supabase database connections](https://supabase.com/docs/guides/database/connecting-to-postgres), [Supabase SMTP](https://supabase.com/docs/guides/auth/auth-smtp).
+References: [Railway service configuration](https://docs.railway.com/infrastructure-as-code/reference), [Railway usage limits](https://docs.railway.com/cli/usage), [Supabase database connections](https://supabase.com/docs/guides/database/connecting-to-postgres), [Supabase SMTP](https://supabase.com/docs/guides/auth/auth-smtp).

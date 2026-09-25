@@ -41,13 +41,13 @@ GitHub Actions checks contracts, types, unit tests, frontend and container build
 
 The `ouranos` Vercel project is connected to this GitHub repository, with `main` as its production branch. `vercel.json` selects the native Next.js build (`npm run build:vercel`), while the existing local preview commands remain available. The Vercel project uses Node.js 24. `.vercelignore` excludes local credentials, service state and generated artifacts from CLI uploads. GitHub Actions checks both frontend builds.
 
-Until hosted services are configured, Vercel serves the existing preview mode. It does not authenticate email addresses or sync to the local backend. Configure `NEXT_PUBLIC_OURANOS_API_URL`, `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in Vercel only when their hosted services are available, then redeploy. Add the actual Vercel origin to the API CORS allowlist and its `/auth/callback` URL to Supabase's allowed redirects. Database and service secrets belong to backend hosting, never these public variables.
+The production frontend at [ouranos-fawn.vercel.app](https://ouranos-fawn.vercel.app) is configured with the hosted Railway API and Supabase Auth. Only the public API URL, Supabase URL and public Auth key are built into the frontend. Database and provider secrets stay in Railway.
 
-## Cloud backend activation still requires an environment
+## Cloud backend
 
-The selected deployment layout is Vercel for the frontend, Railway for the API/worker/receipt services, and the existing paid Supabase project with an isolated Ouranos schema for database/Auth/storage. Service configurations and the activation sequence are in [cloud-deployment.md](cloud-deployment.md). Verify hosting account access and the approved spending limit before starting services.
+The API, worker, receipt adapter and private scanner are live on Railway. PostgreSQL, Auth and private storage use the existing paid Supabase project, with Ouranos tables isolated in their own schema. The workspace has a $40 usage hard limit and $30 alert. Deployment configuration, verification results and email limitations are in [cloud-deployment.md](cloud-deployment.md).
 
-Local services are not a hosted deployment. The existing published frontend preview does not reach this computer's database. The Supabase schema is provisioned in the selected paid project. Cloud activation still needs email delivery configuration and reachable API, worker and receipt services. Verify the intended owner's Supabase organization before provisioning or uploading credentials.
+GitHub `main` is the default and deployment branch. Changes to backend source paths trigger the corresponding Railway services. Infrastructure lives in `.railway/railway.ts`; review `railway config plan` before applying infrastructure changes. Supabase's built-in sender restricts email sign-in to project-team recipients; general-user access still requires SMTP setup.
 
 Use production TLS, exact CORS/callback origins and server-only secrets. The worker requires direct PostgreSQL or **session pooling**, because per-job locks depend on a stable database session. Do not use a transaction pooler for workers. Build the frontend with the deployed API URL and public Auth settings only.
 
