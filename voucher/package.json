@@ -1,0 +1,21 @@
+{
+  "name": "ouranos-voucher-copilot",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "predev": "node scripts/prepare-ocr.mjs",
+    "dev": "vite --host 0.0.0.0",
+    "prebuild": "node scripts/prepare-ocr.mjs",
+    "build": "vite build",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@tesseract.js-data/eng": "^1.0.0",
+    "pdfjs-dist": "^6.3.289",
+    "tesseract.js": "^6.0.1"
+  },
+  "devDependencies": {
+    "vite": "^7.1.0"
+  }
+}
