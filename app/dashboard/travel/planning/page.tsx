@@ -1,2 +1,2 @@
-import {ModuleSlot} from '@/components/platform/module-slot';
-export default function Planning(){return <ModuleSlot module="planning"/>}
+import {ConnectedWorkflow} from '@/components/travel/connected-workflow';
+export default function Planning(){return <ConnectedWorkflow module="planning"/>}

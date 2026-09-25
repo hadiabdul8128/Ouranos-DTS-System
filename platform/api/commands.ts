@@ -8,6 +8,10 @@ import {verifyStoredFile} from '../shared/files';
 import {loadEntity,publishChange,toEntity,updateStatus,TABLES} from './entities';
 import {validatePlanning} from '../../modules/planning/validator';
 import {validateVoucher} from '../../modules/vouchers/validator';
+import {PLANNING_SCHEMA_VERSION,planningModuleSchema} from '../../packages/contracts/planning-module';
+import {VOUCHER_MODULE_SCHEMA_VERSION,voucherModuleSchema} from '../../packages/contracts/voucher-module';
+import {reconcileStoredExpenses} from '../../packages/domain/voucher-adapter';
+import {loadApprovedAuthorization} from './approved';
 
 export const canonical=(v:unknown):string=>JSON.stringify(v,(_key,value)=>value&&typeof value==='object'&&!Array.isArray(value)?Object.fromEntries(Object.entries(value).sort(([a],[b])=>a.localeCompare(b))):value);
 export const hash=(v:unknown)=>createHash('sha256').update(canonical(v)).digest('hex');
@@ -107,11 +111,36 @@ async function submit(db:PoolClient,c:Extract<Command,{type:'authorization.submi
  const workflow=(await db.query("select * from public.workflow_definitions where organization_id=$1 and kind=$2 and status='active'",[org,kind])).rows[0];check(workflow,'DEPENDENCY_PENDING','An administrator must configure approval routing',409);
  check(workflow.data.steps.every((s:any)=>s.assigneeId!==userId),'PERMISSION_DENIED','A traveler cannot review their own submission',403);
  const trip=await loadEntity(db,'trip',entity.trip_id,org);const snapshot:Record<string,any>={kind,entity:toEntity(kind,entity),trip:toEntity('trip',trip),workflow:workflow.data,workflowVersion:workflow.version};
+ if(kind==='authorization'&&entity.data.formSchemaVersion===PLANNING_SCHEMA_VERSION){
+  const form=planningModuleSchema.parse(entity.data.formData);
+  for(const item of form.approvedExpenseItems)for(const date of [item.date,item.startDate,item.endDate].filter(Boolean))check(date!>=trip.data.departure&&date!<=trip.data.returnDate,'VALIDATION_FAILED','Budget item dates must fall within the trip');
+ }
  if(kind==='voucher'){
+  // withActor serializes organization writes, so concurrent submissions cannot
+  // reserve the same expense in two different active vouchers.
+  const claimed=await db.query(`select id from public.vouchers where organization_id=$1 and trip_id=$2 and id<>$3
+   and status in ('in_review','approved') and (data->'expenseIds') ?| $4::text[] limit 1`,[org,entity.trip_id,entity.id,entity.data.expenseIds]);
+  check(!claimed.rowCount,'INVALID_STATE_TRANSITION','An expense is already included in another submitted voucher',409);
   const auth=await loadEntity(db,'authorization',entity.authorization_id,org);check(auth.status==='approved','INVALID_STATE_TRANSITION','An approved authorization is required',409);
   snapshot.authorization=toEntity('authorization',auth);snapshot.expenses=[];snapshot.documents=[];
   for(const expenseId of entity.data.expenseIds){const expense=await loadEntity(db,'expense',expenseId,org);check(expense.trip_id===entity.trip_id,'VALIDATION_FAILED','Expense trip mismatch');snapshot.expenses.push(toEntity('expense',expense));
    for(const docId of expense.data.documentIds){const doc=await loadEntity(db,'document',docId,org);check(doc.trip_id===entity.trip_id&&doc.status==='ready','ATTACHMENT_INCOMPLETE','A receipt is not processed and confirmed',409);snapshot.documents.push(toEntity('document',doc))}
+  }
+  if(entity.data.formSchemaVersion===VOUCHER_MODULE_SCHEMA_VERSION){
+   const form=voucherModuleSchema.parse(entity.data.formData);
+   check(form.tripId===entity.trip_id&&form.authorizationId===entity.authorization_id,'VALIDATION_FAILED','Voucher context does not match its records');
+   const approved=await loadApprovedAuthorization(db,org,entity.authorization_id);
+   snapshot.authorizationRevision=approved;
+   check(form.expenseItems.length===snapshot.expenses.length,'VALIDATION_FAILED','Voucher expense selection changed');
+   for(const expense of snapshot.expenses as Entity[]){
+    const stated=form.expenseItems.find(item=>item.expenseId===expense.id);
+    check(stated&&stated.authorizationItemId===expense.data.authorizationItemId&&stated.amountMinor===expense.data.amountMinor&&stated.currency===expense.data.currency&&canonical([...stated.documentIds].sort())===canonical([...(expense.data.documentIds as string[])].sort()),'VALIDATION_FAILED','Voucher expense details no longer match saved records');
+   }
+   const reconciliation=reconcileStoredExpenses(approved,snapshot.expenses,snapshot.documents,form.resolutions);
+   check(reconciliation.ready,'VALIDATION_FAILED',reconciliation.issues.map(i=>i.message).join(' '));
+   const actualTotal=snapshot.expenses.reduce((sum:number,e:Entity)=>sum+Number(e.data.amountMinor),0);
+   check(Number.isSafeInteger(actualTotal)&&actualTotal===form.reconciliation.totalAmountMinor,'VALIDATION_FAILED','Voucher total does not match saved expenses');
+   snapshot.reconciliation=reconciliation;
   }
  }
  const rev=(await db.query('insert into public.submission_revisions(organization_id,trip_id,authorization_id,voucher_id,entity_version,snapshot,sha256,submitted_by) values($1,$2,$3,$4,$5,$6,$7,$8) returning *',[org,entity.trip_id,kind==='authorization'?entity.id:null,kind==='voucher'?entity.id:null,entity.version,snapshot,hash(snapshot),userId])).rows[0];

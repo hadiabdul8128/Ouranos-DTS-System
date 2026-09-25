@@ -38,7 +38,7 @@ All three `NEXT_PUBLIC_OURANOS_API_URL`, `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PU
 
 The API and worker require `DATABASE_URL`, `SUPABASE_URL`, a publishable key and a server secret. Those credentials stay in server processes. `ALLOWED_ORIGINS` controls browser CORS and must match the actual frontend origins. The API defaults to loopback binding on port 4100. Production requires `DATABASE_SSL=verify-full`; configure trusted database TLS accordingly.
 
-Receipt scanning and OCR default to disabled. To integrate them, supply both HTTP provider modes and their URLs/tokens, then explicitly reprocess waiting documents. DTS defaults to disabled; mock is development-only. See [partner handoff](partner-handoff.md) for adapter payloads and semantics.
+Run `npm run platform:receipts` to start and connect the local ClamAV/Tesseract services. Other deployments can provide both HTTP adapter URLs and server tokens. Explicitly reprocess waiting documents after a provider is enabled. DTS remains disabled; mock is development-only. See [activation](activation.md) and [partner handoff](partner-handoff.md).
 
 ## Checks and failure investigation
 
@@ -61,4 +61,4 @@ Deploy the frontend, Node API and Node worker as distinct runtime services with 
 
 Before a real environment is enabled, supply its real email/identity configuration, allowed callback URLs, database and storage permissions, server secrets, partner validators and explicitly authorized provider connections. Define backups, retention, device/offline data policy, operational monitoring and recovery for that environment. The current repository does not claim these external services or organizational controls are complete.
 
-The current worker holds an organization transaction lock during provider requests. That is a known throughput limit, and long or retrying integrations require a job-claim/finalize design before scaling. The bootstrap endpoint also caps visible data per entity kind. No Redis or Kubernetes deployment has been added; choose those only if the target environment requires them.
+Workers perform provider calls outside organization transactions. They claim work, renew the queue lease, and revalidate version/status/ownership before finalizing. Per-job locks require direct PostgreSQL or session pooling; transaction pooling is unsupported for workers. The bootstrap endpoint still caps visible data per entity kind. No Redis or Kubernetes is required.

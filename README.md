@@ -1,8 +1,8 @@
 # Ouranos
 
-A minimal operational workspace with a travel platform skeleton. The home screen stays simple: an animated Ouranos wordmark, email sign-in, then “What do you want to do?” Enter a travel request to begin.
+A minimal operational workspace with a connected travel platform. The home screen stays simple: an animated Ouranos wordmark, email sign-in, then “What do you want to do?” Enter a travel request to begin.
 
-The shared platform provides verified sessions, organization roles, trip drafts, document storage, an offline outbox, immutable submission revisions, approval routing and background jobs. Planning and voucher forms are explicit partner integration points. Other Ouranos workflows can use the same foundation later.
+The shared platform provides verified sessions, organization roles, planning, expenses, vouchers, private documents, an offline outbox, immutable submission revisions, approval routing and background jobs. The collaborator's voucher module is preserved in `voucher/`; its receipt parser and reconciliation logic are connected to the shared backend. Other workflows can use the same foundation later.
 
 ## Run the platform locally
 
@@ -25,12 +25,12 @@ The API runs on port 4100; Supabase Auth/Storage on 56321, PostgreSQL on 56322 a
 ## Current boundaries
 
 - With all three public platform settings configured, email login uses Supabase and the API verifies access tokens. Without them, the frontend remains a local preview with unverified email; it does not gain authenticated API access. A hosted-site access gate is separate from Ouranos authentication.
-- Planning and voucher screens are integration slots. Drafts accept versioned partner form data, but submission fails closed until a matching server validator is installed. The development fixture schema is never accepted in production.
-- OCR, file scanning and DTS delivery default to disabled. Receipt processing waits for providers. The development DTS mock records a simulation and never reports external acceptance.
+- Planning and voucher forms use registered validators and immutable approved travel. The server checks persisted expenses and recomputes reconciliation. These are application consistency checks; organization reviewers remain responsible for travel-policy decisions. The fixture schema is never accepted in production.
+- Local receipt processing uses the optional ClamAV, Tesseract and Poppler services. Unavailable providers never report successful processing. DTS remains unconnected; the development mock never reports external acceptance.
 - An already open, verified workspace can retain drafts and receipts offline. Initial sign-in, submissions and decisions need a connection. The service worker does not cache private pages or API responses; this is not a fully offline application launch.
 - This is a development foundation, not an operational deployment or an accreditation claim. The hosted frontend alone does not provision the API, worker, database or providers.
 
-Read the [architecture](docs/architecture.md), [partner handoff](docs/partner-handoff.md), and generated [OpenAPI contract](docs/openapi.json). The running API also serves the contract at `/openapi.json`.
+Read the [activation guide](docs/activation.md), [architecture](docs/architecture.md), [partner handoff](docs/partner-handoff.md), and generated [OpenAPI contract](docs/openapi.json). The running API also serves the contract at `/openapi.json`.
 
 ## Checks
 
@@ -38,7 +38,9 @@ Read the [architecture](docs/architecture.md), [partner handoff](docs/partner-ha
 npm run platform:contracts -- --check
 npm run platform:check
 npm run platform:test:integration
+npm run voucher:test
+npm run platform:doctor
 npm run build
 ```
 
-Integration tests use the local Supabase stack and synthetic accounts. They exercise database authorization, command replay/version conflicts, frozen approvals, document verification and provider-injected receipt processing. They do not test live DTS, OCR or production authentication delivery.
+Integration tests use local Supabase and synthetic accounts. They cover database authorization, frozen approvals, real form submissions, server reconciliation, worker concurrency and recovery. When loopback scan/OCR services are enabled, an additional test verifies real receipt processing. No test sends travel to DTS.

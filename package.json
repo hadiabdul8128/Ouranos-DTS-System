@@ -20,7 +20,10 @@
     "platform:local": "node platform/scripts/local-setup.mjs",
     "platform:seed": "tsx platform/scripts/seed.ts",
     "platform:check": "tsc --noEmit && npm run platform:test",
-    "platform:dev": "node platform/scripts/dev.mjs"
+    "platform:dev": "node platform/scripts/dev.mjs",
+    "platform:doctor": "tsx platform/scripts/doctor.ts",
+    "platform:receipts": "node platform/scripts/receipts-local.mjs",
+    "voucher:test": "npm --prefix voucher test"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

@@ -44,6 +44,7 @@ const models = {
   MembershipUpdated:z.object({updated:z.literal(true)}),
   Health:z.object({status:z.literal('ok'),contractVersion:z.string()}),
   Ready:z.object({status:z.literal('ready')}),
+  ApprovedAuthorization:z.object({revision:z.object({id:uuid,sha256:z.string(),snapshot:z.object({entity,trip:entity}).passthrough()})}),
 };
 
 type SchemaName = keyof typeof models;
@@ -80,6 +81,7 @@ const paths:Record<string,Record<string,SpecObject>> = {
   '/v1/entities/{kind}':{get:operation('listEntities','List visible entities of one kind','EntityList',{description:'Sorted by updated_at descending, then id. limit is supported; cursor is currently ignored for this route. Use sync/pull for cursor-based change retrieval.',parameters:[kind,organization,limit]})},
   '/v1/entities/{kind}/{id}':{get:operation('getEntity','Load one visible entity','EntityResponse',{parameters:[kind,pathId,organization]})},
   '/v1/approvals/{id}/revision':{get:operation('approvalRevision','Read an immutable submission and its approval history','RevisionResponse',{description:'The id is an approval request id. The returned revision, steps and decisions retain database snake_case field names.',parameters:[pathId,organization]})},
+  '/v1/authorizations/{id}/approved':{get:operation('approvedAuthorization','Load the approved immutable authorization for a voucher','ApprovedAuthorization',{parameters:[pathId,organization]})},
   '/v1/trips/{id}/audit':{get:operation('tripAudit','Read up to 500 trip audit events','AuditResponse',{description:'Events are ordered by ascending id. This endpoint does not provide pagination.',parameters:[pathId,organization]})},
   '/v1/documents/{id}/upload':{post:operation('prepareUpload','Create a signed upload URL for a registered document','UploadResponse',{description:'Only the document creator may upload while status is registered. Upload bytes to signedUrl, then issue document.finalize. Finalization verifies the stored size, media signature and SHA-256 digest.',parameters:[pathId],requestBody:request('DocumentScope')})},
   '/v1/documents/{id}/download':{post:operation('prepareDownload','Create a short-lived signed download URL','DownloadResponse',{description:'Requires document status needs_review or ready and current trip visibility. The URL expires after 60 seconds.',parameters:[pathId],requestBody:request('DocumentScope')})},

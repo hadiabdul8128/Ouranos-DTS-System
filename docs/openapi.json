@@ -852,6 +852,74 @@
         ]
       }
     },
+    "/v1/authorizations/{id}/approved": {
+      "get": {
+        "operationId": "approvedAuthorization",
+        "summary": "Load the approved immutable authorization for a voucher",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovedAuthorization"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "organizationId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
     "/v1/trips/{id}/audit": {
       "get": {
         "operationId": "tripAudit",
@@ -1251,10 +1319,16 @@
           "category": {
             "type": "string",
             "enum": [
+              "airfare",
               "lodging",
-              "transport",
+              "rental_car",
+              "fuel",
               "meals",
-              "other"
+              "parking",
+              "ground_transport",
+              "baggage",
+              "other",
+              "transport"
             ]
           },
           "description": {
@@ -1270,6 +1344,25 @@
             },
             "maxItems": 30,
             "default": []
+          },
+          "authorizationItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "gtcc",
+              "personal"
+            ]
+          },
+          "serviceStartDate": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "serviceEndDate": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
           }
         },
         "required": [
@@ -1673,10 +1766,16 @@
                   "category": {
                     "type": "string",
                     "enum": [
+                      "airfare",
                       "lodging",
-                      "transport",
+                      "rental_car",
+                      "fuel",
                       "meals",
-                      "other"
+                      "parking",
+                      "ground_transport",
+                      "baggage",
+                      "other",
+                      "transport"
                     ]
                   },
                   "description": {
@@ -1692,6 +1791,25 @@
                     },
                     "maxItems": 30,
                     "default": []
+                  },
+                  "authorizationItemId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "paymentMethod": {
+                    "type": "string",
+                    "enum": [
+                      "gtcc",
+                      "personal"
+                    ]
+                  },
+                  "serviceStartDate": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  },
+                  "serviceEndDate": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
                   }
                 },
                 "required": [
@@ -2669,10 +2787,16 @@
                         "category": {
                           "type": "string",
                           "enum": [
+                            "airfare",
                             "lodging",
-                            "transport",
+                            "rental_car",
+                            "fuel",
                             "meals",
-                            "other"
+                            "parking",
+                            "ground_transport",
+                            "baggage",
+                            "other",
+                            "transport"
                           ]
                         },
                         "description": {
@@ -2688,6 +2812,25 @@
                           },
                           "maxItems": 30,
                           "default": []
+                        },
+                        "authorizationItemId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "paymentMethod": {
+                          "type": "string",
+                          "enum": [
+                            "gtcc",
+                            "personal"
+                          ]
+                        },
+                        "serviceStartDate": {
+                          "type": "string",
+                          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                        },
+                        "serviceEndDate": {
+                          "type": "string",
+                          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
                         }
                       },
                       "required": [
@@ -4800,6 +4943,159 @@
         },
         "required": [
           "status"
+        ],
+        "additionalProperties": false
+      },
+      "ApprovedAuthorization": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "sha256": {
+                "type": "string"
+              },
+              "snapshot": {
+                "type": "object",
+                "properties": {
+                  "entity": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "organizationId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "tripId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "trip",
+                          "authorization",
+                          "expense",
+                          "voucher",
+                          "document",
+                          "approval",
+                          "workflow",
+                          "notification",
+                          "integration"
+                        ]
+                      },
+                      "version": {
+                        "type": "integer",
+                        "exclusiveMinimum": true,
+                        "minimum": 0
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "type": "object",
+                        "additionalProperties": {}
+                      },
+                      "updatedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "organizationId",
+                      "kind",
+                      "version",
+                      "status",
+                      "data",
+                      "updatedAt"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "trip": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "organizationId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "tripId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "trip",
+                          "authorization",
+                          "expense",
+                          "voucher",
+                          "document",
+                          "approval",
+                          "workflow",
+                          "notification",
+                          "integration"
+                        ]
+                      },
+                      "version": {
+                        "type": "integer",
+                        "exclusiveMinimum": true,
+                        "minimum": 0
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "type": "object",
+                        "additionalProperties": {}
+                      },
+                      "updatedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "organizationId",
+                      "kind",
+                      "version",
+                      "status",
+                      "data",
+                      "updatedAt"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "entity",
+                  "trip"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "required": [
+              "id",
+              "sha256",
+              "snapshot"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "revision"
         ],
         "additionalProperties": false
       }

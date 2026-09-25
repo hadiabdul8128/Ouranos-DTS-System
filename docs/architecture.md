@@ -27,7 +27,7 @@ flowchart LR
 | Files | Private Supabase Storage bucket | Original receipt bytes with server-side size, type and hash verification |
 | Development | Supabase CLI and Docker | Local Auth, PostgreSQL, Storage and test email inbox |
 
-Redis is not a dependency; PostgreSQL supplies the durable queue. Kubernetes manifests and a production deployment platform are not part of this skeleton. The frontend build is separate from the long-running API and worker.
+Redis is not a dependency; PostgreSQL supplies the durable queue. Docker images and Compose are supplied for the API, worker and optional receipt services. Kubernetes is not required. The frontend build remains separate from the long-running API and worker.
 
 ## Authority and data flow
 
@@ -37,13 +37,13 @@ Roles are traveler, reviewer, approver, admin and auditor. A traveler edits thei
 
 Each write carries a UUID command id, organization id, entity id, device id, expected entity version and contract schema version. Successful commands are recorded with a canonical payload hash. Retrying identical content returns its original result; reusing the id for different content is rejected. Versions prevent silent overwrite. A device id is scoped to one user and organization.
 
-Commands, change publication, audit events and queue insertion share a transaction. An advisory lock serializes work within each organization so synchronization cursors follow commits. This deliberately limits throughput. The worker currently holds that lock and its transaction during receipt storage/provider calls; move external I/O behind a claim/finalize design before expecting high concurrency.
+Commands, change publication, audit events and queue insertion share a transaction. An advisory lock serializes commits within each organization so synchronization cursors follow commit order. Receipt workers release this lock during storage and provider calls, then recheck the entity version/status and queue lease before finalization. Per-job session advisory locks deduplicate concurrent work. Worker database connections must use direct PostgreSQL or session pooling, not transaction pooling.
 
 ## Submission and review
 
 Planning and voucher drafts carry `formSchemaVersion` plus opaque `formData`. Submission invokes the corresponding server validator, checks dependencies and routing, then freezes a snapshot in `submission_revisions`. Approval decisions refer to that frozen revision, not a mutable draft. Revisions, decisions and audit events have database immutability protections. Steps must run in order and the submitter cannot approve their own request.
 
-This provides mechanics for review, not a complete travel policy implementation. Real planning/voucher rules, amendments and a live DTS adapter still need integration. A status of approved means approved within Ouranos; it does not mean accepted by DTS.
+The registered planning form captures traveler, origin and budget lines using integer minor-unit amounts. The approved-authorization endpoint returns the immutable reviewed snapshot, which is adapted into the existing voucher module's handoff. Voucher submission independently compares all client references and totals with persisted expenses, verifies linked receipts, and reruns reconciliation against that approved snapshot. Organization-specific policy, amendments and live DTS delivery remain separate work. Approval means approval within Ouranos, not DTS acceptance.
 
 ## Offline behavior
 
@@ -60,3 +60,5 @@ IndexedDB is persistent browser storage, not an encrypted vault. Sign-out clears
 Jobs have visibility timeouts, idempotency keys, retry backoff and a failed-job table. The worker validates original file bytes before calling configured scan/OCR adapters; extracted values require a person to confirm the document. Provider failures do not become successful processing.
 
 Disabled receipt providers produce `awaiting_provider`; after configuring both adapters, issue `document.reprocess`. DTS supports only disabled and development mock modes. Both preserve `externalAccepted: false`; production rejects mock mode. Deploying the frontend does not enable these providers.
+
+The optional receipt service streams bytes to ClamAV, verifies signature freshness, and rejects malicious content before running Tesseract/Poppler. Extraction is bounded by file size, image dimensions, page count and timeout. It runs locally without a paid OCR API. Extracted fields remain suggestions until reviewed by the traveler.

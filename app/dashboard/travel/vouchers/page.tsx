@@ -1,2 +1,2 @@
-import {ModuleSlot} from '@/components/platform/module-slot';
-export default function Vouchers(){return <ModuleSlot module="vouchers"/>}
+import {ConnectedWorkflow} from '@/components/travel/connected-workflow';
+export default function Vouchers(){return <ConnectedWorkflow module="vouchers"/>}

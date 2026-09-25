@@ -1,0 +1,93 @@
+# Runtime services only: connect these to an existing Supabase project.
+# Example: OURANOS_CONTAINER_ENV_FILE=.env.platform.container docker compose -f compose.platform.yml up --build
+# Keep that ignored env file outside the image. For host-local Supabase, replace
+# loopback URL hosts with host.docker.internal; a container's 127.0.0.1 is itself.
+# Real deployments use NODE_ENV=production, DATABASE_SSL=verify-full and a proxy
+# with HTTPS. The published port binds only to host loopback by default.
+name: ouranos-platform
+
+x-platform: &platform
+  image: ouranos-platform:local
+  build:
+    context: .
+    dockerfile: Dockerfile.platform
+    target: runtime
+  env_file:
+    - path: ${OURANOS_CONTAINER_ENV_FILE:-.env.platform}
+      required: true
+      format: raw
+  init: true
+  restart: unless-stopped
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  tmpfs:
+    - /tmp:rw,noexec,nosuid,size=64m
+  extra_hosts:
+    - host.docker.internal:host-gateway
+  stop_grace_period: 120s
+
+services:
+  api:
+    <<: *platform
+    environment:
+      HOST: 0.0.0.0
+      PORT: "4100"
+    ports:
+      - "${OURANOS_API_BIND_ADDRESS:-127.0.0.1}:${OURANOS_API_PORT:-4100}:4100"
+  worker:
+    <<: *platform
+    command: [node, --import, tsx, platform/worker/main.ts]
+    # The worker is not an HTTP server; do not inherit the API's HTTP healthcheck.
+    healthcheck:
+      disable: true
+  receipts:
+    profiles: [receipts]
+    image: ouranos-receipts:local
+    build:
+      context: .
+      dockerfile: Dockerfile.receipts
+    environment:
+      RECEIPT_PROVIDER_TOKEN: ${OURANOS_RECEIPT_TOKEN:-}
+      CLAMD_HOST: clamav
+      CLAMD_PORT: "3310"
+    ports:
+      - "127.0.0.1:${OURANOS_RECEIPT_PORT:-4200}:4200"
+    depends_on:
+      clamav:
+        condition: service_healthy
+    init: true
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=256m
+    mem_limit: 1g
+    cpus: 2
+    pids_limit: 64
+    stop_grace_period: 35s
+  clamav:
+    profiles: [receipts]
+    # Official stable image, pinned with preloaded signatures. The publisher
+    # currently supplies amd64; Docker Desktop uses emulation on Apple Silicon.
+    image: clamav/clamav@sha256:0e31ce089574268aefa0b543767d66b70240ab51ed49eec53e07f18d5629d817
+    platform: linux/amd64
+    user: clamav
+    entrypoint: /init-unprivileged
+    restart: unless-stopped
+    volumes:
+      - clamav-signatures:/var/lib/clamav
+    # No host port: the unauthenticated clamd protocol stays inside this network.
+    mem_limit: 4g
+    cpus: 2
+    pids_limit: 128
+    healthcheck:
+      test: [CMD, clamdcheck.sh]
+      interval: 20s
+      timeout: 10s
+      start_period: 180s
+      retries: 10
+
+volumes:
+  clamav-signatures:

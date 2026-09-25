@@ -6,10 +6,10 @@ import { ArrowLeft, ArrowRight, Check, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-type Draft = {id: string; destination: string; departure: string; returnDate: string; dates: string; purpose: string; status: string; location: string; amount: string};
 export default function TravelRequest() {
   const platform = usePlatform();
   const [saving, setSaving] = useState(false);
+  const [savedTripId, setSavedTripId] = useState('');
   const [stage, setStage] = useState<"details" | "review" | "saved">("details");
   const [destination, setDestination] = useState("");
   const [departure, setDeparture] = useState("");
@@ -26,8 +26,9 @@ export default function TravelRequest() {
     if (!platform.repository) {setError("Open workspace settings to create or select an organization first."); return;}
     setSaving(true);
     try {
-      await platform.repository.stage('trip.save', crypto.randomUUID(), {destination:destination.trim(),departure,returnDate,purpose:purpose.trim(),timezone:Intl.DateTimeFormat().resolvedOptions().timeZone});
-      setError("");setStage("saved");void platform.engine?.sync();
+      const tripId=crypto.randomUUID();
+      await platform.repository.stage('trip.save', tripId, {destination:destination.trim(),departure,returnDate,purpose:purpose.trim(),timezone:Intl.DateTimeFormat().resolvedOptions().timeZone});
+      setSavedTripId(tripId);setError("");setStage("saved");void platform.engine?.sync();
     } catch (e) {setError(e instanceof Error ? e.message : "Your device could not save this draft. Please try again.");}
     finally {setSaving(false);}
   }
@@ -36,7 +37,7 @@ export default function TravelRequest() {
     <header className="quiet-header"><a href="/dashboard" className="quiet-brand">Ouranos</a><button onClick={() => void platform.signOut()} className="exit-link" aria-label="Sign out"><LogOut size={17}/></button></header>
     <section className="travel-stage" aria-labelledby="travel-heading">
       <a className="back-link" href="/dashboard"><ArrowLeft size={14}/> Back</a>
-      {stage === "saved" ? <div className="saved-state"><div className="saved-mark"><Check size={23}/></div><h1 id="travel-heading">Draft saved.</h1><p>{destination}</p><p className="saved-dates">{formatDate(departure)} — {formatDate(returnDate)}</p><div className="saved-note">Saved on this device. DTS is not connected.</div><Button asChild className="continue-button"><a href="/dashboard">Back to Ouranos <ArrowRight size={16}/></a></Button></div> : <>
+      {stage === "saved" ? <div className="saved-state"><div className="saved-mark"><Check size={23}/></div><h1 id="travel-heading">Draft saved.</h1><p>{destination}</p><p className="saved-dates">{formatDate(departure)} — {formatDate(returnDate)}</p><div className="saved-note">Saved on this device. DTS is not connected.</div><Button asChild className="continue-button"><a href={`/dashboard/travel/planning?tripId=${savedTripId}`}>Continue to travel plan <ArrowRight size={16}/></a></Button></div> : <>
         <div className="travel-eyebrow">TRAVEL <span/> DTS</div>
         <h1 id="travel-heading">{stage === "details" ? "Let’s plan your travel." : "Everything look right?"}</h1>
         <p className="travel-subtitle">{stage === "details" ? "Start with the essentials." : "Review the details before saving your draft."}</p>

@@ -2,16 +2,16 @@
 
 Contract version: `1.0.0`. The shared sources are `packages/contracts/index.ts`, `packages/sdk/index.ts` and `packages/domain/modules.ts`. Generate the OpenAPI document with `npm run platform:contracts`; `-- --check` verifies the committed output and route inventory without rewriting it.
 
-## Integration slots
+## Connected modules
 
 | Module | Route | Owned data | Submission validator |
 | --- | --- | --- | --- |
 | Planning | `/dashboard/travel/planning?tripId=<uuid>` | Authorization form under an existing trip | `modules/planning/validator.ts` |
 | Vouchers | `/dashboard/travel/vouchers?tripId=<uuid>` | Receipts, expenses and voucher form | `modules/vouchers/validator.ts` |
 
-Replace the module slot with the partner screen while reusing `usePlatform()` for the current session, organization, repository and client. Read the selected trip from its id; do not duplicate identity, organization selection, synchronization, receipt storage or approval routing inside each form. Handle missing trips and unavailable membership explicitly.
+The connected React screens reuse `usePlatform()` for the session, organization, repository and client. The original standalone voucher app remains unchanged in `voucher/`. Its normalization, reconciliation and receipt parser are reused through explicit adapters; its browser events and session handoffs are never evidence of an approved authorization.
 
-Choose a stable `formSchemaVersion`, then implement its server validator before enabling submission. Draft storage accepts arbitrary form versions so work can be saved during integration. Submission currently accepts only `ouranos.fixture.v1` in development/test: planning requires a truthy `purpose`, and vouchers require `certified: true`. These are synthetic test fixtures, not usable travel policy validators. All other versions, and fixture versions in production, fail closed.
+Registered production form versions are `ouranos.planning.v1` and `ouranos.voucher.v1`, defined in `packages/contracts/planning-module.ts` and `voucher-module.ts`. Planning stores origin, traveler and budget items in integer minor units. Vouchers carry certification, expense references and resolutions. The server checks these against stored records and recomputes the collaborator’s reconciliation rules. These are application rules, not an assertion that all military travel policy is encoded. Unknown versions fail closed. `ouranos.fixture.v1` remains development/test-only.
 
 ## Draft commands
 
@@ -21,7 +21,7 @@ Use the local repository for these offline-capable operations:
 const authorizationId = crypto.randomUUID();
 await platform.repository!.stage('authorization.save', authorizationId, {
   tripId,
-  formSchemaVersion: 'partner.planning.v1',
+  formSchemaVersion: 'ouranos.planning.v1',
   formData: validatedDraft,
 });
 await platform.engine?.sync();
@@ -33,7 +33,7 @@ Do not mutate a queued envelope. Lost acknowledgments must retry the original co
 
 ## Online actions and approval
 
-Before submission, finish synchronization and inspect any blocked records or files. Send `authorization.submit` or `voucher.submit` through the client with a new command id, the current server version and a device id owned by the current user/organization. Do not reuse another user's device id. The API checks installed validators, ownership, routing and dependency readiness; a frontend button cannot bypass them.
+Load `/v1/authorizations/{id}/approved` for the immutable approved snapshot before starting a voucher. The server selects a revision with a completed approval request and applies trip visibility. The adapter converts integer amounts to the standalone module’s dollar representation; persistence remains integer-based. Before submission, finish synchronization and inspect any blocked records or files. Send `authorization.submit` or `voucher.submit` through the client with a new command id, the current server version and a device id owned by the current user/organization. Do not reuse another user's device id. The API checks installed validators, ownership, routing and dependency readiness; a frontend button cannot bypass them.
 
 `OuranosClient.command()` throws `ApiFailure` for non-2xx responses. `push()` returns per-command results for domain rejections; inspect every result. A batch is ordered but commits commands independently. Top-level request failures can occur after earlier commands committed, so repeat the exact envelopes when recovering.
 

@@ -1,0 +1,28 @@
+# syntax=docker/dockerfile:1
+# Node LTS and its multi-architecture image are pinned for repeatable builds.
+FROM node:24.21.0-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 AS dependencies
+WORKDIR /app
+COPY package.json package-lock.json ./
+# tsx is currently a devDependency and runs the TypeScript backend. Retain the
+# locked toolchain until the backend has a dedicated compiled/runtime package.
+RUN npm ci --include=dev --include=optional --no-audit --no-fund \
+    && npm cache clean --force
+
+FROM node:24.21.0-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 AS runtime
+ENV NODE_ENV=production HOST=0.0.0.0 PORT=4100
+WORKDIR /app
+COPY --from=dependencies --chown=node:node /app/node_modules ./node_modules
+COPY --chown=node:node package.json package-lock.json ./
+COPY --chown=node:node platform ./platform
+COPY --chown=node:node packages ./packages
+COPY --chown=node:node modules ./modules
+COPY --chown=node:node voucher/src ./voucher/src
+COPY --chown=node:node voucher/package.json ./voucher/package.json
+COPY --chown=node:node docs/openapi.json ./docs/openapi.json
+USER node
+EXPOSE 4100
+STOPSIGNAL SIGTERM
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD node --input-type=module -e "const response = await fetch('http://127.0.0.1:' + (process.env.PORT || '4100') + '/ready', { signal: AbortSignal.timeout(4000) }); if (!response.ok) process.exit(1)"
+# Direct exec form delivers termination to Node without an npm/shell wrapper.
+CMD ["node", "--import", "tsx", "platform/api/server.ts"]
