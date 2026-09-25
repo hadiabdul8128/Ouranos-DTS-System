@@ -12,7 +12,8 @@ const categoryHints = {
 };
 
 const moneyPattern = /(?:[$€£]\s*|(?:USD|EUR|GBP|CAD)\s*)?-?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{2}|,\d{2})\b/gi;
-const datePattern = /\b(20\d{2})[-/](\d{1,2})[-/](\d{1,2})\b|\b(\d{1,2})[/-](\d{1,2})[/-](20\d{2}|\d{2})\b|\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2}),?\s+(20\d{2})\b/gi;
+const monthName = 'Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?';
+const datePattern = new RegExp(`\\b(20\\d{2})[-/](\\d{1,2})[-/](\\d{1,2})\\b|\\b(\\d{1,2})[/-](\\d{1,2})[/-](20\\d{2}|\\d{2})\\b|\\b(${monthName})\\s+(\\d{1,2}),?\\s+(20\\d{2})\\b|\\b(\\d{1,2})\\s+(${monthName})\\s+(20\\d{2})\\b`, 'gi');
 
 export function inferCategory(text) {
   return Object.entries(categoryHints).find(([, pattern]) => pattern.test(text || ''))?.[0] || 'other';
@@ -40,10 +41,14 @@ function dateFromMatch(match) {
   let year, month, day;
   if (match[1]) [year, month, day] = [match[1], match[2], match[3]];
   else if (match[4]) [year, month, day] = [match[6].length === 2 ? `20${match[6]}` : match[6], match[4], match[5]];
-  else {
+  else if (match[7]) {
     year = match[9];
     month = String(new Date(`${match[7]} 1, 2000`).getMonth() + 1);
     day = match[8];
+  } else {
+    year = match[12];
+    month = String(new Date(`${match[11]} 1, 2000`).getMonth() + 1);
+    day = match[10];
   }
   const value = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
   const parsed = new Date(`${value}T12:00:00`);
@@ -111,7 +116,7 @@ export function parseReceiptText(rawText) {
   const symbol = /[$€£]/.exec(rawText)?.[0];
   const currency = currencyMatch?.[1]?.toUpperCase() || ({ '€': 'EUR', '£': 'GBP', '$': 'USD' })[symbol] || 'USD';
   const taxes = optionalMoney(lines, /^(?:(?:sales|occupancy|city|state|room|lodging)\s+)?tax(?:es)?\b/i);
-  const fees = optionalMoney(lines, /^(?:service|booking|convenience|resort|facility)?\s*fees?\b/i);
+  const fees = optionalMoney(lines, /^(?:(?:service|booking|convenience|resort|facility|transaction|processing|fuel)\s+)?(?:fees?|surcharge)\b|^service charge\b/i);
   const subtotal = optionalMoney(lines, /^sub[ -]?total\b/i);
   const tip = optionalMoney(lines, /^(?:tip|gratuity)\b/i);
   const serviceStartDate = labeledDate(lines, /check[ -]?in|arrival/i);
@@ -121,7 +126,7 @@ export function parseReceiptText(rawText) {
     merchant: merchant ? merchantIndex === 0 ? 'high' : 'medium' : 'low', date: dateConfidence, amount: amountConfidence,
     taxes: taxes.confidence, fees: fees.confidence, subtotal: subtotal.confidence, tip: tip.confidence,
     currency: currencyMatch ? 'high' : symbol ? 'medium' : 'low', location: location ? 'high' : 'low', address: address ? 'medium' : 'low',
-    category: category === 'other' ? 'low' : 'medium', paymentMethod: paymentMethod ? 'high' : 'low',
+    category: category === 'other' ? 'low' : 'medium', categoryLabel: category === 'other' ? 'low' : 'medium', paymentMethod: paymentMethod ? 'high' : 'low',
     serviceStartDate: serviceStartDate ? 'high' : 'low', serviceEndDate: serviceEndDate ? 'high' : 'low'
   };
   return { fields, confidence, candidates: { totals, amounts: distinctUnlabeled, dates: distinctDates } };

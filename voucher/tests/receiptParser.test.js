@@ -45,3 +45,11 @@ test('one unlabeled amount is a reviewable suggestion', () => {
   assert.equal(parsed.fields.category, 'fuel');
   assert.equal(parsed.fields.paymentMethod, '');
 });
+
+test('day-month dates and an explicit service fee are extracted', () => {
+  const parsed = parseReceiptText('Airport Shuttle\nDate 14 Oct 2026\nFare $17.50\nService Fee $2.50\nTotal $20.00');
+  assert.equal(parsed.fields.date, '2026-10-14');
+  assert.equal(parsed.fields.fees, 2.5);
+  assert.equal(parsed.fields.amount, 20);
+  assert.equal(parsed.confidence.fees, 'high');
+});
