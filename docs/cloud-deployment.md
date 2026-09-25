@@ -87,3 +87,14 @@ Check API readiness, rejection of an unauthenticated `/v1/session`, private rece
 Real DTS submission remains disabled until an authorized DTS interface is separately configured.
 
 References: [Railway service configuration](https://docs.railway.com/infrastructure-as-code/reference), [Railway usage limits](https://docs.railway.com/cli/usage), [Supabase database connections](https://supabase.com/docs/guides/database/connecting-to-postgres), [Supabase SMTP](https://supabase.com/docs/guides/auth/auth-smtp).
+
+## Temporary access without approval setup
+
+Set the Railway API variable `APPROVAL_MODE=preview` to allow working plans,
+receipt processing, and draft voucher exports without configured reviewers.
+The session response controls the UI. Authentication, memberships, ownership,
+and row-level security remain enforced. This mode does not create approvals
+or submit anything to DTS; exported drafts are labeled accordingly.
+
+Restore `APPROVAL_MODE=required` (the default) and redeploy the API to require
+the normal approval workflow again. Existing drafts remain drafts.

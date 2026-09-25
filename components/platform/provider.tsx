@@ -9,11 +9,12 @@ import {SyncEngine,type SyncState} from '@/packages/offline/sync';
 import type {Role} from '@/packages/contracts';
 const demoOrg='00000000-0000-4000-8000-000000000001';
 type Membership={organizationId:string;name:string;role:Role};
-type Platform={configured:boolean;loading:boolean;session:Session|null;client:OuranosClient|null;repository:LocalRepository|null;engine:SyncEngine|null;sync:SyncState;memberships:Membership[];organizationId:string|null;setOrganization:(id:string)=>void;refresh:()=>Promise<void>;signOut:()=>Promise<void>;error:string|null};
+type Platform={approvalMode:'required'|'preview';configured:boolean;loading:boolean;session:Session|null;client:OuranosClient|null;repository:LocalRepository|null;engine:SyncEngine|null;sync:SyncState;memberships:Membership[];organizationId:string|null;setOrganization:(id:string)=>void;refresh:()=>Promise<void>;signOut:()=>Promise<void>;error:string|null};
 const Context=createContext<Platform|null>(null);
 export function usePlatform(){const p=useContext(Context);if(!p)throw new Error('PlatformProvider missing');return p}
 export function PlatformProvider({children}:{children:ReactNode}){
  const [session,setSession]=useState<Session|null>(null),[loading,setLoading]=useState(true),[memberships,setMemberships]=useState<Membership[]>([]),[organizationId,setOrganizationId]=useState<string|null>(null),[repository,setRepository]=useState<LocalRepository|null>(null),[engine,setEngine]=useState<SyncEngine|null>(null),[sync,setSync]=useState<SyncState>({state:'idle',pending:0}),[error,setError]=useState<string|null>(null);
+ const [approvalMode,setApprovalMode]=useState<'required'|'preview'>('required');
  const identity=useRef<string|null>(null),refreshGeneration=useRef(0);
  const configured=platformConfigured();
  const [client]=useState(()=>configured?new OuranosClient(process.env.NEXT_PUBLIC_OURANOS_API_URL!,async()=>{const {data}=await browserAuth()!.auth.getSession();return data.session?.access_token||null}):null);
@@ -24,7 +25,7 @@ export function PlatformProvider({children}:{children:ReactNode}){
    const info=await client.session();
    if(generation!==refreshGeneration.current||identity.current!==userId)return;
    if(info.user.id!==userId)throw new Error('Your identity changed. Sign in again to open the workspace.');
-   setMemberships(info.memberships);
+   setMemberships(info.memberships);setApprovalMode(info.approvalMode||'required');
    setOrganizationId(current=>info.memberships.some(m=>m.organizationId===current)?current:info.memberships[0]?.organizationId||null);
    setError(null);
   }catch(e){
@@ -44,7 +45,7 @@ export function PlatformProvider({children}:{children:ReactNode}){
    const generation=++updateGeneration;
    if(identity.current!==(next?.user.id||null)){
     ++refreshGeneration.current;identity.current=next?.user.id||null;
-    setMemberships([]);setOrganizationId(null);setError(null);
+    setMemberships([]);setOrganizationId(null);setApprovalMode('required');setError(null);
    }
    setSession(next);
    try{if(next)await refresh()}catch{/* refresh exposes its error in settings */}
@@ -95,7 +96,7 @@ export function PlatformProvider({children}:{children:ReactNode}){
   if(auth){const {error:signOutError}=await auth.auth.signOut({scope:'local'});if(signOutError){setError(signOutError.message);return}}
   window.location.assign('/');
  }
- return <Context.Provider value={{configured,loading,session,client,repository,engine,sync,memberships,organizationId,setOrganization,refresh,signOut,error}}>{children}</Context.Provider>
+ return <Context.Provider value={{approvalMode,configured,loading,session,client,repository,engine,sync,memberships,organizationId,setOrganization,refresh,signOut,error}}>{children}</Context.Provider>
 }
 export function SyncIndicator(){const p=usePlatform();let label=p.configured?'On device':'Local preview';if(p.sync.state==='syncing')label='Saving…';if(p.sync.state==='synced')label='Saved';if(p.sync.state==='offline')label='Offline · saved on this device';if(p.sync.state==='blocked')label='Sync needs attention';if(p.sync.state==='authentication_required')label='Sign in to sync';if(p.sync.state==='access_denied')label='Access needs review';return <a className="platform-status" href="/dashboard/platform" aria-live="polite">{label}{p.sync.pending>0?` · ${p.sync.pending} pending`:''}</a>}
 export function WorkspaceGate({children}:{children:ReactNode}){const p=usePlatform();if(p.loading)return <main className="quiet-page"><p className="platform-loading">Opening your workspace…</p></main>;if(p.configured&&!p.session)return <main className="quiet-page"><div className="platform-loading">Sign in to open your workspace.<p><a href="/">Go to sign in</a></p></div></main>;return <>{children}</>}

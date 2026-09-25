@@ -36,7 +36,7 @@ export default defineRailway(() => {
     healthcheckTimeout: 120,
     replicas: { "sfo": 1 },
     deploy: { drainingSeconds: 30, limitOverride: { containers: { cpu: 1, memoryBytes: 500000000 } }, restartPolicyMaxRetries: 5 },
-    env: { ALLOWED_ORIGINS: preserve(), DATABASE_CA_CERT: preserve(), DATABASE_SSL: preserve(), DATABASE_URL: preserve(), DTS_PROVIDER: preserve(), HOST: preserve(), NODE_ENV: preserve(), OCR_PROVIDER: preserve(), PORT: preserve(), SCAN_PROVIDER: preserve(), SUPABASE_PUBLISHABLE_KEY: preserve(), SUPABASE_SECRET_KEY: preserve(), SUPABASE_URL: preserve(), WORKER_POLL_MS: preserve() },
+    env: { APPROVAL_MODE: preserve(), ALLOWED_ORIGINS: preserve(), DATABASE_CA_CERT: preserve(), DATABASE_SSL: preserve(), DATABASE_URL: preserve(), DTS_PROVIDER: preserve(), HOST: preserve(), NODE_ENV: preserve(), OCR_PROVIDER: preserve(), PORT: preserve(), SCAN_PROVIDER: preserve(), SUPABASE_PUBLISHABLE_KEY: preserve(), SUPABASE_SECRET_KEY: preserve(), SUPABASE_URL: preserve(), WORKER_POLL_MS: preserve() },
   });
 
   return project("ouranos", {

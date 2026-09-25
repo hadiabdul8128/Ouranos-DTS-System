@@ -27,7 +27,7 @@ function TravelPackageContent({voucherId,refreshKey}:{voucherId:string;refreshKe
     const extension=doc.data.mediaType==='application/pdf'?'pdf':doc.data.mediaType==='image/png'?'png':'jpg';const path=`receipts/${doc.id}.${extension}`;files[path]=bytes;
     links.push(`<li><a href="${path}">${escape(doc.data.filename)}</a><small> · SHA-256 ${escape(doc.data.sha256)}</small></li>`);
    }
-   const status=current.status==='approved'?'Approved in Ouranos':'In review in Ouranos';
+   const status=current.snapshot.preview?'Draft preview — not approved':current.status==='approved'?'Approved in Ouranos':'In review in Ouranos';
    files['index.html']=strToU8(current.html.replace('<body>',`<body><p>${status} · Not submitted to DTS</p>`).replace('</body>',`<section class="page"><h2>Original receipts</h2><ul>${links.join('')}</ul><p>Submission ${escape(current.revisionId)} · ${escape(current.sha256)}</p></section></body>`));
    files['submission.json']=strToU8(JSON.stringify({revisionId:current.revisionId,sha256:current.sha256,status:current.status,snapshot:current.snapshot},null,2));
    const zip=zipSync(files,{level:1});
