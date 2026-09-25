@@ -9,6 +9,8 @@ RUN npm ci --include=dev --include=optional --no-audit --no-fund \
     && npm cache clean --force
 
 FROM node:24.21.0-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 AS runtime
+LABEL org.opencontainers.image.source="https://github.com/hadiabdul8128/Ouranos-DTS-System" \
+      org.opencontainers.image.title="Ouranos API and worker"
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=4100
 WORKDIR /app
 COPY --from=dependencies --chown=node:node /app/node_modules ./node_modules

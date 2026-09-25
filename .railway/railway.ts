@@ -1,7 +1,7 @@
 import { defineRailway, github, preserve, project, service } from "railway/iac";
 
 export default defineRailway(() => {
-  const OuranosDTSSystem = github("hadiabdul8128/Ouranos-DTS-System", { branch: "main" });
+  const OuranosDTSSystem = github("hadiabdul8128/Ouranos-DTS-System", { branch: "main", checkSuites: true });
 
   const receipts = service("receipts", {
     source: OuranosDTSSystem,

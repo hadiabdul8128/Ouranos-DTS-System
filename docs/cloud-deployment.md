@@ -6,7 +6,7 @@ The frontend is [ouranos-fawn.vercel.app](https://ouranos-fawn.vercel.app), depl
 
 The `ouranos` Railway project contains four services in its `production` environment, in San Francisco. All source builds use the repository root and GitHub `main`; `main` is also the repository default branch. Infrastructure is declared in [`.railway/railway.ts`](../.railway/railway.ts) using the pinned Railway SDK. The old per-service JSON format is deprecated and is no longer used.
 
-Run `railway config plan` before applying infrastructure changes. Existing variables use `preserve()` so secrets stay in Railway. GitHub pushes deploy only services whose watched paths changed. Infrastructure changes require a separate reviewed `railway config apply`; pushing the TypeScript file alone does not apply infrastructure.
+Run `railway config plan` before applying infrastructure changes. Existing variables use `preserve()` so secrets stay in Railway. The Railway GitHub App is authorized for this repository, with verified `main` triggers on all four services. GitHub pushes deploy only services whose watched paths changed, after GitHub Actions passes (`checkSuites: true`). No Railway account token or production database credentials are stored in GitHub Actions. Infrastructure changes require a separate reviewed `railway config apply`; pushing the TypeScript file alone does not apply infrastructure.
 
 | Service | Dockerfile | Network | Memory limit |
 | --- | --- | --- | --- |
