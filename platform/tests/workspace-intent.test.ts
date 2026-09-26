@@ -3,5 +3,6 @@ import {workspaceIntent} from '../../packages/domain/workspace-intent';
 describe('workspace entry routing',()=>{
  it.each(['Finish my voucher','plan a TDY trip','traveling','flight reimbursement'])('preserves travel request %s',text=>expect(workspaceIntent(text)).toBe('/dashboard/travel'));
  it.each(['What should I do after the military?','Find civilian work','I need a job','career planning','Transition'])('opens Transition for %s',text=>expect(workspaceIntent(text)).toBe('/dashboard/transition'));
+ it.each(['Plan my finances','I want to budget for separation','My TSP contributions','Save money for a home','veteran savings'])('opens Financial Readiness for %s',text=>expect(workspaceIntent(text)).toBe('/dashboard/financial-readiness'));
  it.each(['','weather','Do not create a trip','no job search','cancel transition'])('does not navigate unrelated or negated request %s',text=>expect(workspaceIntent(text)).toBeNull());
 });
