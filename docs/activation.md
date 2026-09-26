@@ -1,6 +1,6 @@
 # Connected development environment
 
-The repository contains a working local travel flow: email sign-in → trip → planning → Authorization review/approval → receipts and expenses → Voucher automatic verification. Records, originals, versions, decisions and audit events live in the shared backend. The home screen remains a single intent prompt. Travel opens a minimal trip list, then Plan → Expenses. New trips save and continue directly into planning. The Voucher rules and audit record are described in [voucher-auto-verification.md](voucher-auto-verification.md).
+The repository contains a working local travel flow: email sign-in → trip → planning → Authorization verification → receipts and expenses → Voucher automatic verification. Records, originals, versions, decisions and audit events live in the shared backend. The home screen remains a single intent prompt. Travel opens a minimal trip list, then Plan → Expenses. New trips save and continue directly into planning. The Voucher rules and audit record are described in [voucher-auto-verification.md](voucher-auto-verification.md).
 
 ## Start locally
 
@@ -17,7 +17,7 @@ npm run platform:dev
 
 `platform:receipts` builds and starts the optional ClamAV and Tesseract/Poppler containers, waits for readiness, generates a local token, and configures the host worker. It refuses nonlocal database/Auth endpoints. The first run downloads images and antivirus signatures. Provider configuration and keys stay in ignored files with owner-only filesystem permissions.
 
-Use the frontend at `http://localhost:5173` and sign in through the local inbox at `http://127.0.0.1:56324`. Seeded accounts are `traveler@ouranos.test`, `reviewer@ouranos.test`, `approver@ouranos.test` and `admin@ouranos.test`. Each person uses a separate session; a traveler cannot approve their own request. Seeded routes run reviewer → approver. In a new organization, an administrator must explicitly assign its team and routes.
+Use the frontend at `http://localhost:5173` and sign in through the local inbox at `http://127.0.0.1:56324`. Set `APPROVAL_MODE=automatic` in the ignored `.env.platform` file to verify current planning forms on the server without reviewer routing. The server checks structure, trip dates, budget dates and arithmetic, freezes a hashed revision, and makes it available to Voucher. Failed checks keep the plan editable. This is an internal Ouranos check, not a policy entitlement or DTS approval. `APPROVAL_MODE=required` remains the default for teams using reviewer → approver routing. Seeded accounts are `traveler@ouranos.test`, `reviewer@ouranos.test`, `approver@ouranos.test` and `admin@ouranos.test`; local sign-in messages appear in the local inbox rather than external email.
 
 The worker processes uploaded receipts asynchronously. The traveler reviews extracted suggestions, confirms the receipt, matches actual expenses to approved budget items, resolves consistency exceptions, certifies the Voucher, and runs server verification. A clean Voucher is ready for external DTS review; Ouranos does not issue government approval or submit to DTS.
 

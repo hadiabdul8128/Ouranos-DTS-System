@@ -1,6 +1,6 @@
 # Voucher automatic verification
 
-Authorization keeps its existing human approval workflow. A traveler can verify a Voucher only against an approved Authorization and its immutable approved revision. The `voucher.submit` command is the server entry point; a browser flag cannot mark a Voucher verified.
+Authorization can use either the existing human approval workflow or internal automatic verification when `APPROVAL_MODE=automatic`. A traveler can verify a Voucher only against an Authorization with an immutable accepted revision. The `voucher.submit` command is the server entry point; a browser flag cannot mark a Voucher verified.
 
 ## State and traveler flow
 
