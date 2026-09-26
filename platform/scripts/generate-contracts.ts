@@ -7,6 +7,8 @@ import {
   workflowInput, commandSchema, syncPushSchema, organizationInput, membershipInput,
 } from '../../packages/contracts/index';
 
+import {transitionProfileSchema,transitionRecommendationSchema,transitionPlanSchema,transitionSaveSchema} from '../../packages/contracts/transition';
+
 // Request schemas come directly from the runtime validators. Response schemas
 // describe the serialized interfaces and rows returned by platform/api/app.ts.
 const record = z.record(z.unknown());
@@ -22,6 +24,8 @@ const approvalStep = z.object({id:uuid, organization_id:uuid, request_id:uuid, p
 const approvalDecision = z.object({id:uuid, organization_id:uuid, request_id:uuid, step_id:uuid, actor_id:uuid, decision:z.enum(['approved','changes_requested','rejected']), comment:z.string(), created_at:timestamp}).passthrough();
 
 const models = {
+  TransitionProfile:transitionProfileSchema,TransitionRecommendation:transitionRecommendationSchema,TransitionSave:transitionSaveSchema,TransitionPlan:transitionPlanSchema,
+  TransitionResponse:z.object({plan:transitionPlanSchema}),TransitionOptionalResponse:z.object({plan:transitionPlanSchema.nullable()}),
   Role:roleSchema, EntityKind:entityKindSchema, TripInput:tripInput,
   AuthorizationInput:authorizationInput, ExpenseInput:expenseInput,
   VoucherInput:voucherInput, DocumentInput:documentInput, WorkflowInput:workflowInput,
@@ -70,6 +74,7 @@ const paths:Record<string,Record<string,SpecObject>> = {
   '/health':{get:operation('health','Process health','Health',{security:[]})},
   '/ready':{get:operation('ready','Database connectivity','Ready',{security:[]})},
   '/openapi.json':{get:{operationId:'openapi',summary:'This generated OpenAPI document',security:[],responses:{'200':{description:'OpenAPI 3.0 document',content:json({type:'object',additionalProperties:true})},default:error}}},
+  '/v1/transition/plan':{get:operation('transitionPlan','Read the caller’s private transition plan','TransitionOptionalResponse',{parameters:[organization]}),put:operation('saveTransitionPlan','Save answers, selected path, and action progress','TransitionResponse',{description:'Owner-only personal plan. expectedVersion is 0 for first save and the last saved version otherwise. Reuse requestId with identical input to retry. The server generates recommendations; the caller cannot supply them. This plan is excluded from shared travel synchronization.',requestBody:request('TransitionSave')})},
   '/v1/session':{get:operation('session','Verified user and active organization memberships','Session')},
   '/v1/organizations':{post:operation('createOrganization','Create an organization with the caller as administrator','CreatedOrganization',{requestBody:request('OrganizationInput'),responses:{'201':response('CreatedOrganization','Created'),'401':error,default:error}})},
   '/v1/organizations/{id}/members':{put:operation('setMembership','Administrator assigns an existing user a role','MembershipUpdated',{description:'The caller cannot change their own membership. The target user must already exist in Supabase Auth.',parameters:[pathId],requestBody:request('MembershipInput')})},
@@ -107,7 +112,7 @@ const document = {
 };
 
 // Prevent route additions/renames from silently disappearing from the handoff.
-const apiSource = await readFile(new URL('../api/app.ts',import.meta.url),'utf8');
+const apiSource = (await Promise.all(['app.ts','transition.ts'].map(file=>readFile(new URL(`../api/${file}`,import.meta.url),'utf8')))).join('\n');
 const implemented = [...apiSource.matchAll(/app\.(get|post|put|patch|delete)\('([^']+)'/g)].map(([,method,path])=>`${method} ${path.replace(/:([A-Za-z]+)/g,'{$1}')}`).sort();
 const documented = Object.entries(paths).flatMap(([path,methods])=>Object.keys(methods).map(method=>`${method} ${path}`)).sort();
 if(JSON.stringify(implemented)!==JSON.stringify(documented))throw new Error('API route inventory differs from OpenAPI. Update generate-contracts.ts before generating.');
