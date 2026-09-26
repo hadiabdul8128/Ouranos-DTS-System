@@ -38,6 +38,10 @@ describe('Financial Readiness arithmetic',()=>{
   const r=calculateFinancialReadiness({...profile,separationMonth:null},asOf);expect(r.goalStatus).toBe('no_deadline');expect(r.baselineForecastMinor).toBeNull();
   const reached=calculateFinancialReadiness({...profile,goal:{...profile.goal,balanceMinor:3000000}},asOf);expect(reached.goalStatus).toBe('reached');expect(reached.goalProgressPercent).toBe(100);expect(reached.goalGapMinor).toBe(0);expect(reached.goalTopUpMinor).toBe(0);
  });
+ it('does not round incomplete goals to 100% and safely handles a deficit without a deadline',()=>{
+  const almost=calculateFinancialReadiness({...profile,goal:{...profile.goal,balanceMinor:profile.goal.targetMinor-1}},asOf);expect(almost.goalProgressPercent).toBe(99.9);expect(almost.goalStatus).not.toBe('reached');
+  const noDate=calculateFinancialReadiness({...profile,separationMonth:null,takeHomePerPaycheckMinor:0},asOf);expect(noDate.monthsToGoal).toBeNull();expect(noDate.baselineForecastMinor).toBeNull();expect(noDate.goalStatus).toBe('budget_shortfall');
+ });
  it('moves projections closer to separation without inventing balance growth',()=>{const a=calculateFinancialReadiness(profile,'2026-09'),b=calculateFinancialReadiness(profile,'2026-10');expect(b.monthsToSeparation).toBe(13);expect(b.goalProgressPercent).toBe(a.goalProgressPercent);expect(b.additionalMonthlyGoalMinor).toBeGreaterThan(a.additionalMonthlyGoalMinor!)});
  it('measures real reported progress independently from projected saving',()=>expect(calculateFinancialReadiness({...profile,goal:{...profile.goal,targetMinor:1500000,balanceMinor:930000}},asOf).goalProgressPercent).toBe(62));
  it('rejects negative amounts, fractions of cents, malformed dates, and client forecasts',()=>{
