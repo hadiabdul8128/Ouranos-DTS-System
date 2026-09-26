@@ -9,6 +9,8 @@ import {
 
 import {transitionProfileSchema,transitionRecommendationSchema,transitionPlanSchema,transitionSaveSchema} from '../../packages/contracts/transition';
 
+import {financialProfileSchema,financialCalculationSchema,financialPlanSchema,financialSaveSchema} from '../../packages/contracts/financial-readiness';
+
 // Request schemas come directly from the runtime validators. Response schemas
 // describe the serialized interfaces and rows returned by platform/api/app.ts.
 const record = z.record(z.unknown());
@@ -24,6 +26,7 @@ const approvalStep = z.object({id:uuid, organization_id:uuid, request_id:uuid, p
 const approvalDecision = z.object({id:uuid, organization_id:uuid, request_id:uuid, step_id:uuid, actor_id:uuid, decision:z.enum(['approved','changes_requested','rejected']), comment:z.string(), created_at:timestamp}).passthrough();
 
 const models = {
+  FinancialProfile:financialProfileSchema,FinancialCalculation:financialCalculationSchema,FinancialSave:financialSaveSchema,FinancialPlan:financialPlanSchema,FinancialResponse:z.object({plan:financialPlanSchema}),FinancialOptionalResponse:z.object({plan:financialPlanSchema.nullable()}),
   TransitionProfile:transitionProfileSchema,TransitionRecommendation:transitionRecommendationSchema,TransitionSave:transitionSaveSchema,TransitionPlan:transitionPlanSchema,
   TransitionResponse:z.object({plan:transitionPlanSchema}),TransitionOptionalResponse:z.object({plan:transitionPlanSchema.nullable()}),
   Role:roleSchema, EntityKind:entityKindSchema, TripInput:tripInput,
@@ -75,6 +78,7 @@ const paths:Record<string,Record<string,SpecObject>> = {
   '/ready':{get:operation('ready','Database connectivity','Ready',{security:[]})},
   '/openapi.json':{get:{operationId:'openapi',summary:'This generated OpenAPI document',security:[],responses:{'200':{description:'OpenAPI 3.0 document',content:json({type:'object',additionalProperties:true})},default:error}}},
   '/v1/transition/plan':{get:operation('transitionPlan','Read the caller’s private transition plan','TransitionOptionalResponse',{parameters:[organization]}),put:operation('saveTransitionPlan','Save answers, selected path, and action progress','TransitionResponse',{description:'Owner-only personal plan. expectedVersion is 0 for first save and the last saved version otherwise. Reuse requestId with identical input to retry. The server generates recommendations; the caller cannot supply them. This plan is excluded from shared travel synchronization.',requestBody:request('TransitionSave')})},
+  '/v1/financial-readiness/plan':{get:operation('financialPlan','Read the caller’s private budget, calculated plan, and check-ins','FinancialOptionalResponse',{parameters:[organization]}),put:operation('saveFinancialPlan','Save a private financial plan or balance check-in','FinancialResponse',{description:'USD cents. Server-generated planning arithmetic, no money movement. Payroll TSP is informational and excluded from net-pay spending deductions. Versions detect concurrent edits. Reuse requestId with identical input for retries. recordCheckIn confirms the current month balances; changing balance amounts requires it. Returns at most 24 monthly check-ins. Calculations on GET refresh to the current UTC month without assuming balances grew.',requestBody:request('FinancialSave')})},
   '/v1/session':{get:operation('session','Verified user and active organization memberships','Session')},
   '/v1/organizations':{post:operation('createOrganization','Create an organization with the caller as administrator','CreatedOrganization',{requestBody:request('OrganizationInput'),responses:{'201':response('CreatedOrganization','Created'),'401':error,default:error}})},
   '/v1/organizations/{id}/members':{put:operation('setMembership','Administrator assigns an existing user a role','MembershipUpdated',{description:'The caller cannot change their own membership. The target user must already exist in Supabase Auth.',parameters:[pathId],requestBody:request('MembershipInput')})},
@@ -112,7 +116,7 @@ const document = {
 };
 
 // Prevent route additions/renames from silently disappearing from the handoff.
-const apiSource = (await Promise.all(['app.ts','transition.ts'].map(file=>readFile(new URL(`../api/${file}`,import.meta.url),'utf8')))).join('\n');
+const apiSource = (await Promise.all(['app.ts','transition.ts','financial-readiness.ts'].map(file=>readFile(new URL(`../api/${file}`,import.meta.url),'utf8')))).join('\n');
 const implemented = [...apiSource.matchAll(/app\.(get|post|put|patch|delete)\('([^']+)'/g)].map(([,method,path])=>`${method} ${path.replace(/:([A-Za-z]+)/g,'{$1}')}`).sort();
 const documented = Object.entries(paths).flatMap(([path,methods])=>Object.keys(methods).map(method=>`${method} ${path}`)).sort();
 if(JSON.stringify(implemented)!==JSON.stringify(documented))throw new Error('API route inventory differs from OpenAPI. Update generate-contracts.ts before generating.');

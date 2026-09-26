@@ -40,7 +40,7 @@ export default function Workspace() {
     if (!text) return;
     const destination=workspaceIntent(text);
     if(destination){setOpening(true);router.push(destination)}
-    else setMessage("You can plan travel or explore life after the military.");
+    else setMessage("You can plan travel, organize your money, or explore life after the military.");
   }
   return <main className="quiet-page prompt-page">
     <header className="quiet-header"><Link href="/dashboard" className="quiet-brand">Ouranos</Link><button onClick={() => void platform.signOut()} className="exit-link" aria-label="Sign out"><LogOut size={17}/></button></header>
@@ -51,7 +51,10 @@ export default function Workspace() {
         <Button type="submit" aria-label="Continue with your request" className="intent-submit" disabled={!request.trim() || opening}><ArrowRight size={20}/></Button>
       </form>
       <p className={`intent-hint ${message ? "has-message" : ""}`} role="status">{opening ? "Opening your workspace…" : message || ''}</p>
-      <Link href="/dashboard/transition" className="back-link">Plan life after the military →</Link>
+      <nav aria-label="Available workflows" className="flex flex-wrap justify-center gap-x-8 gap-y-3">
+        <Link href="/dashboard/financial-readiness" className="back-link">Plan my finances →</Link>
+        <Link href="/dashboard/transition" className="back-link">Plan life after the military →</Link>
+      </nav>
     </section>
     <footer className="quiet-footer"><span/><SyncIndicator/></footer>
   </main>;
