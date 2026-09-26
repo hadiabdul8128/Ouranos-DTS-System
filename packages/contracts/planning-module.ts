@@ -21,8 +21,9 @@ export type PlannedExpense = z.infer<typeof plannedExpenseSchema>;
 
 // Parse the display value as decimal digits, never by multiplying a float.
 export function parseAmountMinor(value:string):number {
-  if(!/^\d+(\.\d{1,2})?$/.test(value.trim()))throw new Error('Use a positive amount with at most two decimal places.');
-  const [whole,fraction='']=value.trim().split('.');
+  const display=value.trim();
+  if(!/^(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d{1,2})?$/.test(display))throw new Error('Use a positive amount with at most two decimal places.');
+  const [whole,fraction='']=display.replaceAll(',','').split('.');
   const amount=Number(whole)*100+Number(fraction.padEnd(2,'0'));
   if(!Number.isSafeInteger(amount)||amount<=0||amount>1_000_000_000)throw new Error('Enter a valid positive amount.');
   return amount;
