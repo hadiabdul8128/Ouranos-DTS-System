@@ -1,7 +1,7 @@
 import {createHash,randomUUID} from 'node:crypto';
 import type {Pool,PoolClient} from 'pg';
 import type {SupabaseClient} from '@supabase/supabase-js';
-import {commandSchema,type Command,type CommandResult,type Entity,type EntityKind} from '../../packages/contracts/index';
+import {commandSchema,type Command,type CommandResult,type Entity} from '../../packages/contracts/index';
 import {DomainError,requireCondition as check} from '../../packages/domain/errors';
 import {withActor} from '../shared/database';
 import {verifyStoredFile} from '../shared/files';
@@ -9,8 +9,9 @@ import {loadEntity,publishChange,toEntity,updateStatus,TABLES} from './entities'
 import {validatePlanning} from '../../modules/planning/validator';
 import {validateVoucher} from '../../modules/vouchers/validator';
 import {PLANNING_SCHEMA_VERSION,planningModuleSchema} from '../../packages/contracts/planning-module';
-import {VOUCHER_MODULE_SCHEMA_VERSION,voucherModuleSchema} from '../../packages/contracts/voucher-module';
+import {VOUCHER_MODULE_SCHEMA_VERSION,voucherVerificationCandidateSchema} from '../../packages/contracts/voucher-module';
 import {reconcileStoredExpenses,planAllowance,resolvedStatements} from '../../packages/domain/voucher-adapter';
+import {buildVoucherVerification,receiptExtractionFromFields,type ReceiptExtraction} from '../../packages/domain/voucher-verification';
 import {loadApprovedAuthorization} from './approved';
 
 export const canonical=(v:unknown):string=>JSON.stringify(v,(_key,value)=>value&&typeof value==='object'&&!Array.isArray(value)?Object.fromEntries(Object.entries(value).sort(([a],[b])=>a.localeCompare(b))):value);
@@ -54,7 +55,7 @@ async function apply(db:PoolClient,storage:SupabaseClient,c:Command,userId:strin
   const kind=c.type.split('.')[0] as 'authorization'|'expense'|'voucher';const payload=c.payload;
   await requireOwner(db,org,payload.tripId);
   const current=(await db.query(`select * from ouranos.${TABLES[kind]} where organization_id=$1 and id=$2 for update`,[org,id])).rows[0];await verifyVersion(current,c.expectedVersion);
-  if(current){check(current.trip_id===payload.tripId,'VALIDATION_FAILED','Cannot move records between trips');check(['draft','changes_requested'].includes(current.status),'INVALID_STATE_TRANSITION','Create a new amendment or revision instead of changing submitted content',409)}
+  if(current){check(current.trip_id===payload.tripId,'VALIDATION_FAILED','Cannot move records between trips');check(['draft','changes_requested',...(kind==='voucher'?['needs_action']:[])].includes(current.status),'INVALID_STATE_TRANSITION','Create a new amendment or revision instead of changing submitted content',409)}
   if(c.type==='expense.save'){
    for(const docId of c.payload.documentIds){const d=await loadEntity(db,'document',docId,org);check(d.trip_id===payload.tripId,'VALIDATION_FAILED','Receipt belongs to another trip')}
   }
@@ -88,13 +89,14 @@ async function apply(db:PoolClient,storage:SupabaseClient,c:Command,userId:strin
   for(const step of c.payload.steps){const member=(await db.query('select role from ouranos.memberships where organization_id=$1 and user_id=$2 and active',[org,step.assigneeId])).rows[0];check(member?.role===step.role,'VALIDATION_FAILED','Each assignee must have the required role')}
   const r=current?await db.query('update ouranos.workflow_definitions set data=$3,kind=$4,version=version+1,updated_at=now() where organization_id=$1 and id=$2 returning *',[org,id,c.payload,c.payload.kind]):await db.query('insert into ouranos.workflow_definitions(id,organization_id,kind,data,created_by) values($1,$2,$3,$4,$5) returning *',[id,org,c.payload.kind,c.payload,userId]);return publishChange(db,'workflow',r.rows[0]);
  }
- if(c.type==='authorization.submit'||c.type==='voucher.submit')return submit(db,c,userId,development);
+ if(c.type==='authorization.submit')return submitAuthorization(db,c,userId,development);
+ if(c.type==='voucher.submit')return verifyVoucher(db,c,userId,development);
  if(c.type==='approval.decide')return decide(db,c,userId,role);
  if(c.type==='notification.read'){
   const n=await loadEntity(db,'notification',id,org,true);await verifyVersion(n,c.expectedVersion);return updateStatus(db,'notification',id,org,'read');
  }
  if(c.type==='integration.request'){
-  const e=await loadEntity(db,c.payload.kind,id,org);await verifyVersion(e,c.expectedVersion);await requireOwner(db,org,e.trip_id);check(e.status==='approved','INVALID_STATE_TRANSITION','Only approved revisions can be delivered',409);
+  const e=await loadEntity(db,c.payload.kind,id,org);await verifyVersion(e,c.expectedVersion);await requireOwner(db,org,e.trip_id);check(e.status==='approved','INVALID_STATE_TRANSITION',c.payload.kind==='voucher'?'Verified vouchers are prepared for DTS review; direct DTS delivery is not configured.':'Only approved revisions can be delivered',409);
   const key=c.payload.kind==='authorization'?'authorization_id':'voucher_id';
   const rev=(await db.query(`select r.* from ouranos.submission_revisions r join ouranos.approval_requests a on a.revision_id=r.id where r.organization_id=$1 and r.${key}=$2 and a.status='approved' order by r.created_at desc limit 1`,[org,id])).rows[0];check(rev,'INVALID_STATE_TRANSITION','Approved revision missing',409);
   let row=(await db.query('select * from ouranos.integration_deliveries where revision_id=$1',[rev.id])).rows[0];
@@ -104,52 +106,72 @@ async function apply(db:PoolClient,storage:SupabaseClient,c:Command,userId:strin
  throw new DomainError('VALIDATION_FAILED','Unsupported command');
 }
 
-async function submit(db:PoolClient,c:Extract<Command,{type:'authorization.submit'|'voucher.submit'}>,userId:string,development:boolean){
- const kind=c.type.split('.')[0] as 'authorization'|'voucher',org=c.organizationId;
- const entity=await loadEntity(db,kind,c.entityId,org,true);await verifyVersion(entity,c.expectedVersion);await requireOwner(db,org,entity.trip_id);check(['draft','changes_requested'].includes(entity.status),'INVALID_STATE_TRANSITION','This revision has already been submitted',409);
- const issues=(kind==='authorization'?validatePlanning:validateVoucher)(entity.data.formSchemaVersion,entity.data.formData,development);check(!issues.length,'VALIDATION_FAILED',issues.join('; '));
- const workflow=(await db.query("select * from ouranos.workflow_definitions where organization_id=$1 and kind=$2 and status='active'",[org,kind])).rows[0];check(workflow,'DEPENDENCY_PENDING','An administrator must configure approval routing',409);
+async function submitAuthorization(db:PoolClient,c:Extract<Command,{type:'authorization.submit'}>,userId:string,development:boolean){
+ const org=c.organizationId;
+ const entity=await loadEntity(db,'authorization',c.entityId,org,true);await verifyVersion(entity,c.expectedVersion);await requireOwner(db,org,entity.trip_id);check(['draft','changes_requested'].includes(entity.status),'INVALID_STATE_TRANSITION','This revision has already been submitted',409);
+ const issues=validatePlanning(entity.data.formSchemaVersion,entity.data.formData,development);check(!issues.length,'VALIDATION_FAILED',issues.join('; '));
+ const workflow=(await db.query("select * from ouranos.workflow_definitions where organization_id=$1 and kind='authorization' and status='active'",[org])).rows[0];check(workflow,'DEPENDENCY_PENDING','An administrator must configure approval routing',409);
  check(workflow.data.steps.every((s:any)=>s.assigneeId!==userId),'PERMISSION_DENIED','A traveler cannot review their own submission',403);
- const trip=await loadEntity(db,'trip',entity.trip_id,org);const snapshot:Record<string,any>={kind,entity:toEntity(kind,entity),trip:toEntity('trip',trip),workflow:workflow.data,workflowVersion:workflow.version};
- if(kind==='authorization'&&entity.data.formSchemaVersion===PLANNING_SCHEMA_VERSION){
+ const trip=await loadEntity(db,'trip',entity.trip_id,org);const snapshot:Record<string,any>={kind:'authorization',entity:toEntity('authorization',entity),trip:toEntity('trip',trip),workflow:workflow.data,workflowVersion:workflow.version};
+ if(entity.data.formSchemaVersion===PLANNING_SCHEMA_VERSION){
   const form=planningModuleSchema.parse(entity.data.formData);
   for(const item of form.approvedExpenseItems)for(const date of [item.date,item.startDate,item.endDate].filter(Boolean))check(date!>=trip.data.departure&&date!<=trip.data.returnDate,'VALIDATION_FAILED','Budget item dates must fall within the trip');
   for(const date of Object.keys(form.allowance?.mealsProvided||{}))check(date>=trip.data.departure&&date<=trip.data.returnDate,'VALIDATION_FAILED','Meal dates must fall within the trip');
   snapshot.perDiem=planAllowance(toEntity('trip',trip),form);
  }
- if(kind==='voucher'){
-  // withActor serializes organization writes, so concurrent submissions cannot
-  // reserve the same expense in two different active vouchers.
-  const claimed=await db.query(`select id from ouranos.vouchers where organization_id=$1 and trip_id=$2 and id<>$3
-   and status in ('in_review','approved') and (data->'expenseIds') ?| $4::text[] limit 1`,[org,entity.trip_id,entity.id,entity.data.expenseIds]);
-  check(!claimed.rowCount,'INVALID_STATE_TRANSITION','An expense is already included in another submitted voucher',409);
-  const auth=await loadEntity(db,'authorization',entity.authorization_id,org);check(auth.status==='approved','INVALID_STATE_TRANSITION','An approved authorization is required',409);
-  snapshot.authorization=toEntity('authorization',auth);snapshot.expenses=[];snapshot.documents=[];
-  for(const expenseId of entity.data.expenseIds){const expense=await loadEntity(db,'expense',expenseId,org);check(expense.trip_id===entity.trip_id,'VALIDATION_FAILED','Expense trip mismatch');snapshot.expenses.push(toEntity('expense',expense));
-   for(const docId of expense.data.documentIds){const doc=await loadEntity(db,'document',docId,org);check(doc.trip_id===entity.trip_id&&doc.status==='ready','ATTACHMENT_INCOMPLETE','A receipt is not processed and confirmed',409);snapshot.documents.push(toEntity('document',doc))}
-  }
-  if(entity.data.formSchemaVersion===VOUCHER_MODULE_SCHEMA_VERSION){
-   const form=voucherModuleSchema.parse(entity.data.formData);
-   check(form.tripId===entity.trip_id&&form.authorizationId===entity.authorization_id,'VALIDATION_FAILED','Voucher context does not match its records');
-   const approved=await loadApprovedAuthorization(db,org,entity.authorization_id);
-   snapshot.authorizationRevision=approved;
-   check(form.expenseItems.length===snapshot.expenses.length,'VALIDATION_FAILED','Voucher expense selection changed');
-   for(const expense of snapshot.expenses as Entity[]){
-    const stated=form.expenseItems.find(item=>item.expenseId===expense.id);
-    check(stated&&stated.authorizationItemId===expense.data.authorizationItemId&&stated.amountMinor===expense.data.amountMinor&&stated.currency===expense.data.currency&&canonical([...stated.documentIds].sort())===canonical([...(expense.data.documentIds as string[])].sort()),'VALIDATION_FAILED','Voucher expense details no longer match saved records');
-   }
-   const reconciliation=reconcileStoredExpenses(approved,snapshot.expenses,snapshot.documents,form.resolutions);
-   check(reconciliation.ready,'VALIDATION_FAILED',reconciliation.issues.map(i=>i.message).join(' '));
-   const actualTotal=snapshot.expenses.reduce((sum:number,e:Entity)=>sum+Number(e.data.amountMinor),0);
-   check(Number.isSafeInteger(actualTotal)&&actualTotal===form.reconciliation.totalAmountMinor,'VALIDATION_FAILED','Voucher total does not match saved expenses');
-   snapshot.reconciliation=reconciliation;
-   snapshot.statements=resolvedStatements(approved,snapshot.expenses,form.resolutions);
+ const rev=(await db.query('insert into ouranos.submission_revisions(organization_id,trip_id,authorization_id,entity_version,snapshot,sha256,submitted_by) values($1,$2,$3,$4,$5,$6,$7) returning *',[org,entity.trip_id,entity.id,entity.version,snapshot,hash(snapshot),userId])).rows[0];
+ const req=(await db.query('insert into ouranos.approval_requests(organization_id,trip_id,revision_id,workflow_id,workflow_version,data,created_by) values($1,$2,$3,$4,$5,$6,$7) returning *',[org,entity.trip_id,rev.id,workflow.id,workflow.version,{kind:'authorization',entityId:entity.id,revisionId:rev.id},userId])).rows[0];
+ for(const [i,step] of workflow.data.steps.entries())await db.query('insert into ouranos.approval_steps(organization_id,request_id,position,assignee_id,required_role) values($1,$2,$3,$4,$5)',[org,req.id,i,step.assigneeId,step.role]);
+ await notify(db,org,entity.trip_id,workflow.data.steps[0].assigneeId,'A travel submission needs review',req.id);await publishChange(db,'approval',req);return updateStatus(db,'authorization',entity.id,org,'in_review');
+}
+
+async function verifyVoucher(db:PoolClient,c:Extract<Command,{type:'voucher.submit'}>,userId:string,development:boolean){
+ const org=c.organizationId;
+ const voucher=await loadEntity(db,'voucher',c.entityId,org,true);await verifyVersion(voucher,c.expectedVersion);await requireOwner(db,org,voucher.trip_id);
+ check(['draft','needs_action','changes_requested'].includes(voucher.status),'INVALID_STATE_TRANSITION','This voucher is already verified or locked',409);
+ check(voucher.data.formSchemaVersion===VOUCHER_MODULE_SCHEMA_VERSION,'VALIDATION_FAILED','A current voucher form is required for automatic verification');
+ const candidate=voucherVerificationCandidateSchema.safeParse(voucher.data.formData);
+ check(candidate.success,'VALIDATION_FAILED',candidate.success?'':candidate.error.issues.map(issue=>`${issue.path.join('.')}: ${issue.message}`).join('; '));
+ const form=candidate.data;
+ check(form.tripId===voucher.trip_id&&form.authorizationId===voucher.authorization_id,'VALIDATION_FAILED','Voucher context does not match its records');
+ const authorization=await loadEntity(db,'authorization',voucher.authorization_id,org);
+ check(authorization.trip_id===voucher.trip_id&&authorization.status==='approved','INVALID_STATE_TRANSITION','An approved authorization for this trip is required',409);
+ const approved=await loadApprovedAuthorization(db,org,voucher.authorization_id);
+ const claimed=await db.query(`select id from ouranos.vouchers where organization_id=$1 and trip_id=$2 and id<>$3
+  and status in ('in_review','approved','verified') and (data->'expenseIds') ?| $4::text[] limit 1`,[org,voucher.trip_id,voucher.id,voucher.data.expenseIds]);
+ check(!claimed.rowCount,'INVALID_STATE_TRANSITION','An expense is already included in another submitted voucher',409);
+ const trip=await loadEntity(db,'trip',voucher.trip_id,org),expenses:Entity[]=[],documentsById=new Map<string,Entity>();
+ for(const expenseId of voucher.data.expenseIds as string[]){
+  const expense=await loadEntity(db,'expense',expenseId,org);check(expense.trip_id===voucher.trip_id,'VALIDATION_FAILED','Expense trip mismatch');expenses.push(toEntity('expense',expense));
+  for(const docId of expense.data.documentIds as string[]){
+   const doc=await loadEntity(db,'document',docId,org);check(doc.trip_id===voucher.trip_id,'VALIDATION_FAILED','Receipt trip mismatch');documentsById.set(docId,toEntity('document',doc));
   }
  }
- const rev=(await db.query('insert into ouranos.submission_revisions(organization_id,trip_id,authorization_id,voucher_id,entity_version,snapshot,sha256,submitted_by) values($1,$2,$3,$4,$5,$6,$7,$8) returning *',[org,entity.trip_id,kind==='authorization'?entity.id:null,kind==='voucher'?entity.id:null,entity.version,snapshot,hash(snapshot),userId])).rows[0];
- const req=(await db.query('insert into ouranos.approval_requests(organization_id,trip_id,revision_id,workflow_id,workflow_version,data,created_by) values($1,$2,$3,$4,$5,$6,$7) returning *',[org,entity.trip_id,rev.id,workflow.id,workflow.version,{kind,entityId:entity.id,revisionId:rev.id},userId])).rows[0];
- for(const [i,step] of workflow.data.steps.entries())await db.query('insert into ouranos.approval_steps(organization_id,request_id,position,assignee_id,required_role) values($1,$2,$3,$4,$5)',[org,req.id,i,step.assigneeId,step.role]);
- await notify(db,org,entity.trip_id,workflow.data.steps[0].assigneeId,'A travel submission needs review',req.id);await publishChange(db,'approval',req);return updateStatus(db,kind,entity.id,org,'in_review');
+ check(form.expenseItems.length===expenses.length,'VALIDATION_FAILED','Voucher expense selection changed');
+ for(const expense of expenses){
+  const stated=form.expenseItems.find(item=>item.expenseId===expense.id);
+  check(stated&&stated.authorizationItemId===expense.data.authorizationItemId&&stated.amountMinor===expense.data.amountMinor&&stated.currency===expense.data.currency&&canonical([...stated.documentIds].sort())===canonical([...(expense.data.documentIds as string[])].sort()),'VALIDATION_FAILED','Voucher expense details no longer match saved records');
+ }
+ const total=expenses.reduce((sum,expense)=>sum+Number(expense.data.amountMinor),0);
+ check(Number.isSafeInteger(total)&&total===form.reconciliation.totalAmountMinor,'VALIDATION_FAILED','Voucher total does not match saved expenses');
+ const documents=[...documentsById.values()];
+ const reconciliation=reconcileStoredExpenses(approved,expenses,documents,form.resolutions);
+ const extractions:ReceiptExtraction[]=[];
+ if(documentsById.size){
+  const rows=(await db.query(`select distinct on (document_id) document_id,result from ouranos.extraction_runs
+   where organization_id=$1 and document_id=any($2::uuid[]) order by document_id,created_at desc`,[org,[...documentsById.keys()]])).rows;
+  for(const row of rows)extractions.push(receiptExtractionFromFields(row.document_id,row.result?.fields));
+ }
+ const snapshot={kind:'voucher',entity:toEntity('voucher',voucher),trip:toEntity('trip',trip),authorization:toEntity('authorization',authorization),authorizationRevision:approved,expenses,documents,reconciliation,statements:resolvedStatements(approved,expenses,form.resolutions)};
+ const sha256=hash(snapshot);
+ const rev=(await db.query('insert into ouranos.submission_revisions(organization_id,trip_id,voucher_id,entity_version,snapshot,sha256,submitted_by) values($1,$2,$3,$4,$5,$6,$7) returning *',[org,voucher.trip_id,voucher.id,voucher.version,snapshot,sha256,userId])).rows[0];
+ const report=buildVoucherVerification({voucher:toEntity('voucher',voucher),authorizationRevision:approved,voucherRevisionId:rev.id,snapshotSha256:sha256,expenses,documents,reconciliation,extractions,clientIssueIds:form.reconciliation.unresolvedIssueIds});
+ if(report.status==='verified'){
+  const issues=validateVoucher(voucher.data.formSchemaVersion,voucher.data.formData,development);
+  check(!issues.length,'VALIDATION_FAILED',issues.join('; '));
+ }
+ await db.query('insert into ouranos.voucher_verifications(organization_id,trip_id,voucher_id,revision_id,result,rule_version,snapshot_sha256,report) values($1,$2,$3,$4,$5,$6,$7,$8)',[org,voucher.trip_id,voucher.id,rev.id,report.status,report.ruleVersion,sha256,report]);
+ return updateStatus(db,'voucher',voucher.id,org,report.status);
 }
 async function decide(db:PoolClient,c:Extract<Command,{type:'approval.decide'}>,userId:string,role:string){
  const req=await loadEntity(db,'approval',c.entityId,c.organizationId,true);await verifyVersion(req,c.expectedVersion);check(req.status==='in_review','INVALID_STATE_TRANSITION','This request is no longer in review',409);check(req.created_by!==userId,'PERMISSION_DENIED','Self-approval is not permitted',403);

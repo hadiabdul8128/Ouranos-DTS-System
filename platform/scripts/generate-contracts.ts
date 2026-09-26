@@ -46,6 +46,7 @@ const models = {
   Ready:z.object({status:z.literal('ready')}),
   TravelPackage:record,
   ApprovedAuthorization:z.object({revision:z.object({id:uuid,sha256:z.string(),snapshot:z.object({entity,trip:entity}).passthrough()})}),
+  VoucherVerification:z.object({report:z.object({status:z.enum(['verified','needs_action']),checkedAt:timestamp,ruleVersion:z.string(),voucherId:uuid,tripId:uuid,authorizationId:uuid,authorizationRevisionId:uuid,voucherRevisionId:uuid,snapshotSha256:z.string(),expenseCount:z.number().int(),receiptCount:z.number().int(),checksPassed:z.number().int(),claimedTotalMinor:z.number().int(),gtccTotalMinor:z.number().int(),personalFundsTotalMinor:z.number().int(),documentIds:z.array(uuid),checks:z.array(record),warnings:z.array(z.string()),blockingIssues:z.array(record),reconciliation:record}).passthrough(),revision:z.object({id:uuid,sha256:z.string(),snapshot:record,createdAt:timestamp})}),
 };
 
 type SchemaName = keyof typeof models;
@@ -85,6 +86,7 @@ const paths:Record<string,Record<string,SpecObject>> = {
   '/v1/authorizations/{id}/approved':{get:operation('approvedAuthorization','Load the approved immutable authorization for a voucher','ApprovedAuthorization',{parameters:[pathId,organization]})},
   '/v1/authorizations/{id}/working':{get:operation('workingAuthorization','Load a current working plan in preview mode only','ApprovedAuthorization',{parameters:[pathId,organization]})},
   '/v1/vouchers/{id}/package':{get:operation('voucherPackage','Read a frozen submission and DTS preparation package','TravelPackage',{parameters:[pathId,organization]})},
+  '/v1/vouchers/{id}/verification':{get:operation('voucherVerification','Read the latest immutable Voucher verification report and frozen submission','VoucherVerification',{parameters:[pathId,organization]})},
   '/v1/trips/{id}/audit':{get:operation('tripAudit','Read up to 500 trip audit events','AuditResponse',{description:'Events are ordered by ascending id. This endpoint does not provide pagination.',parameters:[pathId,organization]})},
   '/v1/documents/{id}/upload':{post:operation('prepareUpload','Create a signed upload URL for a registered document','UploadResponse',{description:'Only the document creator may upload while status is registered. Upload bytes to signedUrl, then issue document.finalize. Finalization verifies the stored size, media signature and SHA-256 digest.',parameters:[pathId],requestBody:request('DocumentScope')})},
   '/v1/documents/{id}/download':{post:operation('prepareDownload','Create a short-lived signed download URL','DownloadResponse',{description:'Requires document status needs_review or ready and current trip visibility. The URL expires after 60 seconds.',parameters:[pathId],requestBody:request('DocumentScope')})},
@@ -97,7 +99,7 @@ const schemas = Object.fromEntries(Object.entries(models).map(([name,schema])=>{
 }));
 const document = {
   openapi:'3.0.3',
-  info:{title:'Ouranos platform API',version:CONTRACT_VERSION,description:'Connected travel platform. Supabase bearer authentication, organization isolation, versioned commands, synchronization and immutable approval revisions. Planning, companion checks and frozen voucher packages share server-validated records. A successful Ouranos command is not DTS acceptance.'},
+  info:{title:'Ouranos platform API',version:CONTRACT_VERSION,description:'Connected travel platform. Supabase bearer authentication, organization isolation, versioned commands, synchronization, human Authorization approval, and immutable automatic Voucher verification. A successful Ouranos verification is not DTS acceptance or DoD approval.'},
   servers:[{url:'http://localhost:4100',description:'Local development; replace with your configured API origin.'}],
   security:[{bearerAuth:[]}],
   paths,

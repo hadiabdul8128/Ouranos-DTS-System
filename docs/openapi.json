@@ -3,7 +3,7 @@
   "info": {
     "title": "Ouranos platform API",
     "version": "1.0.0",
-    "description": "Connected travel platform. Supabase bearer authentication, organization isolation, versioned commands, synchronization and immutable approval revisions. Planning, companion checks and frozen voucher packages share server-validated records. A successful Ouranos command is not DTS acceptance."
+    "description": "Connected travel platform. Supabase bearer authentication, organization isolation, versioned commands, synchronization, human Authorization approval, and immutable automatic Voucher verification. A successful Ouranos verification is not DTS acceptance or DoD approval."
   },
   "servers": [
     {
@@ -999,6 +999,74 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TravelPackage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "organizationId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/vouchers/{id}/verification": {
+      "get": {
+        "operationId": "voucherVerification",
+        "summary": "Read the latest immutable Voucher verification report and frozen submission",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoucherVerification"
                 }
               }
             }
@@ -5281,6 +5349,157 @@
           }
         },
         "required": [
+          "revision"
+        ],
+        "additionalProperties": false
+      },
+      "VoucherVerification": {
+        "type": "object",
+        "properties": {
+          "report": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "verified",
+                  "needs_action"
+                ]
+              },
+              "checkedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "ruleVersion": {
+                "type": "string"
+              },
+              "voucherId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "tripId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "authorizationId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "authorizationRevisionId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "voucherRevisionId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "snapshotSha256": {
+                "type": "string"
+              },
+              "expenseCount": {
+                "type": "integer"
+              },
+              "receiptCount": {
+                "type": "integer"
+              },
+              "checksPassed": {
+                "type": "integer"
+              },
+              "claimedTotalMinor": {
+                "type": "integer"
+              },
+              "gtccTotalMinor": {
+                "type": "integer"
+              },
+              "personalFundsTotalMinor": {
+                "type": "integer"
+              },
+              "documentIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "checks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              },
+              "warnings": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "blockingIssues": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              },
+              "reconciliation": {
+                "type": "object",
+                "additionalProperties": {}
+              }
+            },
+            "required": [
+              "status",
+              "checkedAt",
+              "ruleVersion",
+              "voucherId",
+              "tripId",
+              "authorizationId",
+              "authorizationRevisionId",
+              "voucherRevisionId",
+              "snapshotSha256",
+              "expenseCount",
+              "receiptCount",
+              "checksPassed",
+              "claimedTotalMinor",
+              "gtccTotalMinor",
+              "personalFundsTotalMinor",
+              "documentIds",
+              "checks",
+              "warnings",
+              "blockingIssues",
+              "reconciliation"
+            ],
+            "additionalProperties": true
+          },
+          "revision": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "sha256": {
+                "type": "string"
+              },
+              "snapshot": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "id",
+              "sha256",
+              "snapshot",
+              "createdAt"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "report",
           "revision"
         ],
         "additionalProperties": false

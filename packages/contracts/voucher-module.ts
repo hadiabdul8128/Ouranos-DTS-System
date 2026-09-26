@@ -29,19 +29,16 @@ export const voucherResolutionSchema=z.discriminatedUnion('type',[
  * application's reconciliation rules against the frozen approved revision.
  * A client-provided empty issue list does not establish travel-policy approval.
  */
-export const voucherModuleSchema=z.object({
+const voucherFields={
  tripId:uuid,
  authorizationId:uuid,
  currency:z.literal('USD'),
  certified:z.literal(true),
  intakeComplete:z.literal(true),
  expenseItems:z.array(voucherExpenseItemSchema).min(1).max(500),
- reconciliation:z.object({
-  totalAmountMinor:minorUnits,
-  unresolvedIssueIds:z.array(z.string().min(1).max(240)).max(0,'Resolve all voucher issues before submitting'),
- }).strict(),
  resolutions:z.record(z.string().min(1).max(240),voucherResolutionSchema).default({}),
-}).strict().superRefine((value,context)=>{
+};
+const checkArithmetic=(value:{expenseItems:Array<{expenseId:string;amountMinor:number}>;reconciliation:{totalAmountMinor:number}},context:z.RefinementCtx)=>{
  const seen=new Set<string>();let total=BigInt(0);
  for(const [index,item] of value.expenseItems.entries()){
   if(seen.has(item.expenseId))context.addIssue({code:z.ZodIssueCode.custom,path:['expenseItems',index,'expenseId'],message:'Duplicate expense reference'});
@@ -53,6 +50,18 @@ export const voucherModuleSchema=z.object({
  }
  if(total>BigInt(Number.MAX_SAFE_INTEGER))context.addIssue({code:z.ZodIssueCode.custom,path:['reconciliation','totalAmountMinor'],message:'Combined expenses exceed the supported amount range'});
  else if(Number(total)!==value.reconciliation.totalAmountMinor)context.addIssue({code:z.ZodIssueCode.custom,path:['reconciliation','totalAmountMinor'],message:'Voucher total must equal the sum of its expense amounts'});
-});
+};
+
+/** A verification attempt can include open issues. Only a verified submission
+ * may use the stricter module schema below. The server recomputes every issue. */
+export const voucherVerificationCandidateSchema=z.object({...voucherFields,reconciliation:z.object({
+ totalAmountMinor:minorUnits,
+ unresolvedIssueIds:z.array(z.string().min(1).max(240)).max(500),
+}).strict()}).strict().superRefine(checkArithmetic);
+
+export const voucherModuleSchema=z.object({...voucherFields,reconciliation:z.object({
+ totalAmountMinor:minorUnits,
+ unresolvedIssueIds:z.array(z.string().min(1).max(240)).max(0,'Resolve all voucher issues before submitting'),
+}).strict()}).strict().superRefine(checkArithmetic);
 
 export type VoucherModuleInput=z.infer<typeof voucherModuleSchema>;

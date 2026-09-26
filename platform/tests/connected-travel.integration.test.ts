@@ -139,31 +139,34 @@ describe('connected planning and Voucher Copilot',()=>{
   for(const user of ['outsider','peer'] as const)expect((await request(user,'GET',url)).status).toBe(404);
  });
 
- it('submits and approves a receipt-exempt meal with server-computed reconciliation',async()=>{
+ it('verifies a receipt-exempt meal without creating a human Voucher approval',async()=>{
   const expense=await saveMeal();
   const voucher=await saveVoucher(expense);
   const peer=await send('peer','voucher.submit',voucher.id,voucher.version,{});
   expect(peer.body.ok).toBe(false);
   expect(['PERMISSION_DENIED','NOT_FOUND']).toContain(peer.body.error.code);
   const submitted=expectSuccess(await send('traveler','voucher.submit',voucher.id,voucher.version,{}));
-  expect(submitted.status).toBe('in_review');
-  const approval=await approvalFor(voucher.id);
-  const self=await send('traveler','approval.decide',approval.id,approval.version,{decision:'approved',comment:''});
-  expect(self.status).toBe(403);
-  const first=expectSuccess(await send('reviewer','approval.decide',approval.id,approval.version,{decision:'approved',comment:''}));
-  expectSuccess(await send('approver','approval.decide',approval.id,first.version,{decision:'approved',comment:''}));
-  const revision=await request('reviewer','GET',`/v1/approvals/${approval.id}/revision?organizationId=${organizationId}`);
-  expect(revision.status,JSON.stringify(revision.body)).toBe(200);
-  expect(revision.body.revision.snapshot.reconciliation).toMatchObject({ready:true,issues:[],totals:{actual:18,traveler:18,gtcc:0}});
-  expect(revision.body.revision.snapshot.authorizationRevision.sha256).toMatch(/^[a-f0-9]{64}$/);
-  expect(revision.body.revision.snapshot.documents).toEqual([]);
-  expect(revision.body.decisions).toHaveLength(2);
+  expect(submitted.status).toBe('verified');
+  const inbox=await request('reviewer','GET',`/v1/entities/approval?organizationId=${organizationId}`);
+  expect(inbox.body.entities.some((row:Entity)=>row.data.entityId===voucher.id)).toBe(false);
+  const requests=await pool.query('select count(*)::int as count from ouranos.approval_requests where organization_id=$1 and data->>\'entityId\'=$2',[organizationId,voucher.id]);
+  expect(requests.rows[0].count).toBe(0);
+  const steps=await pool.query('select count(*)::int as count from ouranos.approval_steps where request_id in (select id from ouranos.approval_requests where organization_id=$1 and data->>\'entityId\'=$2)',[organizationId,voucher.id]);
+  expect(steps.rows[0].count).toBe(0);
+  const verification=await request('traveler','GET',`/v1/vouchers/${voucher.id}/verification?organizationId=${organizationId}`);
+  expect(verification.status,JSON.stringify(verification.body)).toBe(200);
+  expect((await request('outsider','GET',`/v1/vouchers/${voucher.id}/verification?organizationId=${organizationId}`)).status).toBe(404);
+  expect(verification.body.report).toMatchObject({status:'verified',expenseCount:1,receiptCount:0,claimedTotalMinor:1800,personalFundsTotalMinor:1800,blockingIssues:[]});
+  expect(verification.body.revision.snapshot.reconciliation).toMatchObject({ready:true,issues:[],totals:{actual:18,traveler:18,gtcc:0}});
+  expect(verification.body.report.snapshotSha256).toBe(verification.body.revision.sha256);
+  expect(verification.body.revision.snapshot.authorizationRevision.sha256).toMatch(/^[a-f0-9]{64}$/);
+  await expect(pool.query('update ouranos.voucher_verifications set result=$1 where revision_id=$2',['needs_action',verification.body.revision.id])).rejects.toThrow(/History is append-only/);
   expectSuccess(await send('traveler','expense.save',expense.id,expense.version,{...expense.data,tripId,amountMinor:1900} as PayloadOf<'expense.save'>));
-  const unchanged=await request('reviewer','GET',`/v1/approvals/${approval.id}/revision?organizationId=${organizationId}`);
-  expect(unchanged.body.revision).toEqual(revision.body.revision);
+  const unchanged=await request('traveler','GET',`/v1/vouchers/${voucher.id}/verification?organizationId=${organizationId}`);
+  expect(unchanged.body).toEqual(verification.body);
  });
 
- it('prevents another voucher from claiming an expense while it is in review or approved',async()=>{
+ it('prevents another voucher from claiming an expense after verification',async()=>{
   const expense=await saveMeal();
   const first=await saveVoucher(expense);
   expectSuccess(await send('traveler','voucher.submit',first.id,first.version,{}));
@@ -178,37 +181,29 @@ describe('connected planning and Voucher Copilot',()=>{
    expect(saved.body.entity.version).toBe(duplicate.version);
   };
   await expectClaimBlocked();
-  const approval=await approvalFor(first.id);
-  const reviewed=expectSuccess(await send('reviewer','approval.decide',approval.id,approval.version,{decision:'approved',comment:''}));
-  expectSuccess(await send('approver','approval.decide',approval.id,reviewed.version,{decision:'approved',comment:''}));
   await expectClaimBlocked();
  });
 
- it('releases expense claims after changes are requested or a voucher is rejected',async()=>{
-  for(const decision of ['changes_requested','rejected'] as const){
-   const expense=await saveMeal();
-   const first=await saveVoucher(expense);
-   expectSuccess(await send('traveler','voucher.submit',first.id,first.version,{}));
-   const approval=await approvalFor(first.id);
-   expectSuccess(await send('reviewer','approval.decide',approval.id,approval.version,{decision,comment:'Please revise this voucher.'}));
-   // A changed voucher may resubmit its own expense without conflicting with itself.
-   if(decision==='changes_requested'){
-    const current=await request('traveler','GET',`/v1/entities/voucher/${first.id}?organizationId=${organizationId}`);
-    const resubmitted=expectSuccess(await send('traveler','voucher.submit',first.id,current.body.entity.version,{}));
-    expect(resubmitted.status).toBe('in_review');
-    const nextApproval=await approvalFor(first.id);
-    expectSuccess(await send('reviewer','approval.decide',nextApproval.id,nextApproval.version,{decision,comment:'Please revise this voucher.'}));
-   }
-   const replacement=await saveVoucher(expense);
-   const submitted=expectSuccess(await send('traveler','voucher.submit',replacement.id,replacement.version,{}));
-   expect(submitted.status).toBe('in_review');
-  }
+ it('returns over-budget expenses to the traveler and releases the claim',async()=>{
+  const expense=await saveMeal(10000),first=await saveVoucher(expense);
+  const result=expectSuccess(await send('traveler','voucher.submit',first.id,first.version,{}));
+  expect(result.status).toBe('needs_action');
+  const detail=await request('traveler','GET',`/v1/vouchers/${first.id}/verification?organizationId=${organizationId}`);
+  expect(detail.body.report.blockingIssues).toContainEqual(expect.objectContaining({code:'over_authorization'}));
+  const replacement=await saveVoucher(expense);
+  expect(expectSuccess(await send('traveler','voucher.submit',replacement.id,replacement.version,{})).status).toBe('needs_action');
  });
 
  it('rejects an internally consistent client total that contradicts the saved expense',async()=>{
   const expense=await saveMeal();const form=voucherForm(expense);
   form.expenseItems[0].amountMinor=1700;form.reconciliation.totalAmountMinor=1700;
   await expectSubmissionRejected(await saveVoucher(expense,form),/details no longer match saved records/);
+ });
+
+ it('rejects an expense changed after Voucher reconciliation was saved',async()=>{
+  const expense=await saveMeal(),voucher=await saveVoucher(expense);
+  expectSuccess(await send('traveler','expense.save',expense.id,expense.version,{...expense.data,tripId,amountMinor:1900} as PayloadOf<'expense.save'>));
+  await expectSubmissionRejected(voucher,/details no longer match saved records/);
  });
 
  it('rejects forged trip or authorization context inside an otherwise valid voucher',async()=>{
@@ -219,14 +214,58 @@ describe('connected planning and Voucher Copilot',()=>{
   }
  });
 
- it('recomputes over-budget blockers despite an empty client issue list',async()=>{
-  const expense=await saveMeal(10000);
-  await expectSubmissionRejected(await saveVoucher(expense),/above the authorized/);
+ it('recomputes duplicate and date blockers despite an empty client issue list',async()=>{
+  const first=await saveMeal(),second=await saveMeal();
+  const form=voucherForm(first);form.expenseItems.push({...form.expenseItems[0],expenseId:second.id});form.reconciliation.totalAmountMinor=3600;
+  const voucher=expectSuccess(await send('traveler','voucher.save',crypto.randomUUID(),0,{tripId,authorizationId,expenseIds:[first.id,second.id],formSchemaVersion:VOUCHER_MODULE_SCHEMA_VERSION,formData:form}));
+  expect(expectSuccess(await send('traveler','voucher.submit',voucher.id,voucher.version,{})).status).toBe('needs_action');
+  const duplicate=await request('traveler','GET',`/v1/vouchers/${voucher.id}/verification?organizationId=${organizationId}`);
+  expect(duplicate.body.report.blockingIssues).toContainEqual(expect.objectContaining({code:'possible_duplicate'}));
+  const outside=expectSuccess(await send('traveler','expense.save',crypto.randomUUID(),0,{tripId,merchant:'Late meal',incurredOn:'2026-10-20',amountMinor:1800,currency:'USD',category:'meals',authorizationItemId:itemId,paymentMethod:'personal',documentIds:[],description:'Late meal'}));
+  const late=await saveVoucher(outside);
+  expect(expectSuccess(await send('traveler','voucher.submit',late.id,late.version,{})).status).toBe('needs_action');
+  const date=await request('traveler','GET',`/v1/vouchers/${late.id}/verification?organizationId=${organizationId}`);
+  expect(date.body.report.blockingIssues).toContainEqual(expect.objectContaining({code:'outside_dates'}));
+  const fixedExpense=expectSuccess(await send('traveler','expense.save',outside.id,outside.version,{...outside.data,tripId,incurredOn:'2026-10-12'} as PayloadOf<'expense.save'>));
+  const updated=expectSuccess(await send('traveler','voucher.save',late.id,2,{tripId,authorizationId,expenseIds:[fixedExpense.id],formSchemaVersion:VOUCHER_MODULE_SCHEMA_VERSION,formData:voucherForm(fixedExpense)}));
+  expect(expectSuccess(await send('traveler','voucher.submit',late.id,updated.version,{})).status).toBe('verified');
  });
 
- it('rejects a persisted expense matched to an item outside the approved authorization',async()=>{
+ it('returns an unmatched expense for correction',async()=>{
   const expense=await saveMeal(1800,crypto.randomUUID());
-  await expectSubmissionRejected(await saveVoucher(expense),/not matched to an approved/);
+  const voucher=await saveVoucher(expense);
+  expect(expectSuccess(await send('traveler','voucher.submit',voucher.id,voucher.version,{})).status).toBe('needs_action');
+  const report=await request('traveler','GET',`/v1/vouchers/${voucher.id}/verification?organizationId=${organizationId}`);
+  expect(report.body.report.blockingIssues).toContainEqual(expect.objectContaining({code:'unauthorized'}));
+ });
+ it('blocks unprocessed receipts and unapproved authorizations',async()=>{
+  const document=expectSuccess(await send('traveler','document.register',crypto.randomUUID(),0,{tripId,filename:'meal.png',mediaType:'image/png',byteSize:100,sha256:'a'.repeat(64)}));
+  const expense=expectSuccess(await send('traveler','expense.save',crypto.randomUUID(),0,{tripId,merchant:'Meal with receipt',incurredOn:'2026-10-12',amountMinor:1800,currency:'USD',category:'meals',authorizationItemId:itemId,paymentMethod:'personal',documentIds:[document.id],description:'Meal'}));
+  const form={...voucherForm(expense),expenseItems:[{...voucherForm(expense).expenseItems[0],documentIds:[document.id]}]};
+  const voucher=await saveVoucher(expense,form);
+  expect(expectSuccess(await send('traveler','voucher.submit',voucher.id,voucher.version,{})).status).toBe('needs_action');
+  const detail=await request('traveler','GET',`/v1/vouchers/${voucher.id}/verification?organizationId=${organizationId}`);
+  expect(detail.body.report.blockingIssues).toContainEqual(expect.objectContaining({code:'receipt_unconfirmed'}));
+  const pendingId=crypto.randomUUID();
+  expectSuccess(await send('traveler','authorization.save',pendingId,0,{tripId,formSchemaVersion:PLANNING_SCHEMA_VERSION,formData:planning}));
+  const pending=expectSuccess(await send('traveler','voucher.save',crypto.randomUUID(),0,{tripId,authorizationId:pendingId,expenseIds:[expense.id],formSchemaVersion:VOUCHER_MODULE_SCHEMA_VERSION,formData:{...form,authorizationId:pendingId}}));
+  const denied=await send('traveler','voucher.submit',pending.id,pending.version,{});
+  expect(denied.body.error.code).toBe('INVALID_STATE_TRANSITION');
+ });
+ it('replays one verification command without duplicating its report and rejects a spoofed verdict',async()=>{
+  const expense=await saveMeal(),voucher=await saveVoucher(expense);
+  const command={type:'voucher.submit',entityId:voucher.id,expectedVersion:voucher.version,payload:{},organizationId,commandId:crypto.randomUUID(),deviceId:users.traveler.deviceId,schemaVersion:1};
+  const first=await request('traveler','POST','/v1/commands',command);
+  const repeated=await request('traveler','POST','/v1/commands',command);
+  expect(first.body.entity.status).toBe('verified');expect(repeated.body.replayed).toBe(true);
+  const reports=await pool.query('select count(*)::int as count from ouranos.voucher_verifications where voucher_id=$1',[voucher.id]);
+  expect(reports.rows[0].count).toBe(1);
+  const forged=await request('traveler','POST','/v1/commands',{...command,commandId:crypto.randomUUID(),payload:{verified:true}});
+  expect(forged.status).toBe(400);
+  const spoofExpense=await saveMeal();
+  const forgedForm=await saveVoucher(spoofExpense,{...voucherForm(spoofExpense),verified:true} as VoucherModuleInput);
+  const rejected=await send('traveler','voucher.submit',forgedForm.id,forgedForm.version,{});
+  expect(rejected.body.error.code).toBe('VALIDATION_FAILED');
  });
  it('freezes companion rates and exports the receipt statement through the authenticated API',async()=>{
   const companionId=crypto.randomUUID(),fuelItem=crypto.randomUUID();
@@ -238,11 +277,17 @@ describe('connected planning and Voucher Copilot',()=>{
   const approved=await request('traveler','GET',`/v1/authorizations/${companionId}/approved?organizationId=${organizationId}`);
   expect(approved.body.revision.snapshot.perDiem.supported).toBe(true);
   const expense=expectSuccess(await send('traveler','expense.save',crypto.randomUUID(),0,{tripId,merchant:'Companion fuel',incurredOn:'2026-10-12',amountMinor:10000,currency:'USD',category:'fuel',authorizationItemId:fuelItem,paymentMethod:'gtcc',documentIds:[],description:'Fuel'}));
-  const form:VoucherModuleInput={...voucherForm(expense),authorizationId:companionId,resolutions:{[`${expense.id}:receipt_missing`]:{type:'lost_receipt_statement',value:{reason:'Paper receipt lost during travel.',expenseVersion:expense.version}}}};
+  const form:VoucherModuleInput={...voucherForm(expense),authorizationId:companionId};
   const voucher=expectSuccess(await send('traveler','voucher.save',crypto.randomUUID(),0,{tripId,authorizationId:companionId,expenseIds:[expense.id],formSchemaVersion:VOUCHER_MODULE_SCHEMA_VERSION,formData:form}));
   const url=`/v1/vouchers/${voucher.id}/package?organizationId=${organizationId}`;
   expect((await request('traveler','GET',url)).status).toBe(409);
-  expectSuccess(await send('traveler','voucher.submit',voucher.id,voucher.version,{}));
+  const blocked=expectSuccess(await send('traveler','voucher.submit',voucher.id,voucher.version,{}));
+  expect(blocked.status).toBe('needs_action');
+  const report=await request('traveler','GET',`/v1/vouchers/${voucher.id}/verification?organizationId=${organizationId}`);
+  expect(report.body.report.blockingIssues).toContainEqual(expect.objectContaining({code:'receipt_missing'}));
+  const resolved={...form,resolutions:{[`${expense.id}:receipt_missing`]:{type:'lost_receipt_statement' as const,value:{reason:'Paper receipt lost during travel.',expenseVersion:expense.version}}}};
+  const saved=expectSuccess(await send('traveler','voucher.save',voucher.id,blocked.version,{tripId,authorizationId:companionId,expenseIds:[expense.id],formSchemaVersion:VOUCHER_MODULE_SCHEMA_VERSION,formData:resolved}));
+  expect(expectSuccess(await send('traveler','voucher.submit',voucher.id,saved.version,{})).status).toBe('verified');
   const exported=await request('traveler','GET',url);expect(exported.status,JSON.stringify(exported.body)).toBe(200);
   expect(exported.body.html).toContain('LOST RECEIPT STATEMENT');
   expect(exported.body.html).toContain('Companion fuel');

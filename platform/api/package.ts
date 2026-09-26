@@ -13,8 +13,11 @@ import {buildEvidenceHtml} from '../../voucher/src/evidencePackage.js';
 /** Export the submitted version, never a mutable draft or client assertion. */
 export async function loadVoucherPackage(db:PoolClient,org:string,id:string){
  const voucher=await loadEntity(db,'voucher',id,org);
- check(['in_review','approved'].includes(voucher.status),'INVALID_STATE_TRANSITION','Submit the voucher before downloading its package',409);
- const revision=(await db.query(`select r.id,r.sha256,r.snapshot,r.created_at from ouranos.submission_revisions r
+ check(['in_review','approved','verified'].includes(voucher.status),'INVALID_STATE_TRANSITION','Verify the voucher before downloading its package',409);
+ const revision=voucher.status==='verified'?(await db.query(`select r.id,r.sha256,r.snapshot,r.created_at,v.report as verification from ouranos.voucher_verifications v
+  join ouranos.submission_revisions r on r.organization_id=v.organization_id and r.id=v.revision_id
+  where v.organization_id=$1 and v.voucher_id=$2 and v.result='verified' order by v.created_at desc limit 1`,[org,id])).rows[0]
+  :(await db.query(`select r.id,r.sha256,r.snapshot,r.created_at from ouranos.submission_revisions r
   join ouranos.approval_requests a on a.revision_id=r.id
   where r.organization_id=$1 and r.voucher_id=$2 and a.status=$3 order by r.created_at desc limit 1`,[org,id,voucher.status])).rows[0];
  check(revision?.snapshot?.authorizationRevision,'INVALID_STATE_TRANSITION','This revision has no connected travel package',409);
@@ -57,5 +60,5 @@ function renderPackage(voucher:any,revision:any){
  const html=snapshot.preview?rendered.replace('<body>','<body><p>Draft preview — not approved or submitted to DTS.</p>'):rendered;
  return {id:voucher.id,status:voucher.status,revisionId:revision.id,sha256:revision.sha256,
   destination:String(snapshot.trip.data.destination),checklist,html,perDiem,documents,
-  snapshot,generatedAt:new Date(revision.created_at).toISOString()};
+  snapshot,verification:revision.verification||null,generatedAt:new Date(revision.created_at).toISOString()};
 }
