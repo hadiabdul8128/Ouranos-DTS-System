@@ -12,11 +12,13 @@ export const financialProfileSchema=z.object({
  emergency:z.object({balanceMinor:financialMoneySchema,targetMinor:financialMoneySchema,monthlyContributionMinor:financialMoneySchema}).strict(),
  goal:z.object({kind:z.enum(['separation','education','home','other']),name:z.string().trim().min(1).max(100),balanceMinor:financialMoneySchema,targetMinor:financialMoneySchema.refine(v=>v>0,'Enter a goal above $0'),monthlyContributionMinor:financialMoneySchema,targetMonth:financialMonthSchema.nullable()}).strict(),
  separationMonth:financialMonthSchema.nullable(),
+ surplusPriority:z.enum(['emergency_first','goal_first','keep_available']).default('emergency_first'),
 }).strict();
 export type FinancialProfile=z.infer<typeof financialProfileSchema>;
 export const financialAllocationSchema=z.object({id:z.enum(['essentials','spending','emergency','goal','buffer']),label:z.string(),monthlyMinor:z.number().int().nonnegative(),perPaycheckMinor:z.number().int().nonnegative()}).strict();
 export const financialCalculationSchema=z.object({
  ruleVersion:z.literal('financial-readiness-v1'),asOfMonth:financialMonthSchema,
+ regularPaychecksPerMonth:z.number().int().positive(),averageMonthlyTakeHomeMinor:z.number().int().nonnegative(),
  annualPaychecks:z.number().int().positive(),monthlyTakeHomeMinor:z.number().int().nonnegative(),monthlyTspMinor:z.number().int().nonnegative(),
  monthlyEssentialsMinor:z.number().int().nonnegative(),monthlyCommittedMinor:z.number().int().nonnegative(),monthlyUnassignedMinor:z.number().int(),monthlyDeficitMinor:z.number().int().nonnegative(),
  emergencyTopUpMinor:z.number().int().nonnegative(),goalTopUpMinor:z.number().int().nonnegative(),
@@ -28,7 +30,7 @@ export const financialCalculationSchema=z.object({
  perPaycheckRequiredMinor:z.number().int().nonnegative(),perPaycheckDeficitMinor:z.number().int().nonnegative(),
 }).strict();
 export type FinancialCalculation=z.infer<typeof financialCalculationSchema>;
-export const financialCheckInSchema=z.object({month:financialMonthSchema,goalBalanceMinor:financialMoneySchema,emergencyBalanceMinor:financialMoneySchema,updatedAt:z.string().datetime()}).strict();
+export const financialCheckInSchema=z.object({month:financialMonthSchema,goalName:z.string(),goalBalanceMinor:financialMoneySchema,emergencyBalanceMinor:financialMoneySchema,updatedAt:z.string().datetime()}).strict();
 export const financialPlanSchema=z.object({
  id:z.string().uuid(),organizationId:z.string().uuid(),version:z.number().int().positive(),profile:financialProfileSchema,
  calculation:financialCalculationSchema,checkIns:z.array(financialCheckInSchema).max(24),updatedAt:z.string().datetime(),
