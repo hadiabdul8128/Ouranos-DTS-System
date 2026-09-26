@@ -145,6 +145,122 @@
         }
       }
     },
+    "/v1/transition/plan": {
+      "get": {
+        "operationId": "transitionPlan",
+        "summary": "Read the caller’s private transition plan",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransitionOptionalResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organizationId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "put": {
+        "operationId": "saveTransitionPlan",
+        "summary": "Save answers, selected path, and action progress",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransitionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Owner-only personal plan. expectedVersion is 0 for first save and the last saved version otherwise. Reuse requestId with identical input to retry. The server generates recommendations; the caller cannot supply them. This plan is excluded from shared travel synchronization.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransitionSave"
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/session": {
       "get": {
         "operationId": "session",
@@ -1411,6 +1527,1046 @@
       }
     },
     "schemas": {
+      "TransitionProfile": {
+        "type": "object",
+        "properties": {
+          "stage": {
+            "type": "string",
+            "enum": [
+              "preparing",
+              "recently_separated",
+              "veteran"
+            ]
+          },
+          "branch": {
+            "type": "string",
+            "enum": [
+              "army",
+              "navy",
+              "air_force",
+              "marine_corps",
+              "space_force",
+              "coast_guard",
+              "other",
+              "prefer_not_to_say"
+            ]
+          },
+          "militaryRole": {
+            "type": "string",
+            "maxLength": 160,
+            "default": ""
+          },
+          "location": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "leadership",
+                "operations",
+                "technical",
+                "people",
+                "analysis"
+              ]
+            },
+            "maxItems": 5
+          },
+          "interests": {
+            "type": "string",
+            "maxLength": 500,
+            "default": ""
+          },
+          "goal": {
+            "type": "string",
+            "enum": [
+              "job",
+              "training",
+              "education",
+              "exploring"
+            ]
+          },
+          "incomeTiming": {
+            "type": "string",
+            "enum": [
+              "now",
+              "soon",
+              "flexible"
+            ]
+          },
+          "housingSupport": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "stage",
+          "branch",
+          "location",
+          "skills",
+          "goal",
+          "incomeTiming"
+        ],
+        "additionalProperties": false
+      },
+      "TransitionRecommendation": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "enum": [
+              "transition-v1"
+            ]
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "guided_rules"
+            ]
+          },
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "enum": [
+                    "employment",
+                    "training",
+                    "education"
+                  ]
+                },
+                "title": {
+                  "type": "string"
+                },
+                "summary": {
+                  "type": "string"
+                },
+                "reasons": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "considerations": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "actions": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "detail": {
+                        "type": "string"
+                      },
+                      "resourceId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "title",
+                      "detail",
+                      "resourceId"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "summary",
+                "reasons",
+                "considerations",
+                "actions"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 3,
+            "maxItems": 3
+          }
+        },
+        "required": [
+          "version",
+          "generatedAt",
+          "method",
+          "paths"
+        ],
+        "additionalProperties": false
+      },
+      "TransitionSave": {
+        "type": "object",
+        "properties": {
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "profile": {
+            "type": "object",
+            "properties": {
+              "stage": {
+                "type": "string",
+                "enum": [
+                  "preparing",
+                  "recently_separated",
+                  "veteran"
+                ]
+              },
+              "branch": {
+                "type": "string",
+                "enum": [
+                  "army",
+                  "navy",
+                  "air_force",
+                  "marine_corps",
+                  "space_force",
+                  "coast_guard",
+                  "other",
+                  "prefer_not_to_say"
+                ]
+              },
+              "militaryRole": {
+                "type": "string",
+                "maxLength": 160,
+                "default": ""
+              },
+              "location": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "skills": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "leadership",
+                    "operations",
+                    "technical",
+                    "people",
+                    "analysis"
+                  ]
+                },
+                "maxItems": 5
+              },
+              "interests": {
+                "type": "string",
+                "maxLength": 500,
+                "default": ""
+              },
+              "goal": {
+                "type": "string",
+                "enum": [
+                  "job",
+                  "training",
+                  "education",
+                  "exploring"
+                ]
+              },
+              "incomeTiming": {
+                "type": "string",
+                "enum": [
+                  "now",
+                  "soon",
+                  "flexible"
+                ]
+              },
+              "housingSupport": {
+                "type": "boolean",
+                "default": false
+              }
+            },
+            "required": [
+              "stage",
+              "branch",
+              "location",
+              "skills",
+              "goal",
+              "incomeTiming"
+            ],
+            "additionalProperties": false
+          },
+          "selectedPath": {
+            "type": "string",
+            "enum": [
+              "employment",
+              "training",
+              "education"
+            ],
+            "nullable": true
+          },
+          "completedActionIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "maxItems": 3
+          }
+        },
+        "required": [
+          "organizationId",
+          "requestId",
+          "expectedVersion",
+          "profile",
+          "selectedPath",
+          "completedActionIds"
+        ],
+        "additionalProperties": false
+      },
+      "TransitionPlan": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "exclusiveMinimum": true,
+            "minimum": 0
+          },
+          "profile": {
+            "type": "object",
+            "properties": {
+              "stage": {
+                "type": "string",
+                "enum": [
+                  "preparing",
+                  "recently_separated",
+                  "veteran"
+                ]
+              },
+              "branch": {
+                "type": "string",
+                "enum": [
+                  "army",
+                  "navy",
+                  "air_force",
+                  "marine_corps",
+                  "space_force",
+                  "coast_guard",
+                  "other",
+                  "prefer_not_to_say"
+                ]
+              },
+              "militaryRole": {
+                "type": "string",
+                "maxLength": 160,
+                "default": ""
+              },
+              "location": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "skills": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "leadership",
+                    "operations",
+                    "technical",
+                    "people",
+                    "analysis"
+                  ]
+                },
+                "maxItems": 5
+              },
+              "interests": {
+                "type": "string",
+                "maxLength": 500,
+                "default": ""
+              },
+              "goal": {
+                "type": "string",
+                "enum": [
+                  "job",
+                  "training",
+                  "education",
+                  "exploring"
+                ]
+              },
+              "incomeTiming": {
+                "type": "string",
+                "enum": [
+                  "now",
+                  "soon",
+                  "flexible"
+                ]
+              },
+              "housingSupport": {
+                "type": "boolean",
+                "default": false
+              }
+            },
+            "required": [
+              "stage",
+              "branch",
+              "location",
+              "skills",
+              "goal",
+              "incomeTiming"
+            ],
+            "additionalProperties": false
+          },
+          "recommendation": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "string",
+                "enum": [
+                  "transition-v1"
+                ]
+              },
+              "generatedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "method": {
+                "type": "string",
+                "enum": [
+                  "guided_rules"
+                ]
+              },
+              "paths": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "enum": [
+                        "employment",
+                        "training",
+                        "education"
+                      ]
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "summary": {
+                      "type": "string"
+                    },
+                    "reasons": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "considerations": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "actions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "detail": {
+                            "type": "string"
+                          },
+                          "resourceId": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title",
+                          "detail",
+                          "resourceId"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "minItems": 3,
+                      "maxItems": 3
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "summary",
+                    "reasons",
+                    "considerations",
+                    "actions"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 3,
+                "maxItems": 3
+              }
+            },
+            "required": [
+              "version",
+              "generatedAt",
+              "method",
+              "paths"
+            ],
+            "additionalProperties": false
+          },
+          "selectedPath": {
+            "type": "string",
+            "enum": [
+              "employment",
+              "training",
+              "education"
+            ],
+            "nullable": true
+          },
+          "completedActionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "organizationId",
+          "version",
+          "profile",
+          "recommendation",
+          "selectedPath",
+          "completedActionIds",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "TransitionResponse": {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "organizationId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "version": {
+                "type": "integer",
+                "exclusiveMinimum": true,
+                "minimum": 0
+              },
+              "profile": {
+                "type": "object",
+                "properties": {
+                  "stage": {
+                    "type": "string",
+                    "enum": [
+                      "preparing",
+                      "recently_separated",
+                      "veteran"
+                    ]
+                  },
+                  "branch": {
+                    "type": "string",
+                    "enum": [
+                      "army",
+                      "navy",
+                      "air_force",
+                      "marine_corps",
+                      "space_force",
+                      "coast_guard",
+                      "other",
+                      "prefer_not_to_say"
+                    ]
+                  },
+                  "militaryRole": {
+                    "type": "string",
+                    "maxLength": 160,
+                    "default": ""
+                  },
+                  "location": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "skills": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "leadership",
+                        "operations",
+                        "technical",
+                        "people",
+                        "analysis"
+                      ]
+                    },
+                    "maxItems": 5
+                  },
+                  "interests": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "default": ""
+                  },
+                  "goal": {
+                    "type": "string",
+                    "enum": [
+                      "job",
+                      "training",
+                      "education",
+                      "exploring"
+                    ]
+                  },
+                  "incomeTiming": {
+                    "type": "string",
+                    "enum": [
+                      "now",
+                      "soon",
+                      "flexible"
+                    ]
+                  },
+                  "housingSupport": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                },
+                "required": [
+                  "stage",
+                  "branch",
+                  "location",
+                  "skills",
+                  "goal",
+                  "incomeTiming"
+                ],
+                "additionalProperties": false
+              },
+              "recommendation": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "string",
+                    "enum": [
+                      "transition-v1"
+                    ]
+                  },
+                  "generatedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "method": {
+                    "type": "string",
+                    "enum": [
+                      "guided_rules"
+                    ]
+                  },
+                  "paths": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "enum": [
+                            "employment",
+                            "training",
+                            "education"
+                          ]
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "reasons": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "considerations": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "actions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "detail": {
+                                "type": "string"
+                              },
+                              "resourceId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "title",
+                              "detail",
+                              "resourceId"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "minItems": 3,
+                          "maxItems": 3
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "title",
+                        "summary",
+                        "reasons",
+                        "considerations",
+                        "actions"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "minItems": 3,
+                    "maxItems": 3
+                  }
+                },
+                "required": [
+                  "version",
+                  "generatedAt",
+                  "method",
+                  "paths"
+                ],
+                "additionalProperties": false
+              },
+              "selectedPath": {
+                "type": "string",
+                "enum": [
+                  "employment",
+                  "training",
+                  "education"
+                ],
+                "nullable": true
+              },
+              "completedActionIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "id",
+              "organizationId",
+              "version",
+              "profile",
+              "recommendation",
+              "selectedPath",
+              "completedActionIds",
+              "updatedAt"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "plan"
+        ],
+        "additionalProperties": false
+      },
+      "TransitionOptionalResponse": {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "organizationId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "version": {
+                "type": "integer",
+                "exclusiveMinimum": true,
+                "minimum": 0
+              },
+              "profile": {
+                "type": "object",
+                "properties": {
+                  "stage": {
+                    "type": "string",
+                    "enum": [
+                      "preparing",
+                      "recently_separated",
+                      "veteran"
+                    ]
+                  },
+                  "branch": {
+                    "type": "string",
+                    "enum": [
+                      "army",
+                      "navy",
+                      "air_force",
+                      "marine_corps",
+                      "space_force",
+                      "coast_guard",
+                      "other",
+                      "prefer_not_to_say"
+                    ]
+                  },
+                  "militaryRole": {
+                    "type": "string",
+                    "maxLength": 160,
+                    "default": ""
+                  },
+                  "location": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "skills": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "leadership",
+                        "operations",
+                        "technical",
+                        "people",
+                        "analysis"
+                      ]
+                    },
+                    "maxItems": 5
+                  },
+                  "interests": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "default": ""
+                  },
+                  "goal": {
+                    "type": "string",
+                    "enum": [
+                      "job",
+                      "training",
+                      "education",
+                      "exploring"
+                    ]
+                  },
+                  "incomeTiming": {
+                    "type": "string",
+                    "enum": [
+                      "now",
+                      "soon",
+                      "flexible"
+                    ]
+                  },
+                  "housingSupport": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                },
+                "required": [
+                  "stage",
+                  "branch",
+                  "location",
+                  "skills",
+                  "goal",
+                  "incomeTiming"
+                ],
+                "additionalProperties": false
+              },
+              "recommendation": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "string",
+                    "enum": [
+                      "transition-v1"
+                    ]
+                  },
+                  "generatedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "method": {
+                    "type": "string",
+                    "enum": [
+                      "guided_rules"
+                    ]
+                  },
+                  "paths": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "enum": [
+                            "employment",
+                            "training",
+                            "education"
+                          ]
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "reasons": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "considerations": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "actions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "detail": {
+                                "type": "string"
+                              },
+                              "resourceId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "title",
+                              "detail",
+                              "resourceId"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "minItems": 3,
+                          "maxItems": 3
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "title",
+                        "summary",
+                        "reasons",
+                        "considerations",
+                        "actions"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "minItems": 3,
+                    "maxItems": 3
+                  }
+                },
+                "required": [
+                  "version",
+                  "generatedAt",
+                  "method",
+                  "paths"
+                ],
+                "additionalProperties": false
+              },
+              "selectedPath": {
+                "type": "string",
+                "enum": [
+                  "employment",
+                  "training",
+                  "education"
+                ],
+                "nullable": true
+              },
+              "completedActionIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "id",
+              "organizationId",
+              "version",
+              "profile",
+              "recommendation",
+              "selectedPath",
+              "completedActionIds",
+              "updatedAt"
+            ],
+            "additionalProperties": false,
+            "nullable": true
+          }
+        },
+        "required": [
+          "plan"
+        ],
+        "additionalProperties": false
+      },
       "Role": {
         "type": "string",
         "enum": [
