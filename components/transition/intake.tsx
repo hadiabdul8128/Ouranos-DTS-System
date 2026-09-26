@@ -30,6 +30,7 @@ export function TransitionIntake({initial,onSave,onCancel,busy}:{initial?:Transi
   </fieldset>
   {error&&<p role="alert" className="transition-error">{error}</p>}
   <div className="transition-controls"><Button type="submit" disabled={busy}>{busy?'Saving your plan…':step===0?'Continue':'See my options'}</Button>{step===1&&<button type="button" className="transition-text-button" disabled={busy} onClick={()=>move(0)}>Back</button>}{onCancel&&<button type="button" className="transition-text-button" disabled={busy} onClick={onCancel}>Cancel</button>}</div>
+  {onCancel&&<p className="transition-fine">Saving answers starts a fresh action plan and resets completed steps.</p>}
   <p className="transition-fine">Your saved plan is private to your account in this workspace. Please leave out SSNs, medical records, and other sensitive documents.</p>
  </form>;
 }
