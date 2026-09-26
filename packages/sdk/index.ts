@@ -2,6 +2,7 @@ import type {Command,CommandResult,Entity,EntityKind,SessionInfo,SyncPage,ApiErr
 import type {ApprovedRevision} from '../domain/voucher-adapter';
 import type {VerificationReport} from '../domain/voucher-verification';
 import type {TransitionPlan,TransitionSave} from '../contracts/transition';
+import type {FinancialPlan,FinancialSave} from '../contracts/financial-readiness';
 export class ApiFailure extends Error {constructor(public status:number,public error:ApiError){super(error.message)}}
 export class OuranosClient {
  constructor(public baseUrl:string,private accessToken:()=>Promise<string|null>){this.baseUrl=baseUrl.replace(/\/$/,'')}
@@ -10,6 +11,8 @@ export class OuranosClient {
   const response=await fetch(`${this.baseUrl}${path}`,{...options,signal:options.signal||AbortSignal.timeout(30000),headers:{'Content-Type':'application/json',...options.headers,Authorization:`Bearer ${token}`}});
   const body:any=await response.json();if(!response.ok)throw new ApiFailure(response.status,body.error||{code:'INTERNAL_ERROR',message:'Request failed'});return body;
  }
+ financialPlan(organizationId:string){return this.request<{plan:FinancialPlan|null}>(`/v1/financial-readiness/plan?organizationId=${organizationId}`)}
+ saveFinancialPlan(input:FinancialSave){return this.request<{plan:FinancialPlan}>('/v1/financial-readiness/plan',{method:'PUT',body:JSON.stringify(input)})}
  transitionPlan(organizationId:string){return this.request<{plan:TransitionPlan|null}>(`/v1/transition/plan?organizationId=${organizationId}`)}
  saveTransitionPlan(input:TransitionSave){return this.request<{plan:TransitionPlan}>('/v1/transition/plan',{method:'PUT',body:JSON.stringify(input)})}
  session(){return this.request<SessionInfo>('/v1/session')}

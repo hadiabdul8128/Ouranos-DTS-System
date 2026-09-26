@@ -36,5 +36,5 @@ export const financialPlanSchema=z.object({
  calculation:financialCalculationSchema,checkIns:z.array(financialCheckInSchema).max(24),updatedAt:z.string().datetime(),
 }).strict();
 export type FinancialPlan=z.infer<typeof financialPlanSchema>;
-export const financialSaveSchema=z.object({organizationId:z.string().uuid(),requestId:z.string().uuid(),expectedVersion:z.number().int().nonnegative(),profile:financialProfileSchema}).strict();
+export const financialSaveSchema=z.object({organizationId:z.string().uuid(),requestId:z.string().uuid(),expectedVersion:z.number().int().nonnegative(),recordCheckIn:z.boolean().default(false),profile:financialProfileSchema}).strict();
 export type FinancialSave=z.infer<typeof financialSaveSchema>;

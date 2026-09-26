@@ -261,6 +261,122 @@
         }
       }
     },
+    "/v1/financial-readiness/plan": {
+      "get": {
+        "operationId": "financialPlan",
+        "summary": "Read the caller’s private budget, calculated plan, and check-ins",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinancialOptionalResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organizationId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "put": {
+        "operationId": "saveFinancialPlan",
+        "summary": "Save a private financial plan or balance check-in",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinancialResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "USD cents. Server-generated planning arithmetic, no money movement. Payroll TSP is informational and excluded from net-pay spending deductions. Versions detect concurrent edits. Reuse requestId with identical input for retries. recordCheckIn confirms the current month balances; changing balance amounts requires it. Returns at most 24 monthly check-ins. Calculations on GET refresh to the current UTC month without assuming balances grew.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FinancialSave"
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/session": {
       "get": {
         "operationId": "session",
@@ -1527,6 +1643,1839 @@
       }
     },
     "schemas": {
+      "FinancialProfile": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string",
+            "enum": [
+              "USD"
+            ]
+          },
+          "takeHomePerPaycheckMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000000
+          },
+          "cadence": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "twice_monthly",
+              "biweekly",
+              "weekly"
+            ]
+          },
+          "tspPerPaycheckMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000000,
+            "default": 0
+          },
+          "expenses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80
+                },
+                "monthlyAmountMinor": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 1000000000
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "monthlyAmountMinor"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 25
+          },
+          "monthlySpendingMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000000
+          },
+          "emergency": {
+            "type": "object",
+            "properties": {
+              "balanceMinor": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000000
+              },
+              "targetMinor": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000000
+              },
+              "monthlyContributionMinor": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000000
+              }
+            },
+            "required": [
+              "balanceMinor",
+              "targetMinor",
+              "monthlyContributionMinor"
+            ],
+            "additionalProperties": false
+          },
+          "goal": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "separation",
+                  "education",
+                  "home",
+                  "other"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "balanceMinor": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000000
+              },
+              "targetMinor": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000000
+              },
+              "monthlyContributionMinor": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000000
+              },
+              "targetMonth": {
+                "type": "string",
+                "pattern": "^20\\d{2}-(0[1-9]|1[0-2])$",
+                "nullable": true
+              }
+            },
+            "required": [
+              "kind",
+              "name",
+              "balanceMinor",
+              "targetMinor",
+              "monthlyContributionMinor",
+              "targetMonth"
+            ],
+            "additionalProperties": false
+          },
+          "separationMonth": {
+            "type": "string",
+            "pattern": "^20\\d{2}-(0[1-9]|1[0-2])$",
+            "nullable": true
+          },
+          "surplusPriority": {
+            "type": "string",
+            "enum": [
+              "emergency_first",
+              "goal_first",
+              "keep_available"
+            ],
+            "default": "emergency_first"
+          }
+        },
+        "required": [
+          "currency",
+          "takeHomePerPaycheckMinor",
+          "cadence",
+          "expenses",
+          "monthlySpendingMinor",
+          "emergency",
+          "goal",
+          "separationMonth"
+        ],
+        "additionalProperties": false
+      },
+      "FinancialCalculation": {
+        "type": "object",
+        "properties": {
+          "ruleVersion": {
+            "type": "string",
+            "enum": [
+              "financial-readiness-v1"
+            ]
+          },
+          "asOfMonth": {
+            "type": "string",
+            "pattern": "^20\\d{2}-(0[1-9]|1[0-2])$"
+          },
+          "regularPaychecksPerMonth": {
+            "type": "integer",
+            "exclusiveMinimum": true,
+            "minimum": 0
+          },
+          "averageMonthlyTakeHomeMinor": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "annualPaychecks": {
+            "type": "integer",
+            "exclusiveMinimum": true,
+            "minimum": 0
+          },
+          "monthlyTakeHomeMinor": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "monthlyTspMinor": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "monthlyEssentialsMinor": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "monthlyCommittedMinor": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "monthlyUnassignedMinor": {
+            "type": "integer"
+          },
+          "monthlyDeficitMinor": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "emergencyTopUpMinor": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "goalTopUpMinor": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "effectiveGoalMonth": {
+            "type": "string",
+            "pattern": "^20\\d{2}-(0[1-9]|1[0-2])$",
+            "nullable": true
+          },
+          "monthsToGoal": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "monthsToSeparation": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "goalProgressPercent": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "goalGapMinor": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "requiredMonthlyGoalMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "additionalMonthlyGoalMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "baselineForecastMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "suggestedForecastMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "goalStatus": {
+            "type": "string",
+            "enum": [
+              "reached",
+              "overdue",
+              "due_now",
+              "no_deadline",
+              "on_track",
+              "behind",
+              "budget_shortfall"
+            ]
+          },
+          "allocations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "enum": [
+                    "essentials",
+                    "spending",
+                    "emergency",
+                    "goal",
+                    "buffer"
+                  ]
+                },
+                "label": {
+                  "type": "string"
+                },
+                "monthlyMinor": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "perPaycheckMinor": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "id",
+                "label",
+                "monthlyMinor",
+                "perPaycheckMinor"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "perPaycheckRequiredMinor": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "perPaycheckDeficitMinor": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "ruleVersion",
+          "asOfMonth",
+          "regularPaychecksPerMonth",
+          "averageMonthlyTakeHomeMinor",
+          "annualPaychecks",
+          "monthlyTakeHomeMinor",
+          "monthlyTspMinor",
+          "monthlyEssentialsMinor",
+          "monthlyCommittedMinor",
+          "monthlyUnassignedMinor",
+          "monthlyDeficitMinor",
+          "emergencyTopUpMinor",
+          "goalTopUpMinor",
+          "effectiveGoalMonth",
+          "monthsToGoal",
+          "monthsToSeparation",
+          "goalProgressPercent",
+          "goalGapMinor",
+          "requiredMonthlyGoalMinor",
+          "additionalMonthlyGoalMinor",
+          "baselineForecastMinor",
+          "suggestedForecastMinor",
+          "goalStatus",
+          "allocations",
+          "perPaycheckRequiredMinor",
+          "perPaycheckDeficitMinor"
+        ],
+        "additionalProperties": false
+      },
+      "FinancialSave": {
+        "type": "object",
+        "properties": {
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "recordCheckIn": {
+            "type": "boolean",
+            "default": false
+          },
+          "profile": {
+            "type": "object",
+            "properties": {
+              "currency": {
+                "type": "string",
+                "enum": [
+                  "USD"
+                ]
+              },
+              "takeHomePerPaycheckMinor": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000000
+              },
+              "cadence": {
+                "type": "string",
+                "enum": [
+                  "monthly",
+                  "twice_monthly",
+                  "biweekly",
+                  "weekly"
+                ]
+              },
+              "tspPerPaycheckMinor": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000000,
+                "default": 0
+              },
+              "expenses": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80
+                    },
+                    "monthlyAmountMinor": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000000
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "monthlyAmountMinor"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 25
+              },
+              "monthlySpendingMinor": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000000
+              },
+              "emergency": {
+                "type": "object",
+                "properties": {
+                  "balanceMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000000
+                  },
+                  "targetMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000000
+                  },
+                  "monthlyContributionMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000000
+                  }
+                },
+                "required": [
+                  "balanceMinor",
+                  "targetMinor",
+                  "monthlyContributionMinor"
+                ],
+                "additionalProperties": false
+              },
+              "goal": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "separation",
+                      "education",
+                      "home",
+                      "other"
+                    ]
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "balanceMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000000
+                  },
+                  "targetMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000000
+                  },
+                  "monthlyContributionMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000000
+                  },
+                  "targetMonth": {
+                    "type": "string",
+                    "pattern": "^20\\d{2}-(0[1-9]|1[0-2])$",
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "kind",
+                  "name",
+                  "balanceMinor",
+                  "targetMinor",
+                  "monthlyContributionMinor",
+                  "targetMonth"
+                ],
+                "additionalProperties": false
+              },
+              "separationMonth": {
+                "type": "string",
+                "pattern": "^20\\d{2}-(0[1-9]|1[0-2])$",
+                "nullable": true
+              },
+              "surplusPriority": {
+                "type": "string",
+                "enum": [
+                  "emergency_first",
+                  "goal_first",
+                  "keep_available"
+                ],
+                "default": "emergency_first"
+              }
+            },
+            "required": [
+              "currency",
+              "takeHomePerPaycheckMinor",
+              "cadence",
+              "expenses",
+              "monthlySpendingMinor",
+              "emergency",
+              "goal",
+              "separationMonth"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "organizationId",
+          "requestId",
+          "expectedVersion",
+          "profile"
+        ],
+        "additionalProperties": false
+      },
+      "FinancialPlan": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "exclusiveMinimum": true,
+            "minimum": 0
+          },
+          "profile": {
+            "type": "object",
+            "properties": {
+              "currency": {
+                "type": "string",
+                "enum": [
+                  "USD"
+                ]
+              },
+              "takeHomePerPaycheckMinor": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000000
+              },
+              "cadence": {
+                "type": "string",
+                "enum": [
+                  "monthly",
+                  "twice_monthly",
+                  "biweekly",
+                  "weekly"
+                ]
+              },
+              "tspPerPaycheckMinor": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000000,
+                "default": 0
+              },
+              "expenses": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80
+                    },
+                    "monthlyAmountMinor": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000000
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "monthlyAmountMinor"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 25
+              },
+              "monthlySpendingMinor": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000000
+              },
+              "emergency": {
+                "type": "object",
+                "properties": {
+                  "balanceMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000000
+                  },
+                  "targetMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000000
+                  },
+                  "monthlyContributionMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000000
+                  }
+                },
+                "required": [
+                  "balanceMinor",
+                  "targetMinor",
+                  "monthlyContributionMinor"
+                ],
+                "additionalProperties": false
+              },
+              "goal": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "separation",
+                      "education",
+                      "home",
+                      "other"
+                    ]
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "balanceMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000000
+                  },
+                  "targetMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000000
+                  },
+                  "monthlyContributionMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000000
+                  },
+                  "targetMonth": {
+                    "type": "string",
+                    "pattern": "^20\\d{2}-(0[1-9]|1[0-2])$",
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "kind",
+                  "name",
+                  "balanceMinor",
+                  "targetMinor",
+                  "monthlyContributionMinor",
+                  "targetMonth"
+                ],
+                "additionalProperties": false
+              },
+              "separationMonth": {
+                "type": "string",
+                "pattern": "^20\\d{2}-(0[1-9]|1[0-2])$",
+                "nullable": true
+              },
+              "surplusPriority": {
+                "type": "string",
+                "enum": [
+                  "emergency_first",
+                  "goal_first",
+                  "keep_available"
+                ],
+                "default": "emergency_first"
+              }
+            },
+            "required": [
+              "currency",
+              "takeHomePerPaycheckMinor",
+              "cadence",
+              "expenses",
+              "monthlySpendingMinor",
+              "emergency",
+              "goal",
+              "separationMonth"
+            ],
+            "additionalProperties": false
+          },
+          "calculation": {
+            "type": "object",
+            "properties": {
+              "ruleVersion": {
+                "type": "string",
+                "enum": [
+                  "financial-readiness-v1"
+                ]
+              },
+              "asOfMonth": {
+                "type": "string",
+                "pattern": "^20\\d{2}-(0[1-9]|1[0-2])$"
+              },
+              "regularPaychecksPerMonth": {
+                "type": "integer",
+                "exclusiveMinimum": true,
+                "minimum": 0
+              },
+              "averageMonthlyTakeHomeMinor": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "annualPaychecks": {
+                "type": "integer",
+                "exclusiveMinimum": true,
+                "minimum": 0
+              },
+              "monthlyTakeHomeMinor": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "monthlyTspMinor": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "monthlyEssentialsMinor": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "monthlyCommittedMinor": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "monthlyUnassignedMinor": {
+                "type": "integer"
+              },
+              "monthlyDeficitMinor": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "emergencyTopUpMinor": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "goalTopUpMinor": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "effectiveGoalMonth": {
+                "type": "string",
+                "pattern": "^20\\d{2}-(0[1-9]|1[0-2])$",
+                "nullable": true
+              },
+              "monthsToGoal": {
+                "type": "integer",
+                "minimum": 0,
+                "nullable": true
+              },
+              "monthsToSeparation": {
+                "type": "integer",
+                "minimum": 0,
+                "nullable": true
+              },
+              "goalProgressPercent": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "goalGapMinor": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "requiredMonthlyGoalMinor": {
+                "type": "integer",
+                "minimum": 0,
+                "nullable": true
+              },
+              "additionalMonthlyGoalMinor": {
+                "type": "integer",
+                "minimum": 0,
+                "nullable": true
+              },
+              "baselineForecastMinor": {
+                "type": "integer",
+                "minimum": 0,
+                "nullable": true
+              },
+              "suggestedForecastMinor": {
+                "type": "integer",
+                "minimum": 0,
+                "nullable": true
+              },
+              "goalStatus": {
+                "type": "string",
+                "enum": [
+                  "reached",
+                  "overdue",
+                  "due_now",
+                  "no_deadline",
+                  "on_track",
+                  "behind",
+                  "budget_shortfall"
+                ]
+              },
+              "allocations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "enum": [
+                        "essentials",
+                        "spending",
+                        "emergency",
+                        "goal",
+                        "buffer"
+                      ]
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "monthlyMinor": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "perPaycheckMinor": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "label",
+                    "monthlyMinor",
+                    "perPaycheckMinor"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "perPaycheckRequiredMinor": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "perPaycheckDeficitMinor": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "ruleVersion",
+              "asOfMonth",
+              "regularPaychecksPerMonth",
+              "averageMonthlyTakeHomeMinor",
+              "annualPaychecks",
+              "monthlyTakeHomeMinor",
+              "monthlyTspMinor",
+              "monthlyEssentialsMinor",
+              "monthlyCommittedMinor",
+              "monthlyUnassignedMinor",
+              "monthlyDeficitMinor",
+              "emergencyTopUpMinor",
+              "goalTopUpMinor",
+              "effectiveGoalMonth",
+              "monthsToGoal",
+              "monthsToSeparation",
+              "goalProgressPercent",
+              "goalGapMinor",
+              "requiredMonthlyGoalMinor",
+              "additionalMonthlyGoalMinor",
+              "baselineForecastMinor",
+              "suggestedForecastMinor",
+              "goalStatus",
+              "allocations",
+              "perPaycheckRequiredMinor",
+              "perPaycheckDeficitMinor"
+            ],
+            "additionalProperties": false
+          },
+          "checkIns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "month": {
+                  "type": "string",
+                  "pattern": "^20\\d{2}-(0[1-9]|1[0-2])$"
+                },
+                "goalName": {
+                  "type": "string"
+                },
+                "goalBalanceMinor": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 1000000000
+                },
+                "emergencyBalanceMinor": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 1000000000
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "month",
+                "goalName",
+                "goalBalanceMinor",
+                "emergencyBalanceMinor",
+                "updatedAt"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 24
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "organizationId",
+          "version",
+          "profile",
+          "calculation",
+          "checkIns",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "FinancialResponse": {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "organizationId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "version": {
+                "type": "integer",
+                "exclusiveMinimum": true,
+                "minimum": 0
+              },
+              "profile": {
+                "type": "object",
+                "properties": {
+                  "currency": {
+                    "type": "string",
+                    "enum": [
+                      "USD"
+                    ]
+                  },
+                  "takeHomePerPaycheckMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000000
+                  },
+                  "cadence": {
+                    "type": "string",
+                    "enum": [
+                      "monthly",
+                      "twice_monthly",
+                      "biweekly",
+                      "weekly"
+                    ]
+                  },
+                  "tspPerPaycheckMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000000,
+                    "default": 0
+                  },
+                  "expenses": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 80
+                        },
+                        "monthlyAmountMinor": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 1000000000
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "monthlyAmountMinor"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "maxItems": 25
+                  },
+                  "monthlySpendingMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000000
+                  },
+                  "emergency": {
+                    "type": "object",
+                    "properties": {
+                      "balanceMinor": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1000000000
+                      },
+                      "targetMinor": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1000000000
+                      },
+                      "monthlyContributionMinor": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1000000000
+                      }
+                    },
+                    "required": [
+                      "balanceMinor",
+                      "targetMinor",
+                      "monthlyContributionMinor"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "goal": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "separation",
+                          "education",
+                          "home",
+                          "other"
+                        ]
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      },
+                      "balanceMinor": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1000000000
+                      },
+                      "targetMinor": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1000000000
+                      },
+                      "monthlyContributionMinor": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1000000000
+                      },
+                      "targetMonth": {
+                        "type": "string",
+                        "pattern": "^20\\d{2}-(0[1-9]|1[0-2])$",
+                        "nullable": true
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "name",
+                      "balanceMinor",
+                      "targetMinor",
+                      "monthlyContributionMinor",
+                      "targetMonth"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "separationMonth": {
+                    "type": "string",
+                    "pattern": "^20\\d{2}-(0[1-9]|1[0-2])$",
+                    "nullable": true
+                  },
+                  "surplusPriority": {
+                    "type": "string",
+                    "enum": [
+                      "emergency_first",
+                      "goal_first",
+                      "keep_available"
+                    ],
+                    "default": "emergency_first"
+                  }
+                },
+                "required": [
+                  "currency",
+                  "takeHomePerPaycheckMinor",
+                  "cadence",
+                  "expenses",
+                  "monthlySpendingMinor",
+                  "emergency",
+                  "goal",
+                  "separationMonth"
+                ],
+                "additionalProperties": false
+              },
+              "calculation": {
+                "type": "object",
+                "properties": {
+                  "ruleVersion": {
+                    "type": "string",
+                    "enum": [
+                      "financial-readiness-v1"
+                    ]
+                  },
+                  "asOfMonth": {
+                    "type": "string",
+                    "pattern": "^20\\d{2}-(0[1-9]|1[0-2])$"
+                  },
+                  "regularPaychecksPerMonth": {
+                    "type": "integer",
+                    "exclusiveMinimum": true,
+                    "minimum": 0
+                  },
+                  "averageMonthlyTakeHomeMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "annualPaychecks": {
+                    "type": "integer",
+                    "exclusiveMinimum": true,
+                    "minimum": 0
+                  },
+                  "monthlyTakeHomeMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "monthlyTspMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "monthlyEssentialsMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "monthlyCommittedMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "monthlyUnassignedMinor": {
+                    "type": "integer"
+                  },
+                  "monthlyDeficitMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "emergencyTopUpMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "goalTopUpMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "effectiveGoalMonth": {
+                    "type": "string",
+                    "pattern": "^20\\d{2}-(0[1-9]|1[0-2])$",
+                    "nullable": true
+                  },
+                  "monthsToGoal": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "nullable": true
+                  },
+                  "monthsToSeparation": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "nullable": true
+                  },
+                  "goalProgressPercent": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "goalGapMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "requiredMonthlyGoalMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "nullable": true
+                  },
+                  "additionalMonthlyGoalMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "nullable": true
+                  },
+                  "baselineForecastMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "nullable": true
+                  },
+                  "suggestedForecastMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "nullable": true
+                  },
+                  "goalStatus": {
+                    "type": "string",
+                    "enum": [
+                      "reached",
+                      "overdue",
+                      "due_now",
+                      "no_deadline",
+                      "on_track",
+                      "behind",
+                      "budget_shortfall"
+                    ]
+                  },
+                  "allocations": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "enum": [
+                            "essentials",
+                            "spending",
+                            "emergency",
+                            "goal",
+                            "buffer"
+                          ]
+                        },
+                        "label": {
+                          "type": "string"
+                        },
+                        "monthlyMinor": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "perPaycheckMinor": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "label",
+                        "monthlyMinor",
+                        "perPaycheckMinor"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "perPaycheckRequiredMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "perPaycheckDeficitMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ruleVersion",
+                  "asOfMonth",
+                  "regularPaychecksPerMonth",
+                  "averageMonthlyTakeHomeMinor",
+                  "annualPaychecks",
+                  "monthlyTakeHomeMinor",
+                  "monthlyTspMinor",
+                  "monthlyEssentialsMinor",
+                  "monthlyCommittedMinor",
+                  "monthlyUnassignedMinor",
+                  "monthlyDeficitMinor",
+                  "emergencyTopUpMinor",
+                  "goalTopUpMinor",
+                  "effectiveGoalMonth",
+                  "monthsToGoal",
+                  "monthsToSeparation",
+                  "goalProgressPercent",
+                  "goalGapMinor",
+                  "requiredMonthlyGoalMinor",
+                  "additionalMonthlyGoalMinor",
+                  "baselineForecastMinor",
+                  "suggestedForecastMinor",
+                  "goalStatus",
+                  "allocations",
+                  "perPaycheckRequiredMinor",
+                  "perPaycheckDeficitMinor"
+                ],
+                "additionalProperties": false
+              },
+              "checkIns": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "month": {
+                      "type": "string",
+                      "pattern": "^20\\d{2}-(0[1-9]|1[0-2])$"
+                    },
+                    "goalName": {
+                      "type": "string"
+                    },
+                    "goalBalanceMinor": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000000
+                    },
+                    "emergencyBalanceMinor": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000000
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "month",
+                    "goalName",
+                    "goalBalanceMinor",
+                    "emergencyBalanceMinor",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 24
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "id",
+              "organizationId",
+              "version",
+              "profile",
+              "calculation",
+              "checkIns",
+              "updatedAt"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "plan"
+        ],
+        "additionalProperties": false
+      },
+      "FinancialOptionalResponse": {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "organizationId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "version": {
+                "type": "integer",
+                "exclusiveMinimum": true,
+                "minimum": 0
+              },
+              "profile": {
+                "type": "object",
+                "properties": {
+                  "currency": {
+                    "type": "string",
+                    "enum": [
+                      "USD"
+                    ]
+                  },
+                  "takeHomePerPaycheckMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000000
+                  },
+                  "cadence": {
+                    "type": "string",
+                    "enum": [
+                      "monthly",
+                      "twice_monthly",
+                      "biweekly",
+                      "weekly"
+                    ]
+                  },
+                  "tspPerPaycheckMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000000,
+                    "default": 0
+                  },
+                  "expenses": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 80
+                        },
+                        "monthlyAmountMinor": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 1000000000
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "monthlyAmountMinor"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "maxItems": 25
+                  },
+                  "monthlySpendingMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000000
+                  },
+                  "emergency": {
+                    "type": "object",
+                    "properties": {
+                      "balanceMinor": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1000000000
+                      },
+                      "targetMinor": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1000000000
+                      },
+                      "monthlyContributionMinor": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1000000000
+                      }
+                    },
+                    "required": [
+                      "balanceMinor",
+                      "targetMinor",
+                      "monthlyContributionMinor"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "goal": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "separation",
+                          "education",
+                          "home",
+                          "other"
+                        ]
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      },
+                      "balanceMinor": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1000000000
+                      },
+                      "targetMinor": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1000000000
+                      },
+                      "monthlyContributionMinor": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1000000000
+                      },
+                      "targetMonth": {
+                        "type": "string",
+                        "pattern": "^20\\d{2}-(0[1-9]|1[0-2])$",
+                        "nullable": true
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "name",
+                      "balanceMinor",
+                      "targetMinor",
+                      "monthlyContributionMinor",
+                      "targetMonth"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "separationMonth": {
+                    "type": "string",
+                    "pattern": "^20\\d{2}-(0[1-9]|1[0-2])$",
+                    "nullable": true
+                  },
+                  "surplusPriority": {
+                    "type": "string",
+                    "enum": [
+                      "emergency_first",
+                      "goal_first",
+                      "keep_available"
+                    ],
+                    "default": "emergency_first"
+                  }
+                },
+                "required": [
+                  "currency",
+                  "takeHomePerPaycheckMinor",
+                  "cadence",
+                  "expenses",
+                  "monthlySpendingMinor",
+                  "emergency",
+                  "goal",
+                  "separationMonth"
+                ],
+                "additionalProperties": false
+              },
+              "calculation": {
+                "type": "object",
+                "properties": {
+                  "ruleVersion": {
+                    "type": "string",
+                    "enum": [
+                      "financial-readiness-v1"
+                    ]
+                  },
+                  "asOfMonth": {
+                    "type": "string",
+                    "pattern": "^20\\d{2}-(0[1-9]|1[0-2])$"
+                  },
+                  "regularPaychecksPerMonth": {
+                    "type": "integer",
+                    "exclusiveMinimum": true,
+                    "minimum": 0
+                  },
+                  "averageMonthlyTakeHomeMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "annualPaychecks": {
+                    "type": "integer",
+                    "exclusiveMinimum": true,
+                    "minimum": 0
+                  },
+                  "monthlyTakeHomeMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "monthlyTspMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "monthlyEssentialsMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "monthlyCommittedMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "monthlyUnassignedMinor": {
+                    "type": "integer"
+                  },
+                  "monthlyDeficitMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "emergencyTopUpMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "goalTopUpMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "effectiveGoalMonth": {
+                    "type": "string",
+                    "pattern": "^20\\d{2}-(0[1-9]|1[0-2])$",
+                    "nullable": true
+                  },
+                  "monthsToGoal": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "nullable": true
+                  },
+                  "monthsToSeparation": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "nullable": true
+                  },
+                  "goalProgressPercent": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "goalGapMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "requiredMonthlyGoalMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "nullable": true
+                  },
+                  "additionalMonthlyGoalMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "nullable": true
+                  },
+                  "baselineForecastMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "nullable": true
+                  },
+                  "suggestedForecastMinor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "nullable": true
+                  },
+                  "goalStatus": {
+                    "type": "string",
+                    "enum": [
+                      "reached",
+                      "overdue",
+                      "due_now",
+                      "no_deadline",
+                      "on_track",
+                      "behind",
+                      "budget_shortfall"
+                    ]
+                  },
+                  "allocations": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "enum": [
+                            "essentials",
+                            "spending",
+                            "emergency",
+                            "goal",
+                            "buffer"
+                          ]
+                        },
+                        "label": {
+                          "type": "string"
+                        },
+                        "monthlyMinor": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "perPaycheckMinor": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "label",
+                        "monthlyMinor",
+                        "perPaycheckMinor"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "perPaycheckRequiredMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "perPaycheckDeficitMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ruleVersion",
+                  "asOfMonth",
+                  "regularPaychecksPerMonth",
+                  "averageMonthlyTakeHomeMinor",
+                  "annualPaychecks",
+                  "monthlyTakeHomeMinor",
+                  "monthlyTspMinor",
+                  "monthlyEssentialsMinor",
+                  "monthlyCommittedMinor",
+                  "monthlyUnassignedMinor",
+                  "monthlyDeficitMinor",
+                  "emergencyTopUpMinor",
+                  "goalTopUpMinor",
+                  "effectiveGoalMonth",
+                  "monthsToGoal",
+                  "monthsToSeparation",
+                  "goalProgressPercent",
+                  "goalGapMinor",
+                  "requiredMonthlyGoalMinor",
+                  "additionalMonthlyGoalMinor",
+                  "baselineForecastMinor",
+                  "suggestedForecastMinor",
+                  "goalStatus",
+                  "allocations",
+                  "perPaycheckRequiredMinor",
+                  "perPaycheckDeficitMinor"
+                ],
+                "additionalProperties": false
+              },
+              "checkIns": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "month": {
+                      "type": "string",
+                      "pattern": "^20\\d{2}-(0[1-9]|1[0-2])$"
+                    },
+                    "goalName": {
+                      "type": "string"
+                    },
+                    "goalBalanceMinor": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000000
+                    },
+                    "emergencyBalanceMinor": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000000
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "month",
+                    "goalName",
+                    "goalBalanceMinor",
+                    "emergencyBalanceMinor",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 24
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "id",
+              "organizationId",
+              "version",
+              "profile",
+              "calculation",
+              "checkIns",
+              "updatedAt"
+            ],
+            "additionalProperties": false,
+            "nullable": true
+          }
+        },
+        "required": [
+          "plan"
+        ],
+        "additionalProperties": false
+      },
       "TransitionProfile": {
         "type": "object",
         "properties": {

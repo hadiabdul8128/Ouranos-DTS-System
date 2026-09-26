@@ -14,6 +14,7 @@ import {loadApprovedAuthorization} from './approved';
 import {loadVoucherPackage,loadDraftVoucherPackage} from './package';
 import {loadWorkingPlan} from './working';
 import {registerTransitionRoutes} from './transition';
+import {registerFinancialReadinessRoutes} from './financial-readiness';
 import {CONTRACT_VERSION,uuid,entityKindSchema,organizationInput,membershipInput,syncPushSchema,commandSchema} from '../../packages/contracts/index';
 import {DomainError,requireCondition as check} from '../../packages/domain/errors';
 
@@ -85,5 +86,6 @@ export async function buildApp(config:PlatformConfig,options:{pool?:Pool;logger?
  app.post('/v1/documents/:id/download',async req=>{const id=uuid.parse((req.params as any).id),org=uuid.parse((req.body as any)?.organizationId);const doc=await withActor(pool,req.actor.id,org,async db=>{const d=await loadEntity(db,'document',id,org);check(['needs_review','ready'].includes(d.status),'ATTACHMENT_INCOMPLETE','Document has not passed processing checks',409);return d});const {data,error}=await supabase.storage.from('ouranos-documents').createSignedUrl(doc.storage_key,60,{download:doc.data.filename});check(!error&&data,'PROVIDER_UNAVAILABLE','Cannot prepare download',503);return {url:data.signedUrl,expiresIn:60}});
  app.get('/v1/documents/:id/extractions',async req=>{const id=uuid.parse((req.params as any).id),org=uuid.parse((req.query as any).organizationId);return withActor(pool,req.actor.id,org,async db=>{await loadEntity(db,'document',id,org);return {runs:(await db.query('select id,provider,model_version,result,created_at from ouranos.extraction_runs where document_id=$1 order by created_at desc',[id])).rows}})});
  registerTransitionRoutes(app,pool);
+ registerFinancialReadinessRoutes(app,pool);
  app.addHook('onClose',async()=>{if(!options.pool)await pool.end()});return app;
 }
