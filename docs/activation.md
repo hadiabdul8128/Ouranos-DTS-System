@@ -1,6 +1,6 @@
 # Connected development environment
 
-The repository contains a working local travel flow: email sign-in → trip → planning → review/approval → receipts and expenses → voucher → review/approval. Records, originals, versions, decisions and audit events live in the shared backend. The home screen remains a single intent prompt. Travel opens a minimal trip list, then Plan → Expenses. New trips save and continue directly into planning.
+The repository contains a working local travel flow: email sign-in → trip → planning → Authorization review/approval → receipts and expenses → Voucher automatic verification. Records, originals, versions, decisions and audit events live in the shared backend. The home screen remains a single intent prompt. Travel opens a minimal trip list, then Plan → Expenses. New trips save and continue directly into planning. The Voucher rules and audit record are described in [voucher-auto-verification.md](voucher-auto-verification.md).
 
 ## Start locally
 
@@ -19,7 +19,7 @@ npm run platform:dev
 
 Use the frontend at `http://localhost:5173` and sign in through the local inbox at `http://127.0.0.1:56324`. Seeded accounts are `traveler@ouranos.test`, `reviewer@ouranos.test`, `approver@ouranos.test` and `admin@ouranos.test`. Each person uses a separate session; a traveler cannot approve their own request. Seeded routes run reviewer → approver. In a new organization, an administrator must explicitly assign its team and routes.
 
-The worker processes uploaded receipts asynchronously. The traveler reviews extracted suggestions, confirms the receipt, matches actual expenses to approved budget items, resolves consistency exceptions, certifies the voucher and sends it for review. This records an Ouranos approval, never fabricated DTS acceptance.
+The worker processes uploaded receipts asynchronously. The traveler reviews extracted suggestions, confirms the receipt, matches actual expenses to approved budget items, resolves consistency exceptions, certifies the Voucher, and runs server verification. A clean Voucher is ready for external DTS review; Ouranos does not issue government approval or submit to DTS.
 
 ## Containerized API and worker
 
