@@ -1,5 +1,6 @@
 "use client";
 import {useRouter} from 'next/navigation';
+import {workspaceIntent} from '@/packages/domain/workspace-intent';
 import Link from 'next/link';
 
 import { useEffect, useState } from "react";
@@ -37,12 +38,9 @@ export default function Workspace() {
     event.preventDefault();
     const text = request.trim();
     if (!text) return;
-    if (/\b(travel(?:ing|ling)?|trip|trips|dts|flight|flights|voucher|reimbursement|tdy)\b/i.test(text) && !/\b(don't|do not|not|no|cancel)\b/i.test(text)) {
-      setOpening(true);
-      router.push("/dashboard/travel");
-    } else {
-      setMessage("Travel is available now. Other workflows are on the way.");
-    }
+    const destination=workspaceIntent(text);
+    if(destination){setOpening(true);router.push(destination)}
+    else setMessage("You can plan travel or explore life after the military.");
   }
   return <main className="quiet-page prompt-page">
     <header className="quiet-header"><Link href="/dashboard" className="quiet-brand">Ouranos</Link><button onClick={() => void platform.signOut()} className="exit-link" aria-label="Sign out"><LogOut size={17}/></button></header>
@@ -52,7 +50,8 @@ export default function Workspace() {
         <Input aria-label="What do you want to do?" placeholder="Tell us what you need…" value={request} onChange={event => {setRequest(event.target.value); setMessage("");}} autoComplete="off" maxLength={500} disabled={opening}/>
         <Button type="submit" aria-label="Continue with your request" className="intent-submit" disabled={!request.trim() || opening}><ArrowRight size={20}/></Button>
       </form>
-      <p className={`intent-hint ${message ? "has-message" : ""}`} role="status">{opening ? "Opening travel…" : message || ''}</p>
+      <p className={`intent-hint ${message ? "has-message" : ""}`} role="status">{opening ? "Opening your workspace…" : message || ''}</p>
+      <Link href="/dashboard/transition" className="back-link">Plan life after the military →</Link>
     </section>
     <footer className="quiet-footer"><span/><SyncIndicator/></footer>
   </main>;
