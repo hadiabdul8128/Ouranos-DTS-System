@@ -4254,7 +4254,8 @@
             "type": "string",
             "enum": [
               "required",
-              "preview"
+              "preview",
+              "automatic"
             ]
           },
           "user": {

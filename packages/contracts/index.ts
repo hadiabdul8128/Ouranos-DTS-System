@@ -47,4 +47,4 @@ export interface Change {cursor:string;kind:EntityKind;entityId:string;operation
 export interface SyncPage {changes:Change[];cursor:string;hasMore:boolean}
 export const organizationInput = z.object({name:text(120)}).strict();
 export const membershipInput = z.object({userId:uuid,role:roleSchema,active:z.boolean().default(true)}).strict();
-export interface SessionInfo {approvalMode?:'required'|'preview';user:{id:string;email?:string};memberships:Array<{organizationId:string;name:string;role:Role}>;contractVersion:string}
+export interface SessionInfo {approvalMode?:'required'|'preview'|'automatic';user:{id:string;email?:string};memberships:Array<{organizationId:string;name:string;role:Role}>;contractVersion:string}

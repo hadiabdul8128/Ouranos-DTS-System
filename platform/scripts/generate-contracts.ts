@@ -29,7 +29,7 @@ const models = {
   Command:commandSchema, SyncPushInput:syncPushSchema,
   ApiError:apiError, ErrorResponse:z.object({error:apiError}), Entity:entity,
   CommandSuccess:commandSuccess, CommandFailure:commandFailure, CommandResult:commandResult,
-  Session:z.object({approvalMode:z.enum(['required','preview']).optional(),user:z.object({id:uuid,email:z.string().optional()}), memberships:z.array(z.object({organizationId:uuid,name:z.string(),role:roleSchema})), contractVersion:z.string()}),
+  Session:z.object({approvalMode:z.enum(['required','preview','automatic']).optional(),user:z.object({id:uuid,email:z.string().optional()}), memberships:z.array(z.object({organizationId:uuid,name:z.string(),role:roleSchema})), contractVersion:z.string()}),
   EntityResponse:z.object({entity}), EntityList:z.object({entities:z.array(entity)}),
   Bootstrap:z.object({entities:z.array(entity),cursor}),
   SyncPushResult:z.object({results:z.array(commandResult)}),

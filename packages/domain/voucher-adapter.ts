@@ -15,7 +15,7 @@ export type Resolution=VoucherModuleInput['resolutions'][string];
 export type Reconciliation={ready:boolean;issues:Array<{id:string;code:string;message:string;action:string;expenseId?:string;authorizationItemId?:string}>;checks:unknown[];totals:{authorized:number;actual:number;gtcc:number;traveler:number}};
 
 /** Only feed this adapter an immutable revision selected by the server after
- * its approval request reaches approved. Browser handoff events confer no authority. */
+ * a completed review or automatic verification. Browser handoff events confer no authority. */
 export function approvedTravel(revision:ApprovedRevision){
   const {entity,trip}=revision.snapshot;
   if(entity.data.formSchemaVersion!==PLANNING_SCHEMA_VERSION)throw new Error('This authorization uses a planning form that is not supported by the connected voucher.');

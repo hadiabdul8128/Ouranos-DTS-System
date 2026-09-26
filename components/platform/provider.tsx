@@ -9,12 +9,12 @@ import {SyncEngine,type SyncState} from '@/packages/offline/sync';
 import type {Role} from '@/packages/contracts';
 const demoOrg='00000000-0000-4000-8000-000000000001';
 type Membership={organizationId:string;name:string;role:Role};
-type Platform={approvalMode:'required'|'preview';configured:boolean;loading:boolean;session:Session|null;client:OuranosClient|null;repository:LocalRepository|null;engine:SyncEngine|null;sync:SyncState;memberships:Membership[];organizationId:string|null;setOrganization:(id:string)=>void;refresh:()=>Promise<void>;signOut:()=>Promise<void>;error:string|null};
+type Platform={approvalMode:'required'|'preview'|'automatic';configured:boolean;loading:boolean;session:Session|null;client:OuranosClient|null;repository:LocalRepository|null;engine:SyncEngine|null;sync:SyncState;memberships:Membership[];organizationId:string|null;setOrganization:(id:string)=>void;refresh:()=>Promise<void>;signOut:()=>Promise<void>;error:string|null};
 const Context=createContext<Platform|null>(null);
 export function usePlatform(){const p=useContext(Context);if(!p)throw new Error('PlatformProvider missing');return p}
 export function PlatformProvider({children}:{children:ReactNode}){
  const [session,setSession]=useState<Session|null>(null),[loading,setLoading]=useState(true),[memberships,setMemberships]=useState<Membership[]>([]),[organizationId,setOrganizationId]=useState<string|null>(null),[repository,setRepository]=useState<LocalRepository|null>(null),[engine,setEngine]=useState<SyncEngine|null>(null),[sync,setSync]=useState<SyncState>({state:'idle',pending:0}),[error,setError]=useState<string|null>(null);
- const [approvalMode,setApprovalMode]=useState<'required'|'preview'>('required');
+ const [approvalMode,setApprovalMode]=useState<'required'|'preview'|'automatic'>('required');
  const identity=useRef<string|null>(null),refreshGeneration=useRef(0);
  const configured=platformConfigured();
  const [client]=useState(()=>configured?new OuranosClient(process.env.NEXT_PUBLIC_OURANOS_API_URL!,async()=>{const {data}=await browserAuth()!.auth.getSession();return data.session?.access_token||null}):null);

@@ -74,7 +74,7 @@ async function expectSubmissionRejected(voucher:Entity,message:RegExp){
 
 beforeAll(async()=>{
  pool=makePool(config);
- app=await buildApp(config,{pool,logger:false});
+ app=await buildApp({...config,APPROVAL_MODE:'required'},{pool,logger:false});
  const admin=createClient(config.SUPABASE_URL,config.SUPABASE_SECRET_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
  for(const name of ['traveler','reviewer','approver','peer','outsider'] as const){
   const email=`connected-${name}-${crypto.randomUUID()}@ouranos.test`,password=`Local-${crypto.randomUUID()}!`;

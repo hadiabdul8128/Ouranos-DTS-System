@@ -7,8 +7,10 @@ export async function loadApprovedAuthorization(db:PoolClient,organizationId:str
   const entity=await loadEntity(db,'authorization',id,organizationId);
   check(entity.status==='approved','INVALID_STATE_TRANSITION','An approved authorization is required',409);
   const revision=(await db.query(`select r.id,r.sha256,r.snapshot from ouranos.submission_revisions r
-    join ouranos.approval_requests a on a.revision_id=r.id
-    where r.organization_id=$1 and r.authorization_id=$2 and a.status='approved'
+    where r.organization_id=$1 and r.authorization_id=$2 and (
+      exists(select 1 from ouranos.approval_requests a where a.revision_id=r.id and a.status='approved')
+      or (r.snapshot->'verification'->>'mode'='automatic' and r.snapshot->'verification'->>'result'='verified')
+    )
     order by r.created_at desc limit 1`,[organizationId,id])).rows[0];
   check(revision,'INVALID_STATE_TRANSITION','Approved authorization revision is missing',409);
   return revision;

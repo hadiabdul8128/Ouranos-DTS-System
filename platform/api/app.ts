@@ -52,8 +52,8 @@ export async function buildApp(config:PlatformConfig,options:{pool?:Pool;logger?
    await db.query('insert into ouranos.audit_events(organization_id,actor_id,action,entity_id,details) values($1,$2,$3,$4,$5)',[org,req.actor.id,'membership.changed',b.userId,{role:b.role,active:b.active}]);return {updated:true};
   });
  });
- app.post('/v1/commands',async(req,reply)=>{const command=commandSchema.parse(req.body);const r=await executeCommand(pool,supabase,req.actor.id,command,config.NODE_ENV!=='production');return reply.code(r.ok?200:r.error.code==='VERSION_CONFLICT'?409:r.error.code==='PERMISSION_DENIED'?403:422).send(r)});
- app.post('/v1/sync/push',async req=>{const b=syncPushSchema.parse(req.body);const results=[];for(const c of b.commands)results.push(await executeCommand(pool,supabase,req.actor.id,c,config.NODE_ENV!=='production'));return {results}});
+ app.post('/v1/commands',async(req,reply)=>{const command=commandSchema.parse(req.body);const r=await executeCommand(pool,supabase,req.actor.id,command,config.NODE_ENV!=='production',config.APPROVAL_MODE);return reply.code(r.ok?200:r.error.code==='VERSION_CONFLICT'?409:r.error.code==='PERMISSION_DENIED'?403:422).send(r)});
+ app.post('/v1/sync/push',async req=>{const b=syncPushSchema.parse(req.body);const results=[];for(const c of b.commands)results.push(await executeCommand(pool,supabase,req.actor.id,c,config.NODE_ENV!=='production',config.APPROVAL_MODE));return {results}});
  const querySchema=z.object({organizationId:uuid,cursor:z.string().regex(/^\d+$/).default('0'),limit:z.coerce.number().int().min(1).max(500).default(100)});
  app.get('/v1/sync/pull',async req=>{const q=querySchema.parse(req.query);return withActor(pool,req.actor.id,q.organizationId,async db=>{
   check((await db.query('select ouranos.member_role($1) as role',[q.organizationId])).rows[0].role,'PERMISSION_DENIED','Membership required',403);

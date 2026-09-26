@@ -15,7 +15,7 @@ const request=async(user:string,method:string,url:string,payload?:unknown)=>{con
 function command(type:string,id:string,version:number,payload:unknown,organizationId=org):Command{return {type,entityId:id,expectedVersion:version,payload,organizationId,commandId:crypto.randomUUID(),deviceId:users.traveler.deviceId,schemaVersion:1} as Command}
 const send=async(user:string,c:Command)=>request(user,'POST','/v1/commands',{...c,deviceId:users[user].deviceId});
 beforeAll(async()=>{
- pool=makePool(config);admin=createClient(config.SUPABASE_URL,config.SUPABASE_SECRET_KEY,{auth:{persistSession:false}});app=await buildApp(config,{pool,logger:false});
+ pool=makePool(config);admin=createClient(config.SUPABASE_URL,config.SUPABASE_SECRET_KEY,{auth:{persistSession:false}});app=await buildApp({...config,APPROVAL_MODE:'required'},{pool,logger:false});
  for(const name of ['traveler','reviewer','approver','outsider']){const email=`${name}-${crypto.randomUUID()}@ouranos.test`,password=`Local-${crypto.randomUUID()}!`;const {data,error}=await admin.auth.admin.createUser({email,password,email_confirm:true});if(error)throw error;const client=createClient(config.SUPABASE_URL,config.SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:false}});const session=await client.auth.signInWithPassword({email,password});if(session.error)throw session.error;users[name]={id:data.user.id,token:session.data.session!.access_token,deviceId:crypto.randomUUID()}}
  const created=await request('traveler','POST','/v1/organizations',{name:'Integration fixtures'});expect(created.status,JSON.stringify(created.body)).toBe(201);org=created.body.id;
  otherOrg=(await request('outsider','POST','/v1/organizations',{name:'Other tenant'})).body.id;

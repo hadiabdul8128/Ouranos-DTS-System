@@ -13,6 +13,7 @@ import {VOUCHER_MODULE_SCHEMA_VERSION,voucherVerificationCandidateSchema} from '
 import {reconcileStoredExpenses,planAllowance,resolvedStatements} from '../../packages/domain/voucher-adapter';
 import {buildVoucherVerification,receiptExtractionFromFields,type ReceiptExtraction} from '../../packages/domain/voucher-verification';
 import {loadApprovedAuthorization} from './approved';
+import type {PlatformConfig} from '../shared/config';
 
 export const canonical=(v:unknown):string=>JSON.stringify(v,(_key,value)=>value&&typeof value==='object'&&!Array.isArray(value)?Object.fromEntries(Object.entries(value).sort(([a],[b])=>a.localeCompare(b))):value);
 export const hash=(v:unknown)=>createHash('sha256').update(canonical(v)).digest('hex');
@@ -26,7 +27,7 @@ async function notify(db:PoolClient,org:string,trip:string,userId:string,title:s
  await publishChange(db,'notification',{id,organization_id:org,trip_id:trip,data,status:'unread',version:1,updated_at:new Date()});
 }
 
-export async function executeCommand(pool:Pool,storage:SupabaseClient,userId:string,input:unknown,development:boolean):Promise<CommandResult>{
+export async function executeCommand(pool:Pool,storage:SupabaseClient,userId:string,input:unknown,development:boolean,approvalMode:PlatformConfig['APPROVAL_MODE']='required'):Promise<CommandResult>{
  const c=commandSchema.parse(input);
  try{return await withActor(pool,userId,c.organizationId,async db=>{
   const role=(await db.query('select ouranos.member_role($1) as role',[c.organizationId])).rows[0].role;
@@ -34,7 +35,7 @@ export async function executeCommand(pool:Pool,storage:SupabaseClient,userId:str
   const prior=(await db.query('select * from ouranos.processed_commands where organization_id=$1 and command_id=$2',[c.organizationId,c.commandId])).rows[0];
   if(prior){check(prior.payload_hash===hash(c),'IDEMPOTENCY_CONFLICT','Command ID was reused with different content',409);return {...prior.result,replayed:true}}
   await db.query('insert into ouranos.devices(id,organization_id,user_id) values($1,$2,$3) on conflict(organization_id,id) do update set last_seen_at=now()',[c.deviceId,c.organizationId,userId]);
-  const entity=await apply(db,storage,c,userId,role,development);
+  const entity=await apply(db,storage,c,userId,role,development,approvalMode);
   const result:CommandResult={commandId:c.commandId,ok:true,entity};
   await audit(db,c,userId,entity);
   await db.query('insert into ouranos.processed_commands(organization_id,user_id,command_id,payload_hash,result) values($1,$2,$3,$4,$5)',[c.organizationId,userId,c.commandId,hash(c),JSON.stringify(result)]);
@@ -42,7 +43,7 @@ export async function executeCommand(pool:Pool,storage:SupabaseClient,userId:str
  })}catch(error){if(error instanceof DomainError)return {commandId:c.commandId,ok:false,error:{code:error.code,message:error.message,details:error.details}};throw error}
 }
 
-async function apply(db:PoolClient,storage:SupabaseClient,c:Command,userId:string,role:string,development:boolean):Promise<Entity>{
+async function apply(db:PoolClient,storage:SupabaseClient,c:Command,userId:string,role:string,development:boolean,approvalMode:PlatformConfig['APPROVAL_MODE']):Promise<Entity>{
  const org=c.organizationId,id=c.entityId;
  if(c.type==='trip.save'){
   const current=(await db.query('select * from ouranos.trips where organization_id=$1 and id=$2 for update',[org,id])).rows[0];
@@ -89,7 +90,7 @@ async function apply(db:PoolClient,storage:SupabaseClient,c:Command,userId:strin
   for(const step of c.payload.steps){const member=(await db.query('select role from ouranos.memberships where organization_id=$1 and user_id=$2 and active',[org,step.assigneeId])).rows[0];check(member?.role===step.role,'VALIDATION_FAILED','Each assignee must have the required role')}
   const r=current?await db.query('update ouranos.workflow_definitions set data=$3,kind=$4,version=version+1,updated_at=now() where organization_id=$1 and id=$2 returning *',[org,id,c.payload,c.payload.kind]):await db.query('insert into ouranos.workflow_definitions(id,organization_id,kind,data,created_by) values($1,$2,$3,$4,$5) returning *',[id,org,c.payload.kind,c.payload,userId]);return publishChange(db,'workflow',r.rows[0]);
  }
- if(c.type==='authorization.submit')return submitAuthorization(db,c,userId,development);
+ if(c.type==='authorization.submit')return submitAuthorization(db,c,userId,development,approvalMode);
  if(c.type==='voucher.submit')return verifyVoucher(db,c,userId,development);
  if(c.type==='approval.decide')return decide(db,c,userId,role);
  if(c.type==='notification.read'){
@@ -98,7 +99,7 @@ async function apply(db:PoolClient,storage:SupabaseClient,c:Command,userId:strin
  if(c.type==='integration.request'){
   const e=await loadEntity(db,c.payload.kind,id,org);await verifyVersion(e,c.expectedVersion);await requireOwner(db,org,e.trip_id);check(e.status==='approved','INVALID_STATE_TRANSITION',c.payload.kind==='voucher'?'Verified vouchers are prepared for DTS review; direct DTS delivery is not configured.':'Only approved revisions can be delivered',409);
   const key=c.payload.kind==='authorization'?'authorization_id':'voucher_id';
-  const rev=(await db.query(`select r.* from ouranos.submission_revisions r join ouranos.approval_requests a on a.revision_id=r.id where r.organization_id=$1 and r.${key}=$2 and a.status='approved' order by r.created_at desc limit 1`,[org,id])).rows[0];check(rev,'INVALID_STATE_TRANSITION','Approved revision missing',409);
+  const rev=(await db.query(`select r.* from ouranos.submission_revisions r join ouranos.approval_requests a on a.revision_id=r.id where r.organization_id=$1 and r.${key}=$2 and a.status='approved' order by r.created_at desc limit 1`,[org,id])).rows[0];check(rev,'INVALID_STATE_TRANSITION','External delivery requires a separately approved revision; automatic Ouranos verification only opens the Voucher workflow',409);
   let row=(await db.query('select * from ouranos.integration_deliveries where revision_id=$1',[rev.id])).rows[0];
   if(!row)row=(await db.query('insert into ouranos.integration_deliveries(organization_id,trip_id,revision_id,data,created_by) values($1,$2,$3,$4,$5) returning *',[org,e.trip_id,rev.id,{kind:c.payload.kind,entityId:id,revisionId:rev.id},userId])).rows[0];
   await enqueue(db,'dts.deliver',org,row.id,`dts:${row.id}`);return publishChange(db,'integration',row);
@@ -106,19 +107,36 @@ async function apply(db:PoolClient,storage:SupabaseClient,c:Command,userId:strin
  throw new DomainError('VALIDATION_FAILED','Unsupported command');
 }
 
-async function submitAuthorization(db:PoolClient,c:Extract<Command,{type:'authorization.submit'}>,userId:string,development:boolean){
+async function submitAuthorization(db:PoolClient,c:Extract<Command,{type:'authorization.submit'}>,userId:string,development:boolean,approvalMode:PlatformConfig['APPROVAL_MODE']){
  const org=c.organizationId;
  const entity=await loadEntity(db,'authorization',c.entityId,org,true);await verifyVersion(entity,c.expectedVersion);await requireOwner(db,org,entity.trip_id);check(['draft','changes_requested'].includes(entity.status),'INVALID_STATE_TRANSITION','This revision has already been submitted',409);
  const issues=validatePlanning(entity.data.formSchemaVersion,entity.data.formData,development);check(!issues.length,'VALIDATION_FAILED',issues.join('; '));
- const workflow=(await db.query("select * from ouranos.workflow_definitions where organization_id=$1 and kind='authorization' and status='active'",[org])).rows[0];check(workflow,'DEPENDENCY_PENDING','An administrator must configure approval routing',409);
- check(workflow.data.steps.every((s:any)=>s.assigneeId!==userId),'PERMISSION_DENIED','A traveler cannot review their own submission',403);
- const trip=await loadEntity(db,'trip',entity.trip_id,org);const snapshot:Record<string,any>={kind:'authorization',entity:toEntity('authorization',entity),trip:toEntity('trip',trip),workflow:workflow.data,workflowVersion:workflow.version};
+ check(approvalMode!=='preview','INVALID_STATE_TRANSITION','Formal submission is disabled in preview mode',409);
+ if(approvalMode==='automatic')check(entity.data.formSchemaVersion===PLANNING_SCHEMA_VERSION,'VALIDATION_FAILED','Automatic verification requires the current planning form');
+ const trip=await loadEntity(db,'trip',entity.trip_id,org);const snapshot:Record<string,any>={kind:'authorization',entity:toEntity('authorization',entity),trip:toEntity('trip',trip)};
  if(entity.data.formSchemaVersion===PLANNING_SCHEMA_VERSION){
   const form=planningModuleSchema.parse(entity.data.formData);
   for(const item of form.approvedExpenseItems)for(const date of [item.date,item.startDate,item.endDate].filter(Boolean))check(date!>=trip.data.departure&&date!<=trip.data.returnDate,'VALIDATION_FAILED','Budget item dates must fall within the trip');
   for(const date of Object.keys(form.allowance?.mealsProvided||{}))check(date>=trip.data.departure&&date<=trip.data.returnDate,'VALIDATION_FAILED','Meal dates must fall within the trip');
   snapshot.perDiem=planAllowance(toEntity('trip',trip),form);
+  if(approvalMode==='automatic'){
+   const authorizedTotalMinor=form.approvedExpenseItems.reduce((sum,item)=>sum+item.authorizedAmountMinor,0);
+   check(Number.isSafeInteger(authorizedTotalMinor)&&authorizedTotalMinor>0,'VALIDATION_FAILED','Planned expense total is invalid');
+   snapshot.verification={mode:'automatic',result:'verified',ruleVersion:'authorization-v1',checkedAt:new Date().toISOString(),authorizedTotalMinor,checks:[
+    {id:'current_form',result:'passed'},
+    {id:'trip_dates',result:'passed'},
+    {id:'budget_items',result:'passed'},
+    {id:'budget_dates',result:'passed'},
+   ]};
+  }
  }
+ if(approvalMode==='automatic'){
+  await db.query('insert into ouranos.submission_revisions(organization_id,trip_id,authorization_id,entity_version,snapshot,sha256,submitted_by) values($1,$2,$3,$4,$5,$6,$7)',[org,entity.trip_id,entity.id,entity.version,snapshot,hash(snapshot),userId]);
+  return updateStatus(db,'authorization',entity.id,org,'approved');
+ }
+ const workflow=(await db.query("select * from ouranos.workflow_definitions where organization_id=$1 and kind='authorization' and status='active'",[org])).rows[0];check(workflow,'DEPENDENCY_PENDING','An administrator must configure approval routing',409);
+ check(workflow.data.steps.every((s:any)=>s.assigneeId!==userId),'PERMISSION_DENIED','A traveler cannot review their own submission',403);
+ snapshot.workflow=workflow.data;snapshot.workflowVersion=workflow.version;
  const rev=(await db.query('insert into ouranos.submission_revisions(organization_id,trip_id,authorization_id,entity_version,snapshot,sha256,submitted_by) values($1,$2,$3,$4,$5,$6,$7) returning *',[org,entity.trip_id,entity.id,entity.version,snapshot,hash(snapshot),userId])).rows[0];
  const req=(await db.query('insert into ouranos.approval_requests(organization_id,trip_id,revision_id,workflow_id,workflow_version,data,created_by) values($1,$2,$3,$4,$5,$6,$7) returning *',[org,entity.trip_id,rev.id,workflow.id,workflow.version,{kind:'authorization',entityId:entity.id,revisionId:rev.id},userId])).rows[0];
  for(const [i,step] of workflow.data.steps.entries())await db.query('insert into ouranos.approval_steps(organization_id,request_id,position,assignee_id,required_role) values($1,$2,$3,$4,$5)',[org,req.id,i,step.assigneeId,step.role]);
