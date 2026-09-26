@@ -13,6 +13,7 @@ import type {Command,Entity,PayloadOf} from '@/packages/contracts';
 import {planningModuleSchema,PLANNING_SCHEMA_VERSION,parseAmountMinor,travelCategories,type PlannedExpense} from '@/packages/contracts/planning-module';
 import {voucherModuleSchema,VOUCHER_MODULE_SCHEMA_VERSION} from '@/packages/contracts/voucher-module';
 import {approvedTravel,approvedAllowance,reconcileStoredExpenses,suggestReceiptAllocation,type ApprovedRevision,type Resolution,type Reconciliation} from '@/packages/domain/voucher-adapter';
+import type {VerificationReport} from '@/packages/domain/voucher-verification';
 import {AllowanceEditor,AllowanceDetails} from './allowance';
 import {TravelPackagePanel} from './package-panel';
 import {assessReceipt} from '@/voucher/src/receiptValidity.js';
@@ -28,7 +29,7 @@ const text=(value:unknown)=>typeof value==='string'?value:'';
 const label=(value:string)=>value.replaceAll('_',' ');
 const record=(value:unknown):Record<string,unknown>=>value&&typeof value==='object'&&!Array.isArray(value)?value as Record<string,unknown>:{};
 const displayDate=(value:unknown)=>text(value)?new Date(`${value}T12:00:00`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
-const editable=(row?:LocalRecord)=>!row||['draft','changes_requested'].includes(row.server?.status||row.local.status);
+const editable=(row?:LocalRecord)=>!row||['draft','changes_requested','needs_action'].includes(row.server?.status||row.local.status);
 const recent=(rows:LocalRecord[],kind:string,tripId:string)=>rows.filter(r=>r.kind===kind&&r.local.tripId===tripId).sort((a,b)=>b.local.updatedAt.localeCompare(a.local.updatedAt))[0];
 function message(error:unknown){return error instanceof z.ZodError?error.issues.map(i=>i.message).filter((v,i,a)=>a.indexOf(v)===i).join(' '):error instanceof Error?error.message:'Unable to complete this action. Please try again.'}
 function useFeedback(){
@@ -43,7 +44,7 @@ function Categories(){return travelCategories.map(c=><option key={c} value={c}>{
 function Status({value}:{value:string}){return <span className={`cw-status cw-status-${value}`}>{label(value)}</span>}
 async function deviceId(p:Platform){const db=p.repository!.db;return db.transaction('rw',db.meta,async()=>{const saved=(await db.meta.get('deviceId'))?.value;if(saved)return saved;const id=crypto.randomUUID();await db.meta.put({key:'deviceId',value:id});return id})}
 async function readyToSubmit(p:Platform,tripId:string){
- if(!p.client||!p.engine||!p.repository||!p.organizationId)throw new Error('Connect your workspace before submitting for review.');
+ if(!p.client||!p.engine||!p.repository||!p.organizationId)throw new Error('Connect your workspace before continuing.');
  await p.engine.sync();
  const pending=await p.repository.db.outbox.toArray();
  if(pending.some(q=>q.command.entityId===tripId||record(q.command.payload).tripId===tripId))throw new Error('Some trip changes are still on this device. Sync them before submitting. Check workspace settings if a change needs attention.');
@@ -55,7 +56,7 @@ async function onlineCommand(p:Platform,type:'authorization.submit'|'voucher.sub
  const {entity}=await p.client.get(kind,id,p.organizationId);
  // A response can be lost after a successful submission. Reading its current
  // state avoids saving over it or submitting the same revision twice.
- if((type.endsWith('.submit')&&['in_review','approved'].includes(entity.status))||(type==='document.confirm'&&entity.status==='ready')){await p.engine.merge(entity);return entity}
+ if((type.endsWith('.submit')&&['in_review','approved','verified','needs_action'].includes(entity.status))||(type==='document.confirm'&&entity.status==='ready')){await p.engine.merge(entity);return entity}
  const key=`online:${type}:${id}:${entity.version}`;let saved=(await p.repository.db.meta.get(key))?.value;
  if(!saved){const command:Command={type,commandId:crypto.randomUUID(),organizationId:p.organizationId,deviceId:await deviceId(p),entityId:id,expectedVersion:entity.version,schemaVersion:1,payload:{}};saved=JSON.stringify(command);await p.repository.db.meta.put({key,value:saved})}
  const result=await p.client.command(JSON.parse(saved));if(!result.ok)throw new Error(result.error.message);
@@ -143,6 +144,10 @@ function VoucherForm({trip,rows,revision}:{trip:Entity;rows:LocalRecord[];revisi
  const [included,setIncluded]=useState<string[]>(()=>Array.isArray(initial?.local.data.expenseIds)?initial.local.data.expenseIds as string[]:expenses.map(e=>e.id));
  const [resolutions,setResolutions]=useState<Record<string,Resolution>>(()=>record(form.resolutions) as Record<string,Resolution>),[certified,setCertified]=useState(form.certified===true),[intakeComplete,setIntakeComplete]=useState(form.intakeComplete===true),[dirty,setDirty]=useState(false);
  const [editor,setEditor]=useState<ExpenseDraft|null>(null),[reviewReceipt,setReviewReceipt]=useState<string|null>(null);
+ const verificationKey=`${id}:${status}:${row?.server?.version||0}`;
+ const [loadedVerification,setLoadedVerification]=useState<{key:string;report:VerificationReport}|null>(null);
+ const verification=loadedVerification?.key===verificationKey?loadedVerification.report:null;
+ useEffect(()=>{if(!['verified','needs_action'].includes(status)||!p.client||!p.organizationId)return;let active=true;const key=`${id}:${status}:${row?.server?.version||0}`;void p.client.voucherVerification(id,p.organizationId).then(value=>{if(active)setLoadedVerification({key,report:value.report})}).catch(()=>{if(active)setLoadedVerification(null)});return()=>{active=false}},[status,row?.server?.version,p.client,p.organizationId,id]);
  useUnsaved(dirty||editor!==null);
  const selected=expenses.filter(e=>included.includes(e.id));
  const reconciliation=useMemo(()=>reconcileStoredExpenses(revision,selected,documents,resolutions),[revision,selected,documents,resolutions]);
@@ -172,12 +177,14 @@ function VoucherForm({trip,rows,revision}:{trip:Entity;rows:LocalRecord[];revisi
  }
  async function submit(){
   if(p.approvalMode==='preview'){await save();await readyToSubmit(p,trip.id);return 'Saved.'}
+  if(!intakeComplete)throw new Error('Confirm that you have accounted for all trip expenses.');
+  if(!certified)throw new Error('Certify the expense details before verification.');
   await readyToSubmit(p,trip.id);
   // Save the current reconciled references only while the record is editable.
   // If a previous response was lost, recover its accepted submission instead.
   const current=await p.repository!.db.entities.get(`voucher:${id}`);
-  if(!editable(current)){const result=await onlineCommand(p,'voucher.submit',id);return result.status==='approved'?'Approved.':'Your voucher is already with your reviewers.'}
-  await save(true);await readyToSubmit(p,trip.id);await onlineCommand(p,'voucher.submit',id);setDirty(false);return 'Submitted.';
+  if(!editable(current)){const result=await onlineCommand(p,'voucher.submit',id);baselineVersion.current=result.version;return result.status==='verified'?'Verified by Ouranos. Ready for DTS review.':'This voucher is already locked.'}
+  await save();await readyToSubmit(p,trip.id);const result=await onlineCommand(p,'voucher.submit',id);baselineVersion.current=result.version;setDirty(false);return result.status==='verified'?'Verified by Ouranos. Ready for DTS review.':'Verification found items that need your attention.';
  }
  async function capture(files:File[]){for(const file of files)await p.repository!.captureReceipt(trip.id,file);await p.engine?.sync();changed();return 'Receipts saved. Their processing status appears below.'}
  function resolve(issue:Reconciliation['issues'][number],resolution:Resolution){setResolutions(current=>({...current,[issue.id]:{...resolution,at:new Date().toISOString()}}));changed()}
@@ -185,10 +192,11 @@ function VoucherForm({trip,rows,revision}:{trip:Entity;rows:LocalRecord[];revisi
  return <>
  <div className="cw-approved-summary"><div><span className="cw-eyebrow">{p.approvalMode==='preview'?'Travel plan':'Approved plan'}</span><strong>{approved.traveler}</strong><p>{approved.origin} <ArrowRight size={13}/> {text(revision.snapshot.trip.data.destination)}</p></div><div><span className="cw-muted">{p.approvalMode==='preview'?'Planned budget':'Approved budget'}</span><strong>{money(approved.approvedExpenseItems.reduce((sum,e)=>sum+e.authorizedAmountMinor,0))}</strong><span className="cw-fingerprint" title={revision.sha256}>{p.approvalMode==='preview'?'Draft':`Revision ${revision.id.slice(0,8)}`}</span></div></div>
  <AllowanceDetails value={approvedAllowance(revision)}/>
+ {verification&&<section className="cw-card cw-verification" aria-live="polite"><h2>{verification.status==='verified'?'Voucher verified by Ouranos':'Needs action'}</h2><p className="cw-muted">{verification.checksPassed} checks passed · {verification.expenseCount} expenses · {verification.receiptCount} confirmed receipts</p>{verification.status==='verified'?<p>Ready for DTS review. Official approval and payment remain outside Ouranos.</p>:<div className="cw-issues">{verification.blockingIssues.map(issue=><div className="cw-issue" key={issue.id}><p>{issue.message}</p>{issue.expenseId&&expenses.some(expense=>expense.id===issue.expenseId)&&<Button variant="outline" onClick={()=>{editExpense(expenses.find(expense=>expense.id===issue.expenseId));window.setTimeout(()=>document.getElementById('cw-expense-editor')?.scrollIntoView({block:'center'}),0)}}>{issue.action}</Button>}</div>)}</div>}<Button asChild variant="outline"><Link href={`/dashboard/travel/vouchers/verification?tripId=${trip.id}&voucherId=${id}`}>View verification details <ArrowRight size={15}/></Link></Button></section>}
  {(locked||(p.approvalMode==='preview'&&row?.server))&&<TravelPackagePanel voucherId={id} refreshKey={`${status}:${row?.server?.version}`}/>}
  <details className={`cw-record-details ${locked?'':'cw-editable'}`} open={!locked}><summary>{locked?'View expenses':'Expenses'}</summary>
  <div className="cw-section-heading"><div><h2>Expenses</h2></div><Status value={status}/></div>
- {locked&&<div className="cw-banner"><Check size={18}/><div><strong>{status==='approved'?'Approved.':'In review.'}</strong></div></div>}
+ {locked&&<div className="cw-banner"><Check size={18}/><div><strong>{status==='verified'?'Verified by Ouranos. Ready for DTS review.':status==='approved'?'Approved.':'In review.'}</strong></div></div>}
  <div className="cw-expenses">{expenses.map(expense=><article id={`expense-${expense.id}`} className={`cw-expense-row ${included.includes(expense.id)?'':'cw-excluded'}`} key={expense.id}><label className="cw-check"><input type="checkbox" checked={included.includes(expense.id)} disabled={locked||!!feedback.busy} onChange={e=>{setIncluded(current=>e.target.checked?[...current,expense.id]:current.filter(x=>x!==expense.id));changed()}}/><span className="sr-only">Include {text(expense.data.merchant)} in this voucher</span></label><div className="cw-expense-info"><strong>{text(expense.data.merchant)}</strong><span>{label(text(expense.data.category))} · {displayDate(expense.data.incurredOn)} · {expense.data.paymentMethod==='personal'?'Personal':'GTCC'}</span><small>{(expense.data.documentIds as string[]||[]).length} receipt{(expense.data.documentIds as string[]||[]).length===1?'':'s'}{!included.includes(expense.id)?' · Excluded from this voucher':''}</small></div><strong className="cw-expense-amount">{money(Number(expense.data.amountMinor))}</strong>{!locked&&<Button variant="ghost" disabled={!!feedback.busy} onClick={()=>editExpense(expense)}>Edit</Button>}</article>)}</div>
  {!locked&&!editor&&<Button variant="outline" className="cw-add-button" onClick={()=>editExpense()} disabled={!!feedback.busy}><Plus size={16}/> Add expense</Button>}
  {editor&&!locked&&<form id="cw-expense-editor" className="cw-card cw-expense-editor" onSubmit={e=>{e.preventDefault();void feedback.run('expense',saveExpense)}}><div className="cw-section-heading"><h3>{expenses.some(e=>e.id===editor.id)?'Edit expense':'New expense'}</h3></div><fieldset className="cw-fieldset cw-grid" disabled={!!feedback.busy}>
@@ -206,7 +214,7 @@ function VoucherForm({trip,rows,revision}:{trip:Entity;rows:LocalRecord[];revisi
  {reconciliation.issues.length?<div className="cw-issues">{reconciliation.issues.map(issue=><Issue key={issue.id} issue={issue} locked={locked} expense={selected.find(e=>e.id===issue.expenseId)} onResolve={resolution=>resolve(issue,resolution)} onEdit={()=>{const expense=expenses.find(e=>e.id===issue.expenseId);if(expense)editExpense(expense)}}/>)}</div>:selected.length>0?<div className="cw-ready"><Check size={18}/> Ready.</div>:<p className="cw-muted">Add an expense to begin reconciliation.</p>}
  {Object.keys(resolutions).length>0&&<details className="cw-resolutions"><summary>{Object.keys(resolutions).length} recorded resolution{Object.keys(resolutions).length===1?'':'s'}</summary>{Object.entries(resolutions).map(([key,value])=><div key={key}><span>{value.type==='not_used'?'Authorized item not used':value.type==='confirmed_date'?`Date confirmed: ${value.value}`:value.type==='lost_receipt_statement'?value.value.reason:value.value}</span>{!locked&&<Button variant="ghost" disabled={!!feedback.busy} onClick={()=>{setResolutions(current=>Object.fromEntries(Object.entries(current).filter(([id])=>id!==key)));changed()}}>Remove</Button>}</div>)}</details>}
  {!locked&&<div className="cw-certification"><label className="cw-check"><input type="checkbox" checked={intakeComplete} disabled={!!feedback.busy} onChange={e=>{setIntakeComplete(e.target.checked);changed()}}/><span>All expenses are included.</span></label><label className="cw-check"><input type="checkbox" checked={certified} disabled={!!feedback.busy} onChange={e=>{setCertified(e.target.checked);setDirty(true)}}/><span>I certify these details are accurate.</span></label></div>}
- <Feedback error={feedback.error} notice={feedback.notice}/>{!locked&&<div className="cw-action-bar"><div><p>{reconciliation.ready?'Ready.':'Finish the items above.'}</p></div><div className="cw-actions"><Button variant="outline" disabled={!!feedback.busy||!!editor} onClick={()=>void feedback.run('save',()=>save())}>{feedback.busy==='save'?'Saving…':'Save draft'}</Button><Button disabled={!!feedback.busy||!!editor||!p.client||(p.approvalMode!=='preview'&&(!certified||!intakeComplete||!reconciliation.ready))} onClick={()=>void feedback.run('submit',submit)}>{feedback.busy==='submit'?'Saving…':p.approvalMode==='preview'?'Save voucher':'Submit voucher'}<ArrowRight size={16}/></Button></div></div>}
+ <Feedback error={feedback.error} notice={feedback.notice}/>{!locked&&<div className="cw-action-bar"><div><p>{reconciliation.ready?'Ready for verification.':'Resolve the items above, or run verification for a full report.'}</p></div><div className="cw-actions"><Button variant="outline" disabled={!!feedback.busy||!!editor} onClick={()=>void feedback.run('save',()=>save())}>{feedback.busy==='save'?'Saving…':'Save draft'}</Button><Button disabled={!!feedback.busy||!!editor||!p.client||(p.approvalMode!=='preview'&&(!certified||!intakeComplete))} onClick={()=>void feedback.run('submit',submit)}>{feedback.busy==='submit'?'Verifying…':p.approvalMode==='preview'?'Save voucher':'Verify voucher'}<ArrowRight size={16}/></Button></div></div>}
  </details></>;
 }
 function ReceiptInbox({trip,rows}:{trip:Entity;rows:LocalRecord[]}){

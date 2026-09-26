@@ -1,5 +1,6 @@
 import type {Command,CommandResult,Entity,EntityKind,SessionInfo,SyncPage,ApiError,Role} from '../contracts/index';
 import type {ApprovedRevision} from '../domain/voucher-adapter';
+import type {VerificationReport} from '../domain/voucher-verification';
 export class ApiFailure extends Error {constructor(public status:number,public error:ApiError){super(error.message)}}
 export class OuranosClient {
  constructor(public baseUrl:string,private accessToken:()=>Promise<string|null>){this.baseUrl=baseUrl.replace(/\/$/,'')}
@@ -21,6 +22,7 @@ export class OuranosClient {
  approvedAuthorization(id:string,organizationId:string){return this.request<{revision:ApprovedRevision}>(`/v1/authorizations/${id}/approved?organizationId=${organizationId}`)}
  workingAuthorization(id:string,organizationId:string){return this.request<{revision:ApprovedRevision}>(`/v1/authorizations/${id}/working?organizationId=${organizationId}`)}
  voucherPackage(id:string,organizationId:string){return this.request<import('../domain/travel-package').TravelPackage>(`/v1/vouchers/${id}/package?organizationId=${organizationId}`)}
+ voucherVerification(id:string,organizationId:string){return this.request<{report:VerificationReport;revision:{id:string;sha256:string;snapshot:Record<string,unknown>;createdAt:string}}>(`/v1/vouchers/${id}/verification?organizationId=${organizationId}`)}
  prepareUpload(id:string,organizationId:string){return this.request<{documentId:string;path:string;token:string;signedUrl:string}>(`/v1/documents/${id}/upload`,{method:'POST',body:JSON.stringify({organizationId})})}
  download(id:string,organizationId:string){return this.request<{url:string;expiresIn:number}>(`/v1/documents/${id}/download`,{method:'POST',body:JSON.stringify({organizationId})})}
  extractions(id:string,organizationId:string){return this.request<{runs:unknown[]}>(`/v1/documents/${id}/extractions?organizationId=${organizationId}`)}

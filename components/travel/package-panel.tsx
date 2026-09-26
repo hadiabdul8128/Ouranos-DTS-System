@@ -27,15 +27,15 @@ function TravelPackageContent({voucherId,refreshKey}:{voucherId:string;refreshKe
     const extension=doc.data.mediaType==='application/pdf'?'pdf':doc.data.mediaType==='image/png'?'png':'jpg';const path=`receipts/${doc.id}.${extension}`;files[path]=bytes;
     links.push(`<li><a href="${path}">${escape(doc.data.filename)}</a><small> · SHA-256 ${escape(doc.data.sha256)}</small></li>`);
    }
-   const status=current.snapshot.preview?'Draft preview — not approved':current.status==='approved'?'Approved in Ouranos':'In review in Ouranos';
+   const status=current.snapshot.preview?'Draft preview — not approved':current.status==='verified'?'Verified by Ouranos — ready for DTS review':current.status==='approved'?'Approved in Ouranos':'In review in Ouranos';
    files['index.html']=strToU8(current.html.replace('<body>',`<body><p>${status} · Not submitted to DTS</p>`).replace('</body>',`<section class="page"><h2>Original receipts</h2><ul>${links.join('')}</ul><p>Submission ${escape(current.revisionId)} · ${escape(current.sha256)}</p></section></body>`));
-   files['submission.json']=strToU8(JSON.stringify({revisionId:current.revisionId,sha256:current.sha256,status:current.status,snapshot:current.snapshot},null,2));
+   files['submission.json']=strToU8(JSON.stringify({revisionId:current.revisionId,sha256:current.sha256,status:current.status,verification:current.verification||null,snapshot:current.snapshot},null,2));
    const zip=zipSync(files,{level:1});
    if(encrypted){const {encryptBackup}=await import('@/voucher/src/backup.js');const value=await encryptBackup({format:'ouranos-travel-package',version:1,sha256:await digest(zip),archive:encode(zip)},passphrase);download(value,'ouranos-package.encrypted.json','application/json');setPassphrase('')}
    else download(zip,'ouranos-travel-package.zip','application/zip');
   }catch(e){setError(e instanceof Error?e.message:'Download failed.')}finally{setBusy(false)}
  }
- return <section className="cw-package"><div className="cw-section-heading"><div><h2>{pack?.status==='approved'?'Approved.':'In review.'}</h2><span className="cw-muted">DTS preparation package</span></div><Button disabled={!pack||busy} onClick={()=>void exportPackage()}><Download size={16}/>{busy?'Preparing…':'Download'}</Button></div>
+ return <section className="cw-package"><div className="cw-section-heading"><div><h2>{pack?.status==='verified'?'Verified by Ouranos.':pack?.status==='approved'?'Approved.':'In review.'}</h2><span className="cw-muted">DTS preparation package · official approval remains external</span></div><Button disabled={!pack||busy} onClick={()=>void exportPackage()}><Download size={16}/>{busy?'Preparing…':'Download'}</Button></div>
  {error&&<p className="cw-error" role="alert">{error}</p>}
  {pack&&<details className="cw-disclosure"><summary>Package details</summary><p className="cw-muted">Open index.html to print. Original receipts are included. Submit separately in DTS.</p>{pack.checklist.steps.map((step,i)=><details className="cw-disclosure" key={i}><summary>{step.title}</summary><ul>{step.items.map((item,j)=><li key={j}>{item.text}{item.evidence&&<small> · {item.evidence}</small>}{(item.source||item.rule)&&<small className="cw-source">{item.source||item.rule}</small>}</li>)}</ul></details>)}<details className="cw-disclosure"><summary>Encrypted copy</summary><label className="cw-field"><span>Passphrase</span><Input type="password" autoComplete="new-password" minLength={10} value={passphrase} onChange={e=>setPassphrase(e.target.value)}/></label><Button variant="outline" disabled={busy||passphrase.length<10} onClick={()=>void exportPackage(true)}>Save encrypted copy</Button></details></details>}
  </section>;
