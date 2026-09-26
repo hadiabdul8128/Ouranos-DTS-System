@@ -13,6 +13,8 @@
 .finance-field input,.finance-field select { width:100%; min-height:48px; border:1px solid #cbd2d7; background:#fff; color:#262930; border-radius:8px; padding:11px 12px; font-size:15px; box-shadow:none; }
 .finance-field input::placeholder { color:#67717e; }
 .finance-field select { appearance:auto; }
+.finance-month legend { font-size:14px; font-weight:500; margin-bottom:9px; }
+.finance-month > div { display:grid; grid-template-columns:1.4fr 1fr; gap:8px; }
 .finance-money-input { position:relative; }
 .finance-money-input > span { position:absolute; left:13px; top:12px; color:var(--finance-muted); }
 .finance-money-input input { padding-left:29px; font-variant-numeric:tabular-nums; }
