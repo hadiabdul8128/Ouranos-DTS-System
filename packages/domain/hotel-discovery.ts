@@ -9,8 +9,8 @@ const states:Record<string,string>={Alabama:'AL',Alaska:'AK',Arizona:'AZ',Arkans
 const countryAlias:Record<string,string>={us:'United States',usa:'United States','united states of america':'United States',uk:'United Kingdom',gb:'United Kingdom',uae:'United Arab Emirates'};
 
 export function hotelLocation(property:HotelProperty){const [, ,city,state,,country]=property;return {city,state,country,label:[city,country==='United States'?state:country].filter(Boolean).join(', ')}}
-export function hotelAddress(property:HotelProperty){const [,address,city,state,zip,country]=property;return [address,[city,state,zip].filter(Boolean).join(', '),country].filter(Boolean).join(' · ')}
-export function hotelMapUrl(property:HotelProperty){return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([property[0],property[1],property[2],property[3],property[4],property[5]].filter(Boolean).join(', '))}`}
+export function hotelAddress(property:HotelProperty){const [,address,city,state,zip,country]=property;return [address,[city,country==='United States'?state:'',zip].filter(Boolean).join(', '),country].filter(Boolean).join(' · ')}
+export function hotelMapUrl(property:HotelProperty){return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([property[0],property[1],property[2],property[5]==='United States'?property[3]:'',property[4],property[5]].filter(Boolean).join(', '))}`}
 const fold=(value:string)=>value.normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('en-US').replace(/[^\p{L}\p{N}]+/gu,' ').trim().replace(/\s+/g,' ');
 const locationKey=(p:HotelProperty)=>[fold(p[2]),fold(p[3]),fold(p[5])].join('|');
 const zip=(value:string)=>value.match(/\b\d{5}\b/)?.[0]||'';

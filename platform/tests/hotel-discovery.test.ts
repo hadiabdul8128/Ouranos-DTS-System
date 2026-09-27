@@ -1,6 +1,6 @@
 import {describe,expect,it} from 'vitest';
 import {readFileSync} from 'node:fs';
-import {parseHotelCatalog,searchHotels,canonicalLocation,hotelMapUrl} from '../../packages/domain/hotel-discovery';
+import {parseHotelCatalog,searchHotels,canonicalLocation,hotelAddress,hotelMapUrl} from '../../packages/domain/hotel-discovery';
 
 const catalog=parseHotelCatalog(JSON.parse(readFileSync(new URL('../../public/lodging/fedrooms-2026.json',import.meta.url),'utf8')));
 
@@ -42,6 +42,12 @@ describe('sourced hotel discovery',()=>{
   expect(result.properties.every(p=>p[5]==='United Kingdom')).toBe(true);
   expect(canonicalLocation(result.properties[0])).toBe('London, United Kingdom');
   expect(hotelMapUrl(result.properties[0])).toMatch(/^https:\/\/www\.google\.com\/maps\/search\/\?api=1&query=/);
+ });
+ it('does not route an overseas property using a malformed state in the source file',()=>{
+  const perth=catalog.properties.find(p=>p[0]==='The Westin Perth');
+  expect(perth).toBeDefined();
+  expect(hotelAddress(perth!)).not.toContain('Washington');
+  expect(decodeURIComponent(hotelMapUrl(perth!))).not.toContain('Washington');
  });
  it('rejects altered or malformed catalog data',()=>{
   expect(()=>parseHotelCatalog({...catalog,source:'javascript:alert(1)'})).toThrow();
