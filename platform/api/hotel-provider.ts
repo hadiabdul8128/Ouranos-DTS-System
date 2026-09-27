@@ -9,7 +9,7 @@ export type HotelOfferRequest=z.infer<typeof hotelOfferRequest>;
 export type HotelOffer={id:number;name:string;address:string;photoUrl:string|null;reviewScore:number|null;reviewCount:number|null;stars:number|null;totalPrice:number;currency:string;url:string};
 export type HotelOfferResponse={status:'unavailable'|'results';source:'booking.com'|'booking.com sandbox'|null;offers:HotelOffer[]};
 
-const money=z.number().finite().positive();
+const money=z.number().finite();
 const searchResponse=z.object({data:z.array(z.object({
  id:z.number().int(),currency:z.object({booker:z.string()}).optional(),
  price:z.object({total:z.object({booker_currency:money.optional()}).optional()}).optional(),
@@ -41,7 +41,7 @@ export async function searchBookingOffers(input:HotelOfferRequest,credentials:{a
   coordinates:{latitude:input.latitude,longitude:input.longitude,radius:Math.round(input.radiusMiles*1.609344*10)/10},
   currency:'USD',guests:{number_of_adults:1,number_of_rooms:1},rows:20,
  }));
- const priced=search.data.filter(item=>item.price?.total?.booker_currency&&item.currency?.booker).slice(0,20);
+ const priced=search.data.filter(item=>(item.price?.total?.booker_currency||0)>0&&item.currency?.booker).slice(0,20);
  if(!priced.length)return [];
  const details=detailsResponse.parse(await post('/accommodations/details',{accommodations:priced.map(item=>item.id),extras:['photos'],languages:['en-us']}));
  const byId=new Map(details.data.map(item=>[item.id,item]));
