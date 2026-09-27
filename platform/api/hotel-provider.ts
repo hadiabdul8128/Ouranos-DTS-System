@@ -1,10 +1,11 @@
 import {z} from 'zod';
+import {stayNights} from '../../packages/domain/hotel-price';
 
 export const hotelOfferRequest=z.object({
  latitude:z.number().min(-90).max(90),longitude:z.number().min(-180).max(180),
  radiusMiles:z.number().min(1).max(50),
  checkin:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),checkout:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-}).strict().refine(value=>value.checkout>value.checkin,{message:'Check-out must follow check-in',path:['checkout']});
+}).strict().refine(value=>stayNights(value.checkin,value.checkout)>0,{message:'Check-out must follow a valid check-in date',path:['checkout']});
 export type HotelOfferRequest=z.infer<typeof hotelOfferRequest>;
 export type HotelOffer={id:number;name:string;address:string;photoUrl:string|null;reviewScore:number|null;reviewCount:number|null;stars:number|null;totalPrice:number;currency:string;url:string};
 export type HotelOfferResponse={status:'unavailable'|'results';source:'booking.com'|'booking.com sandbox'|null;offers:HotelOffer[]};
@@ -41,12 +42,12 @@ export async function searchBookingOffers(input:HotelOfferRequest,credentials:{a
   coordinates:{latitude:input.latitude,longitude:input.longitude,radius:Math.round(input.radiusMiles*1.609344*10)/10},
   currency:'USD',guests:{number_of_adults:1,number_of_rooms:1},rows:20,
  }));
- const priced=search.data.filter(item=>(item.price?.total?.booker_currency||0)>0&&item.currency?.booker).slice(0,20);
+ const priced=search.data.filter(item=>(item.price?.total?.booker_currency||0)>0&&/^[A-Z]{3}$/.test(item.currency?.booker||'')).slice(0,20);
  if(!priced.length)return [];
  const details=detailsResponse.parse(await post('/accommodations/details',{accommodations:priced.map(item=>item.id),extras:['photos'],languages:['en-us']}));
  const byId=new Map(details.data.map(item=>[item.id,item]));
  return priced.flatMap(item=>{
-  const detail=byId.get(item.id),name=localized(detail?.name),url=approvedUrl(item.deep_link_url||item.url,'booking.com');
+  const detail=byId.get(item.id),name=localized(detail?.name),url=approvedUrl(item.deep_link_url,'booking.com')||approvedUrl(item.url,'booking.com');
   const totalPrice=item.price?.total?.booker_currency,currency=item.currency?.booker;
   if(!detail||!name||!url||!totalPrice||!currency)return [];
   const photo=detail.photos?.find(photo=>photo.main_photo)||detail.photos?.[0];

@@ -4,6 +4,7 @@ import {ArrowUpRight} from 'lucide-react';
 import Image from 'next/image';
 import {usePlatform} from '@/components/platform/provider';
 import type {NearbySearch} from '@/packages/domain/hotel-nearby';
+import {averageNightlyPrice,stayNights} from '@/packages/domain/hotel-price';
 import type {HotelOfferResponse} from '@/platform/api/hotel-provider';
 import type {HotelSearchForm} from './search-fields';
 
@@ -31,6 +32,7 @@ export function LiveHotelOffers({search,result}:{search:HotelSearchForm|null;res
  },[token,api,latitude,longitude,radiusMiles,checkin,checkout,key]);
  if(!search||!result||result.status!=='found')return null;
  if(!checkin||!checkout)return <section className="hotel-live" aria-label="Live hotel offers"><h2>Prices, photos and ratings</h2><p>Add check-in and check-out dates to look for live room offers. You can browse nearby listed properties below without dates.</p></section>;
+ const nights=stayNights(checkin,checkout);
  const offers=(response?.offers||[]).filter(offer=>!search.hotelName||offer.name.toLowerCase().includes(search.hotelName.toLowerCase()));
  return <section className="hotel-live" aria-label="Live hotel offers"><div className="hotel-results-heading"><div><h2>Rooms near {result.location}</h2><p>{checkin} to {checkout} · 1 traveler · public room offers</p></div></div>
   {loading?<p className="hotel-live-message" role="status">Checking live room offers…</p>:error?<p className="hotel-live-message" role="alert">{error} Nearby property listings are still below.</p>:response?.status==='unavailable'?<p className="hotel-live-message">Live prices, photos and ratings are not connected yet. Nearby property listings are below.</p>:response?.source==='booking.com sandbox'?<p className="hotel-live-message">Test inventory only. These prices and hotels are not real booking offers.</p>:null}
@@ -39,7 +41,7 @@ export function LiveHotelOffers({search,result}:{search:HotelSearchForm|null;res
    {offer.photoUrl?<div className="hotel-live-photo"><Image src={offer.photoUrl} alt={`${offer.name} property`} fill sizes="(max-width: 760px) 100vw, 50vw" unoptimized/></div>:<div className="hotel-live-no-photo">Photo unavailable</div>}
    <div className="hotel-live-details"><h3>{offer.name}</h3>{offer.address&&<p className="hotel-live-address">{offer.address}</p>}
     <div className="hotel-live-facts">{offer.reviewScore!==null&&<span>{offer.reviewScore.toFixed(1)}/10 guest rating{offer.reviewCount!==null?` · ${offer.reviewCount} reviews`:''}</span>}{offer.stars!==null&&<span>{offer.stars} stars</span>}</div>
-    <div className="hotel-live-bottom"><div><strong>{new Intl.NumberFormat('en-US',{style:'currency',currency:offer.currency}).format(offer.totalPrice)}</strong><small>Total for stay · public rate, subject to change</small></div><a href={offer.url} target="_blank" rel="noopener noreferrer">View offer <ArrowUpRight size={14}/></a></div>
+    <div className="hotel-live-bottom"><div><strong>{new Intl.NumberFormat('en-US',{style:'currency',currency:offer.currency}).format(averageNightlyPrice(offer.totalPrice,checkin,checkout)??offer.totalPrice)} <span>/ night</span></strong><small>Average from {nights}-night stay total · {new Intl.NumberFormat('en-US',{style:'currency',currency:offer.currency}).format(offer.totalPrice)} total</small></div><a href={offer.url} target="_blank" rel="noopener noreferrer">View offer <ArrowUpRight size={14}/></a></div>
    </div></article>)}</div><p className="hotel-results-note">Public offers from Booking.com. They are not verified FedRooms or DoD Preferred rates. Confirm the required lodging order and final price before booking.</p></>}
  </section>;
 }

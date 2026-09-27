@@ -36,6 +36,7 @@
 .hotel-live-facts span{background:#eef5ef;padding:5px 8px;border-radius:30px}
 .hotel-live-bottom{display:flex;align-items:end;justify-content:space-between;gap:12px;border-top:1px solid #edf0f2;padding-top:13px;margin-top:15px}
 .hotel-live-bottom strong{display:block;font-size:18px;font-weight:600}
+.hotel-live-bottom strong span{font-size:12px;font-weight:500;color:#5e6d7c}
 .hotel-live-bottom small{display:block;color:#7b8894;font-size:10px;margin-top:4px}
 .hotel-live-bottom a{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;font-size:11px;color:#315a7a}
 .hotel-results-heading h2{font-size:22px;margin:0 0 5px}
@@ -46,7 +47,6 @@
 .hotel-card-main{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
 .hotel-card h3{font-size:15px;font-weight:500;line-height:1.4;overflow-wrap:anywhere}
 .hotel-card p{color:#657383;font-size:12px;line-height:1.6;margin:8px 0 16px;overflow-wrap:anywhere}
-.hotel-zip-match{white-space:nowrap;color:#3e6855;background:#edf5ef;border-radius:50px;padding:5px 7px;font-size:10px}
 .hotel-card-actions{display:flex;flex-wrap:wrap;gap:6px;border-top:1px solid #edf0f2;padding-top:8px}
 .hotel-card-actions button,.hotel-card-actions a{display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:0 7px;color:#49617a;font-size:11px}
 .hotel-card-actions a{margin-left:auto}
@@ -62,4 +62,4 @@
 .hotel-source-note{margin:34px 0 0;font-size:11px;line-height:1.7;color:#718090}
 .hotel-source-note a{text-decoration:underline;text-underline-offset:2px}
 @media(max-width:760px){.hotel-search{grid-template-columns:repeat(2,minmax(0,1fr))}.hotel-destination{grid-column:1/-1}.hotel-guidance{flex-direction:column;gap:12px}.hotel-guidance-links{min-width:0}.hotel-guidance-links a{min-height:44px}.hotel-list,.hotel-live-grid{grid-template-columns:1fr}}
-@media(max-width:480px){.hotel-search{grid-template-columns:1fr;padding:17px}.hotel-destination{grid-column:auto}.hotel-search-action{flex-direction:column;align-items:stretch}.hotel-search-action button{width:100%}.hotel-guidance{padding:18px}.hotel-card{padding:17px 15px 10px}.hotel-card-main{flex-direction:column}.hotel-card p{margin-bottom:9px}.hotel-zip-match{margin-bottom:8px}}
+@media(max-width:480px){.hotel-search{grid-template-columns:1fr;padding:17px}.hotel-destination{grid-column:auto}.hotel-search-action{flex-direction:column;align-items:stretch}.hotel-search-action button{width:100%}.hotel-guidance{padding:18px}.hotel-card{padding:17px 15px 10px}.hotel-card-main{flex-direction:column}.hotel-card p{margin-bottom:9px}}

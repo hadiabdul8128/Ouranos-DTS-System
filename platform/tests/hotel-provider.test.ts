@@ -1,5 +1,6 @@
 import {describe,expect,it,vi} from 'vitest';
 import {hotelOfferRequest,searchBookingOffers} from '../api/hotel-provider';
+import {averageNightlyPrice,stayNights} from '../../packages/domain/hotel-price';
 
 const input={latitude:32.716,longitude:-117.161,radiusMiles:10,checkin:'2026-10-12',checkout:'2026-10-15'};
 const credentials={apiKey:'test-secret',affiliateId:'test-affiliate',mode:'production' as const};
@@ -8,6 +9,7 @@ describe('live hotel provider',()=>{
  it('requires a coherent location and stay date range',()=>{
   expect(hotelOfferRequest.safeParse({...input,latitude:100}).success).toBe(false);
   expect(hotelOfferRequest.safeParse({...input,checkout:'2026-10-11'}).success).toBe(false);
+  expect(hotelOfferRequest.safeParse({...input,checkin:'2026-02-30'}).success).toBe(false);
   expect(hotelOfferRequest.parse(input)).toEqual(input);
  });
  it('maps priced offers, real photos and review scores without inventing missing values',async()=>{
@@ -16,7 +18,7 @@ describe('live hotel provider',()=>{
    if(url.endsWith('/search')){
     expect(JSON.parse(String(options.body))).toMatchObject({checkin:'2026-10-12',coordinates:{latitude:32.716,longitude:-117.161}});
     return new Response(JSON.stringify({data:[
-     {id:4,currency:{booker:'USD'},price:{total:{booker_currency:621}},url:'https://www.booking.com/hotel/us/marriott.html'},
+     {id:4,currency:{booker:'USD'},price:{total:{booker_currency:621}},deep_link_url:'booking://hotel/4',url:'https://www.booking.com/hotel/us/marriott.html'},
      {id:5,currency:{booker:'USD'},price:{total:{booker_currency:0}},url:'https://www.booking.com/hotel/us/invalid.html'},
      {id:6,currency:{booker:'USD'},price:{total:{booker_currency:280}},url:'https://malicious.example/offer'},
     ]}),{status:200});
@@ -34,6 +36,11 @@ describe('live hotel provider',()=>{
  it('does not call details when no result includes a valid paid total',async()=>{
   const request=vi.fn(async()=>new Response(JSON.stringify({data:[{id:4,currency:{booker:'USD'},price:{total:{booker_currency:0}}}]}),{status:200}));
   expect(await searchBookingOffers(input,credentials,request as typeof fetch)).toEqual([]);
-  expect(request).toHaveBeenCalledTimes(1);
+ expect(request).toHaveBeenCalledTimes(1);
+ });
+ it('labels a three-night total as an average rather than an actual nightly tariff',()=>{
+  expect(stayNights('2026-10-12','2026-10-15')).toBe(3);
+  expect(averageNightlyPrice(621,'2026-10-12','2026-10-15')).toBe(207);
+  expect(averageNightlyPrice(621,'2026-10-15','2026-10-12')).toBeNull();
  });
 });
