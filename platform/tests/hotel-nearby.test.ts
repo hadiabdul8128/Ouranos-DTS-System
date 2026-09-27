@@ -9,6 +9,7 @@ const centers=postalCentersSchema.parse(JSON.parse(readFileSync(new URL('../../p
 describe('standalone nearby hotel search',()=>{
  it('validates a sourced US ZIP catalog',()=>{
   expect(Object.keys(centers.points).length).toBeGreaterThan(40_000);
+  expect(Object.keys(centers.cities).length).toBeGreaterThan(10_000);
   expect(centers.license).toBe('CC BY 4.0');
   expect(()=>postalCentersSchema.parse({...centers,points:{'92101':[500,0]}})).toThrow();
  });
@@ -25,6 +26,12 @@ describe('standalone nearby hotel search',()=>{
   expect(result.status).toBe('found');
   expect(result.location).toBe('work ZIP 92101');
   expect(result.center).toEqual(centers.points['92101']);
+ });
+ it('can center a search on a US town with no FedRooms listing of its own',()=>{
+  const result=findNearbyHotels(catalog,centers,'Boring, OR',{radiusMiles:25});
+  expect(result.status).toBe('found');
+  expect(result.location).toBe('Boring, Oregon');
+  expect(result.center).toEqual(centers.cities['boring|or'].slice(0,2));
  });
  it('requires a choice for an ambiguous city',()=>{
   const result=findNearbyHotels(catalog,centers,'Portland');
