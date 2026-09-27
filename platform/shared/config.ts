@@ -11,6 +11,8 @@ const environment=z.object({
  OCR_PROVIDER:z.enum(['disabled','http']).default('disabled'),OCR_URL:z.string().url().optional(),OCR_TOKEN:z.string().optional(),
  SCAN_PROVIDER:z.enum(['disabled','http']).default('disabled'),SCAN_URL:z.string().url().optional(),SCAN_TOKEN:z.string().optional(),
  DTS_PROVIDER:z.enum(['disabled','mock']).default('disabled'),
+ BOOKING_DEMAND_API_KEY:z.string().optional(),BOOKING_DEMAND_AFFILIATE_ID:z.string().optional(),
+ BOOKING_DEMAND_MODE:z.enum(['production','sandbox']).default('production'),
  APPROVAL_MODE:z.enum(['required','preview','automatic']).default('required'),
  WORKER_POLL_MS:z.coerce.number().min(100).default(2000),
 });
@@ -21,5 +23,7 @@ export function readConfig():PlatformConfig {
  if(c.NODE_ENV==='production'&&c.DTS_PROVIDER==='mock')throw new Error('Mock DTS is development-only');
  if(c.OCR_PROVIDER==='http'&&!c.OCR_URL)throw new Error('OCR_URL required');
  if(c.SCAN_PROVIDER==='http'&&!c.SCAN_URL)throw new Error('SCAN_URL required');
+ if(Boolean(c.BOOKING_DEMAND_API_KEY)!==Boolean(c.BOOKING_DEMAND_AFFILIATE_ID))throw new Error('Booking Demand requires both API key and affiliate ID');
+ if(c.NODE_ENV==='production'&&c.BOOKING_DEMAND_MODE==='sandbox')throw new Error('Booking Demand sandbox cannot be used in production');
  return c;
 }
