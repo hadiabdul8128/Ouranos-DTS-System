@@ -17,7 +17,7 @@ const money=(minor:number)=>new Intl.NumberFormat('en-US',{style:'currency',curr
 
 function HotelTripSearch({trip,catalog,catalogError,catalogLoading,retry}:{trip:HotelTripContext;catalog:HotelCatalog|null;catalogError:string|null;catalogLoading:boolean;retry:()=>void}){
  const [destination,setDestination]=useState(trip.destination),[workZip,setWorkZip]=useState(''),[hotelName,setHotelName]=useState(''),[limit,setLimit]=useState(12);
- function changeDestination(value:string){setDestination(value);setLimit(12)}
+ function changeDestination(value:string){setDestination(value);setWorkZip('');setHotelName('');setLimit(12)}
  function changeWorkZip(value:string){setWorkZip(value);setLimit(12)}
  function changeHotelName(value:string){setHotelName(value);setLimit(12)}
  return <>

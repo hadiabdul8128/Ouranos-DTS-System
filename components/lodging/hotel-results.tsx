@@ -13,11 +13,11 @@ export function HotelResults({catalog,destination,workZip,hotelName,limit,onMore
  return <section className="hotel-results" aria-label="Listed hotels">
   <div className="hotel-results-heading"><div><h2>Hotels in {result.location}</h2><p>{result.total} FedRooms {result.total===1?'property':'properties'} in this search · GSA list dated {new Date(`${catalog.published}T12:00:00Z`).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric',timeZone:'UTC'})}</p></div></div>
   {result.total===0?<div className="hotel-empty"><p>No hotel names match this filter. Clear “Hotel name” to see the properties in {result.location}.</p></div>:<div className="hotel-list">{result.properties.map(property=>{
-   const [name,address,city,state,postal,country]=property;
+   const [name,address,,,postal,country]=property;
    const key=[name,address,postal,country].join('|');
    const exactZip=workZip.length===5&&postal.slice(0,5)===workZip;
    const copy=async()=>{try{await navigator.clipboard.writeText(`${name}\n${address}\n${canonicalLocation(property)} ${postal}`);setCopied(key)}catch{setCopied('error')}};
-   return <article className="hotel-card" key={key}><div className="hotel-card-main"><div><h3>{name}</h3><p>{address}<br/>{city}{country==='United States'&&state?`, ${state}`:''} {postal}{country!=='United States'?` · ${country}`:''}</p></div>{exactZip&&<span className="hotel-zip-match">Work ZIP match</span>}</div><div className="hotel-card-actions"><button type="button" onClick={copy}><Copy size={14}/>{copied===key?'Copied':copied==='error'?'Copy unavailable':'Copy details'}</button><a href={hotelMapUrl(property)} target="_blank" rel="noopener noreferrer">View on map <ArrowUpRight size={15}/></a></div></article>
+   return <article className="hotel-card" key={key}><div className="hotel-card-main"><div><h3>{name}</h3><p>{address}<br/>{canonicalLocation(property)} {postal}</p></div>{exactZip&&<span className="hotel-zip-match">Work ZIP match</span>}</div><div className="hotel-card-actions"><button type="button" onClick={copy}><Copy size={14}/>{copied===key?'Copied':copied==='error'?'Copy unavailable':'Copy details'}</button><a href={hotelMapUrl(property)} target="_blank" rel="noopener noreferrer">View on map <ArrowUpRight size={15}/></a></div></article>
   })}</div>}
   {result.total>result.properties.length&&<Button variant="outline" onClick={onMore} className="hotel-more">Show more hotels ({result.total-result.properties.length} remaining)</Button>}
  </section>;
