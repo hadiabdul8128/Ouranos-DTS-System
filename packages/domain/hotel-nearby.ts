@@ -20,7 +20,7 @@ function matchCity(centers:PostalCenters,location:string){
  const [rawCity,rawState]=location.split(',').map(value=>value.trim());
  const city=fold(rawCity||''),state=fold(displayState(rawState||''));
  if(!city)return [];
- return Object.entries(centers.cities).filter(([key])=>{const [name,code]=key.split('|');return name===city&&(!state||code===state)}).map(([key,value])=>({key,value}));
+ return Object.entries(centers.cities||{}).filter(([key])=>{const [name,code]=key.split('|');return name===city&&(!state||code===state)}).map(([key,value])=>({key,value}));
 }
 
 export function findNearbyHotels(catalog:HotelCatalog,centers:PostalCenters,rawLocation:string,options:{radiusMiles?:number;workZip?:string;hotelName?:string;limit?:number}={}):NearbySearch{
