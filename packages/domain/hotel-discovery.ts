@@ -1,7 +1,7 @@
 import {z} from 'zod';
 
 export const hotelPropertySchema=z.tuple([z.string().min(1),z.string().min(1),z.string().min(1),z.string(),z.string(),z.string().min(1)]);
-export const hotelCatalogSchema=z.object({source:z.string().url(),published:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),sha256:z.string().regex(/^[a-f0-9]{64}$/),properties:z.array(hotelPropertySchema).min(1)}).strict();
+export const hotelCatalogSchema=z.object({source:z.string().url().refine(value=>{const url=new URL(value);return url.protocol==='https:'&&url.hostname==='www.gsa.gov'}),published:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),sha256:z.string().regex(/^[a-f0-9]{64}$/),properties:z.array(hotelPropertySchema).min(1)}).strict();
 export type HotelProperty=z.infer<typeof hotelPropertySchema>;
 export type HotelCatalog=z.infer<typeof hotelCatalogSchema>;
 
