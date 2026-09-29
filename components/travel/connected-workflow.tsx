@@ -125,7 +125,7 @@ function VoucherGate({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
  const p=usePlatform();const preview=p.approvalMode==='preview';
  const auth=rows.filter(r=>r.kind==='authorization'&&r.local.tripId===trip.id&&(preview?Boolean(r.server):r.server?.status==='approved')).sort((a,b)=>b.server!.updatedAt.localeCompare(a.server!.updatedAt))[0];
  if(!auth&&preview)return <><ReceiptInbox trip={trip} rows={rows}/><Button asChild variant="outline"><Link href={`/dashboard/travel/planning?tripId=${trip.id}`}>Add travel plan <ArrowRight size={16}/></Link></Button></>;
- if(!auth)return <div className="cw-card cw-empty"><FileText size={28}/><h2>Plan approval pending.</h2><Button asChild><Link href={`/dashboard/travel/planning?tripId=${trip.id}`}>Open travel plan <ArrowRight size={16}/></Link></Button></div>;
+ if(!auth)return <><div className="cw-card cw-empty"><FileText size={28}/><h2>Plan approval pending.</h2><p className="cw-muted">You can collect receipts while waiting. Preparing the voucher still requires an approved plan.</p><Button asChild><Link href={`/dashboard/travel/planning?tripId=${trip.id}`}>Open travel plan <ArrowRight size={16}/></Link></Button></div><ReceiptInbox trip={trip} rows={rows}/></>;
  return <ApprovedVoucher key={`${auth.id}:${auth.server!.version}`} authorizationId={auth.id} trip={trip} rows={rows}/>;
 }
 function ApprovedVoucher({authorizationId,trip,rows}:{authorizationId:string;trip:Entity;rows:LocalRecord[]}){
