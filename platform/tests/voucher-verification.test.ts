@@ -59,3 +59,30 @@ describe('verification candidate contract',()=>{
   expect(voucherVerificationCandidateSchema.safeParse({...candidate,reconciliation:{...candidate.reconciliation,totalAmountMinor:1}}).success).toBe(false);
  });
 });
+
+describe('foreign receipt evidence',()=>{
+ const foreignExpense={...expense,data:{...expense.data,amountMinor:11000,originalReceipt:{currency:'EUR',amountMinor:10000,taxesMinor:0,feesMinor:0,usdBasis:'card_statement',conversionNote:''}}};
+ it('compares the original receipt total and keeps the confirmed USD voucher total',()=>{
+  const evidence=receiptExtractionFromFields(documentId,[{name:'amount',value:'100.00',confidence:.95},{name:'currency',value:'EUR',confidence:.95}]);
+  const result=report({expenses:[foreignExpense],extractions:[evidence]});
+  expect(result.status).toBe('verified');expect(result.claimedTotalMinor).toBe(11000);
+  expect(result.checks).toContainEqual({code:'receipt_total_match',status:'passed',expenseId,documentId});
+  expect(report({expenses:[foreignExpense],extractions:[{...evidence,amountMinor:11000}]}).blockingIssues).toContainEqual(expect.objectContaining({code:'receipt_total_mismatch'}));
+ });
+ it('blocks an unrecorded currency mismatch, and audits traveler OCR corrections',()=>{
+  const evidence={documentId,amountMinor:10000,confidence:.95,currency:'USD',currencyConfidence:.95};
+  expect(report({expenses:[foreignExpense],extractions:[evidence]}).blockingIssues).toContainEqual(expect.objectContaining({code:'receipt_currency_mismatch'}));
+  const corrected={...foreignExpense,data:{...foreignExpense.data,receiptCurrencyCorrection:'Original receipt clearly shows EUR, OCR read USD'}};
+  const result=report({expenses:[corrected],extractions:[evidence]});
+  expect(result.status).toBe('verified');expect(result.warnings.join(' ')).toContain('OCR read USD');
+  expect(result.checks.some(c=>c.code==='receipt_total_match')).toBe(false);
+ });
+ it('does not compare uncertain currency units or invent an OCR currency',()=>{
+  const result=report({expenses:[foreignExpense],extractions:[{documentId,amountMinor:11000,confidence:.95}]});
+  expect(result.status).toBe('verified');expect(result.checks.some(c=>c.code==='receipt_total_match')).toBe(false);
+  expect(result.warnings.join(' ')).toContain('needs traveler confirmation');
+  expect(receiptExtractionFromFields(documentId,[{name:'currency',value:'JPY',confidence:.95},{name:'amount',value:'12345',confidence:.95}]).amountMinor).toBe(12345);
+  expect(receiptExtractionFromFields(documentId,[{name:'currency',value:'KWD',confidence:.95},{name:'amount',value:'10.125',confidence:.95}]).amountMinor).toBe(10125);
+  expect(receiptExtractionFromFields(documentId,[{name:'currency',value:'EUR'},{name:'currency',value:'USD'},{name:'amount',value:'100.00',confidence:.95}]).amountMinor).toBeNull();
+ });
+});

@@ -31,7 +31,7 @@ export function approvedTravel(revision:ApprovedRevision){
  * Only structured paid totals are used; an uncertain OCR amount stays blank. */
 export function suggestReceiptAllocation(revision:ApprovedRevision,fields:Record<string,string>,hint=''){
   const parsed=parseReceiptText(fields.rawText||'').fields;
-  const amount=/^\d+(?:\.\d{1,2})?$/.test(fields.amount||'')?Number(fields.amount):null;
+  const amount=(!fields.currency||fields.currency==='USD')&&/^\d+(?:\.\d{1,2})?$/.test(fields.amount||'')?Number(fields.amount):null;
   const category=travelCategories.includes(fields.category as typeof travelCategories[number])&&fields.category!=='other'?fields.category:parsed.category;
   return suggestAssignment(approvedTravel(revision),{
     merchant:fields.merchant||parsed.merchant,

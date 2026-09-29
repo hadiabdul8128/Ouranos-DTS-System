@@ -46,3 +46,13 @@ describe('connected Voucher receipt allocation',()=>{
     expect(match.confidence).toBe('review');
   });
 });
+
+it('does not use a foreign receipt number as a USD authorization amount',()=>{
+ const approved=revision([
+  {id:crypto.randomUUID(),category:'parking',description:'Parking A',authorizedAmountMinor:7500},
+  {id:crypto.randomUUID(),category:'parking',description:'Parking B',authorizedAmountMinor:9200},
+ ]);
+ expect(suggestReceiptAllocation(approved,{merchant:'Parking',amount:'92.00',currency:'EUR'},'parking').authorizationItemId).toBe('');
+ const fuelId=crypto.randomUUID();
+ expect(suggestReceiptAllocation(revision([{id:fuelId,category:'fuel',description:'Rental car fuel',authorizedAmountMinor:6800}]),{merchant:'Fuel Stop',amount:'10500',currency:'JPY'},'rental car gas').authorizationItemId).toBe(fuelId);
+});
