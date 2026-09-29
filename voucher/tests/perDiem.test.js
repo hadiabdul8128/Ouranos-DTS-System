@@ -70,3 +70,14 @@ test('provided meals do not remove the incidental allowance on travel days', () 
   const result = plan('San Diego, CA', '2026-10-12', '2026-10-15', { mealsProvided: { '2026-10-12': { breakfast: true, lunch: true, dinner: true } } });
   assert.equal(result.days[0].mie, 5);
 });
+
+
+test('full state names calculate the same sourced estimate as state abbreviations', () => {
+  for (const destination of ['San Francisco, California', 'San Francisco, california', 'San Francisco,  California ']) {
+    const result = plan(destination, '2026-09-15', '2026-09-18');
+    assert.equal(result.supported, true);
+    assert.deepEqual(result, plan('San Francisco, CA', '2026-09-15', '2026-09-18'));
+  }
+  assert.deepEqual(plan('Raleigh, North Carolina', '2026-09-15', '2026-09-18'), plan('Raleigh, NC', '2026-09-15', '2026-09-18'));
+  assert.equal(plan('Paris, France', '2026-09-15', '2026-09-18').supported, false);
+});
