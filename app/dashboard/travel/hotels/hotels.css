@@ -43,3 +43,8 @@
 .hotel-source-note a{text-decoration:underline;text-underline-offset:2px}
 @media(max-width:760px){.hotel-search{grid-template-columns:repeat(2,minmax(0,1fr))}.hotel-destination{grid-column:1/-1}.hotel-guidance{flex-direction:column;gap:12px}.hotel-guidance-links{min-width:0}.hotel-guidance-links a{min-height:44px}.hotel-list{grid-template-columns:1fr}}
 @media(max-width:480px){.hotel-search{grid-template-columns:1fr}.hotel-destination{grid-column:auto}.hotel-trip{gap:16px}.hotel-trip>div{min-width:0;flex-basis:100%;padding:0}.hotel-trip>div+div{border-left:0;border-top:1px solid #e2e7eb;padding:16px 0 0}.hotel-guidance{padding:18px}.hotel-card{padding:17px 15px 10px}.hotel-card-main{flex-direction:column}.hotel-card p{margin-bottom:9px}.hotel-zip-match{margin-bottom:8px}}
+.planning-hotel-finder{margin:24px 0 32px}
+.planning-hotel-finder>.hotel-lead,.planning-hotel-finder .hotel-lead{margin:18px 0;font-size:13px}
+.planning-hotel-finder .hotel-trip{margin:18px 0}
+.planning-hotel-finder .hotel-guidance{margin:18px 0}
+.planning-hotel-finder .hotel-source-note{margin:20px 0}
