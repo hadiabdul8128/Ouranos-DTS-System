@@ -17,6 +17,10 @@ const environment=z.object({
 export type PlatformConfig=z.infer<typeof environment>;
 export function readConfig():PlatformConfig {
  const c=environment.parse(process.env);
+ // Production Authorization requires the assigned human review sequence.
+ // Retain alternative modes only for development; a stale deployment variable
+ // must not silently bypass approval after restoring the production workflow.
+ if(c.NODE_ENV==='production')c.APPROVAL_MODE='required';
  if(c.NODE_ENV==='production'&&c.DATABASE_SSL!=='verify-full')throw new Error('Production requires verified database TLS');
  if(c.NODE_ENV==='production'&&c.DTS_PROVIDER==='mock')throw new Error('Mock DTS is development-only');
  if(c.OCR_PROVIDER==='http'&&!c.OCR_URL)throw new Error('OCR_URL required');

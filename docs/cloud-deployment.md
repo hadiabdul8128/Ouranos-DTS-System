@@ -54,6 +54,7 @@ Both `api` and `worker` need:
 - `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`
 - `ALLOWED_ORIGINS=https://ouranos-fawn.vercel.app`
 - `DTS_PROVIDER=disabled`
+- `APPROVAL_MODE=required` for the API. Production now always enforces this mode, including when an older deployment variable says `automatic` or `preview`.
 
 The API listens on `HOST=0.0.0.0` and Railway's supplied `PORT`. Add another frontend origin only if that domain is deliberately supported and its Auth callback is also allowed.
 
@@ -88,13 +89,10 @@ Real DTS submission remains disabled until an authorized DTS interface is separa
 
 References: [Railway service configuration](https://docs.railway.com/infrastructure-as-code/reference), [Railway usage limits](https://docs.railway.com/cli/usage), [Supabase database connections](https://supabase.com/docs/guides/database/connecting-to-postgres), [Supabase SMTP](https://supabase.com/docs/guides/auth/auth-smtp).
 
-## Temporary access without approval setup
+## Authorization approval in production
 
-Set the Railway API variable `APPROVAL_MODE=preview` to allow working plans,
-receipt processing, and draft voucher exports without configured reviewers.
-The session response controls the UI. Authentication, memberships, ownership,
-and row-level security remain enforced. This mode does not create approvals
-or submit anything to DTS; exported drafts are labeled accordingly.
+Production always requires the assigned human Authorization review sequence. The server reports `approvalMode: required`, so Vercel displays **Submit for review** and keeps Voucher blocked until final approval. The deployment variable should be `APPROVAL_MODE=required`; legacy `automatic` or `preview` values are overridden in production to prevent a stale setting from bypassing review.
 
-Restore `APPROVAL_MODE=required` (the default) and redeploy the API to require
-the normal approval workflow again. Existing drafts remain drafts.
+An organization administrator assigns actual reviewer and approving-official memberships, then configures the route in Settings → Approval routing. Assigned reviewers use the Review inbox. A traveler cannot approve their own submission. Historical accepted revisions remain available; restoring the workflow does not revoke or rewrite existing approvals.
+
+Development may explicitly use `automatic` or `preview` for isolated testing. Those alternatives cannot disable production Authorization approval. Voucher receipt extraction and deterministic verification continue after the approved handoff.
