@@ -51,7 +51,7 @@ export default function Workspace() {
         <Button type="submit" aria-label="Continue with your request" className="intent-submit" disabled={!request.trim() || opening}><ArrowRight size={20}/></Button>
       </form>
       <p className={`intent-hint ${message ? "has-message" : ""}`} role="status">{opening ? "Opening your workspace…" : message || ''}</p>
-      <Link href="/dashboard/transition" className="back-link">Plan life after the military →</Link>
+      <Link href="/dashboard/travel" className="back-link">Travel system →</Link>
     </section>
     <footer className="quiet-footer"><span/><SyncIndicator/></footer>
   </main>;
