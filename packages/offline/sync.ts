@@ -3,19 +3,21 @@ import {OuranosClient,ApiFailure} from '../sdk/index';
 import {OuranosDatabase,entityKey} from './database';
 export type SyncState={state:'idle'|'syncing'|'offline'|'authentication_required'|'access_denied'|'blocked'|'synced';pending:number;lastSyncedAt?:string;message?:string};
 export class SyncEngine {
- private running:Promise<void>|null=null;private stopped=false;private active=false;private timer:ReturnType<typeof setTimeout>|undefined;private failures=0;
+ private running:Promise<void>|null=null;private stopped=false;private active=false;private timer:ReturnType<typeof setTimeout>|undefined;private failures=0;private lastPending=0;
  constructor(public db:OuranosDatabase,private client:OuranosClient,private organizationId:string,private emit:(state:SyncState)=>void=()=>{}){}
  async merge(entity:Entity){if(entity.organizationId!==this.organizationId)throw new Error('Invalid synchronization workspace');await this.db.transaction('rw',this.db.entities,this.db.outbox,async()=>{const key=entityKey(entity.kind,entity.id),row=await this.db.entities.get(key);const pending=await this.db.outbox.where('entityKey').equals(key).count();await this.db.entities.put({key,kind:entity.kind,id:entity.id,server:entity,local:pending&&row?row.local:entity})})}
  sync():Promise<void>{
   if(this.stopped)return Promise.resolve();
   if(this.running)return this.running;
   const run=async()=>{if(typeof navigator!=='undefined'&&navigator.locks)return navigator.locks.request(`ouranos-sync:${this.db.name}`,()=>this.run());return this.run()};
-  this.running=run().finally(()=>{this.running=null});return this.running;
+  // Lock acquisition can fail before run() starts. Background/focus callers
+  // must get the same handled status as errors inside the database transaction.
+  this.running=run().catch(error=>this.reportFailure(error)).finally(()=>{this.running=null});return this.running;
  }
  private async run(){
   if(this.stopped)return;
   try{
-   const initialPending=await this.db.outbox.count();if(this.stopped)return;
+   const initialPending=await this.db.outbox.count();if(this.stopped)return;this.lastPending=initialPending;
    this.emit({state:'syncing',pending:initialPending});
    // Replay immutable envelopes first. Successful acknowledgments survive a
    // connection drop because the same command ID is retried on the next run.
@@ -39,11 +41,22 @@ export class SyncEngine {
    });
    this.failures=0;const pending=await this.db.outbox.count();const pendingFiles=await this.db.files.where('state').notEqual('uploaded').count();const blocked=await this.db.outbox.where('state').equals('blocked').count();
    if(this.stopped)return;
-   this.emit({state:blocked||pendingFiles?'blocked':pending?'idle':'synced',pending:pending+pendingFiles,lastSyncedAt:new Date().toISOString(),message:pendingFiles?'A receipt upload needs attention':blocked?'Review pending changes':''});
+   this.lastPending=pending+pendingFiles;this.emit({state:blocked||pendingFiles?'blocked':pending?'idle':'synced',pending:this.lastPending,lastSyncedAt:new Date().toISOString(),message:pendingFiles?'A receipt upload needs attention':blocked?'Review pending changes':''});
   }catch(error){
-   if(this.stopped)return;
-   this.failures++;const pending=await this.db.outbox.count();if(this.stopped)return;this.emit({state:error instanceof ApiFailure?(error.status===401?'authentication_required':error.status===403?'access_denied':'blocked'):'offline',pending,message:error instanceof ApiFailure?error.message:'Saved on this device. Waiting for a connection to Ouranos.'});
+   await this.reportFailure(error);
   }
+ }
+ private async reportFailure(error:unknown){
+  if(this.stopped)return;
+  this.failures++;
+  let pending=this.lastPending;
+  let storageInterrupted=error instanceof Error&&['AbortError','DatabaseClosedError','UnknownError','InvalidStateError','QuotaExceededError'].includes(error.name);
+  // A browser can abort all IndexedDB requests together. Do not let the error
+  // handler itself reject, report zero pending work, or claim an aborted save
+  // succeeded. Leave persisted commands/files untouched for the next sync.
+  try{pending=await this.db.outbox.count()+await this.db.files.where('state').notEqual('uploaded').count();this.lastPending=pending}catch{storageInterrupted=true}
+  if(this.stopped)return;
+  this.emit({state:storageInterrupted?'blocked':error instanceof ApiFailure?(error.status===401?'authentication_required':error.status===403?'access_denied':'blocked'):'offline',pending,message:storageInterrupted?'Local storage was interrupted. Retry saving or syncing; your last action may not have finished.':error instanceof ApiFailure?error.message:'Saved on this device. Waiting for a connection to Ouranos.'});
  }
  private async uploadFiles(){
   for(const file of await this.db.files.where('state').equals('pending').toArray()){

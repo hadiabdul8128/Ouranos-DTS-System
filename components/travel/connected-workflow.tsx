@@ -3,10 +3,11 @@ import Link from 'next/link';
 
 import {useEffect,useMemo,useRef,useState,useSyncExternalStore,type ReactNode} from 'react';
 import {useLiveQuery} from 'dexie-react-hooks';
-import {ArrowLeft,ArrowRight,Check,FileText,Plus,Trash2,Upload} from 'lucide-react';
+import {ArrowLeft,ArrowRight,Check,FileText,Plus,Trash2} from 'lucide-react';
 import {z} from 'zod';
 import {usePlatform,SyncIndicator} from '@/components/platform/provider';
 import {Button} from '@/components/ui/button';
+import {ReceiptIntake} from './receipt-intake';
 import {Input} from '@/components/ui/input';
 import {Textarea} from '@/components/ui/textarea';
 import type {Command,Entity,PayloadOf} from '@/packages/contracts';
@@ -124,7 +125,7 @@ function VoucherGate({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
  const p=usePlatform();const preview=p.approvalMode==='preview';
  const auth=rows.filter(r=>r.kind==='authorization'&&r.local.tripId===trip.id&&(preview?Boolean(r.server):r.server?.status==='approved')).sort((a,b)=>b.server!.updatedAt.localeCompare(a.server!.updatedAt))[0];
  if(!auth&&preview)return <><ReceiptInbox trip={trip} rows={rows}/><Button asChild variant="outline"><Link href={`/dashboard/travel/planning?tripId=${trip.id}`}>Add travel plan <ArrowRight size={16}/></Link></Button></>;
- if(!auth)return <div className="cw-card cw-empty"><FileText size={28}/><h2>Plan approval pending.</h2><Button asChild><Link href={`/dashboard/travel/planning?tripId=${trip.id}`}>Open travel plan <ArrowRight size={16}/></Link></Button></div>;
+ if(!auth)return <><div className="cw-card cw-empty"><FileText size={28}/><h2>Plan approval pending.</h2><p className="cw-muted">You can collect receipts while waiting. Preparing the voucher still requires an approved plan.</p><Button asChild><Link href={`/dashboard/travel/planning?tripId=${trip.id}`}>Open travel plan <ArrowRight size={16}/></Link></Button></div><ReceiptInbox trip={trip} rows={rows}/></>;
  return <ApprovedVoucher key={`${auth.id}:${auth.server!.version}`} authorizationId={auth.id} trip={trip} rows={rows}/>;
 }
 function ApprovedVoucher({authorizationId,trip,rows}:{authorizationId:string;trip:Entity;rows:LocalRecord[]}){
@@ -206,8 +207,9 @@ function VoucherForm({trip,rows,revision}:{trip:Entity;rows:LocalRecord[];revisi
  {editor.category==='lodging'&&<><Field label="Tax · USD"><Input inputMode="decimal" value={editor.taxes} onChange={e=>setEditor({...editor,taxes:e.target.value})} placeholder="0.00"/></Field><Field label="Fees · USD"><Input inputMode="decimal" value={editor.fees} onChange={e=>setEditor({...editor,fees:e.target.value})} placeholder="0.00"/></Field><label className="cw-check cw-span-full"><input type="checkbox" checked={editor.bookedOnline} onChange={e=>setEditor({...editor,bookedOnline:e.target.checked})}/><span>Booked through an online travel agency</span></label></>}
  <div className="cw-span-full cw-attach"><span>Attach receipts</span>{documents.length?documents.map(doc=><label className="cw-check" key={doc.id}><input type="checkbox" checked={editor.documentIds.includes(doc.id)} onChange={e=>setEditor({...editor,documentIds:e.target.checked?[...editor.documentIds,doc.id]:editor.documentIds.filter(id=>id!==doc.id)})}/><span>{text(doc.data.filename)} <small>{label(doc.status)}</small></span></label>):<p className="cw-muted">Save this expense, then add a receipt below and attach it here.</p>}</div>
  </fieldset><div className="cw-actions cw-editor-actions"><Button type="button" variant="ghost" disabled={!!feedback.busy} onClick={()=>setEditor(null)}>Cancel</Button><Button type="submit" disabled={!!feedback.busy}>{feedback.busy==='expense'?'Saving…':'Save expense'}</Button></div></form>}
- <div className="cw-section-heading"><div><h2>Receipts</h2></div>{!locked&&<label className={`cw-upload-button ${feedback.busy?'is-disabled':''}`}><Upload size={15}/> Add receipt<input type="file" accept="image/jpeg,image/png,application/pdf" multiple disabled={!!feedback.busy} onChange={e=>{const files=Array.from(e.target.files||[]);e.target.value='';if(files.length)void feedback.run('receipt',()=>capture(files))}}/></label>}</div>
+ {locked?<div className="cw-section-heading"><h2>Receipts</h2></div>:<ReceiptIntake disabled={!!feedback.busy} onFiles={files=>void feedback.run('receipt',()=>capture(files))}/>}
  <div className="cw-card cw-receipt-list">{documents.length?documents.map(doc=><div className="cw-receipt" key={doc.id}><FileText size={19}/><div><strong>{text(doc.data.filename)}</strong><span>{receiptStatus(doc.status)}</span></div>{['needs_review','ready'].includes(doc.status)&&<Button variant="ghost" onClick={()=>setReviewReceipt(reviewReceipt===doc.id?null:doc.id)}>{reviewReceipt===doc.id?'Close':'Review'}</Button>}{!locked&&['failed','awaiting_provider'].includes(doc.status)&&<Button variant="ghost" disabled={!!feedback.busy} onClick={()=>void feedback.run('retry',async()=>{await onlineCommand(p,'document.reprocess',doc.id);return 'Receipt queued for processing.'})}>Retry</Button>}</div>):<p className="cw-muted">JPEG, PNG or PDF · 20 MB max</p>}</div>
+ <ReceiptSyncNotice/>
  {reviewReceipt&&<ReceiptReview key={reviewReceipt} id={reviewReceipt} document={documents.find(d=>d.id===reviewReceipt)!} locked={locked} onConfirmed={()=>{setReviewReceipt(null);changed()}} onUseDetails={(documentId,fields,hint)=>{if(fields.currency&&fields.currency!=='USD'){feedback.setError('This voucher supports USD. Review the receipt currency before adding an expense.');return}const suggestion=suggestReceiptAllocation(revision,fields,hint);const matched=approved.approvedExpenseItems.find(item=>item.id===suggestion.authorizationItemId);const draft=expenseDraft();setEditor({...draft,authorizationItemId:matched?.id||'',merchant:fields.merchant||'',date:/^\d{4}-\d{2}-\d{2}$/.test(fields.date||'')?fields.date:'',amount:/^\d+(?:\.\d{1,2})?$/.test(fields.amount||'')?fields.amount:'',category:(matched?.category||suggestion.category) as Category,paymentMethod:(['gtcc','personal'].includes(fields.paymentMethod)?fields.paymentMethod:'') as ExpenseDraft['paymentMethod'],description:hint,documentIds:[documentId],startDate:fields.serviceStartDate||'',endDate:fields.serviceEndDate||'',taxes:fields.taxes||'',fees:fields.fees||'',bookedOnline:false});setReviewReceipt(null);feedback.setNotice(matched?`Suggested match: ${matched.description}. Check the receipt details and payment method, then save.`:'Receipt details added. Choose the approved budget item and check the fields before saving.');setTimeout(()=>window.document.getElementById('cw-expense-editor')?.scrollIntoView({block:'center'}),0)}}/>}
  <div className="cw-section-heading"><div><h2>Review</h2></div></div>
  <div className="cw-totals"><div><span>Actual expenses</span><strong>{money(Math.round(reconciliation.totals.actual*100))}</strong></div><div><span>GTCC</span><strong>{money(Math.round(reconciliation.totals.gtcc*100))}</strong></div><div><span>Personal</span><strong>{money(Math.round(reconciliation.totals.traveler*100))}</strong></div></div>
@@ -217,12 +219,18 @@ function VoucherForm({trip,rows,revision}:{trip:Entity;rows:LocalRecord[];revisi
  <Feedback error={feedback.error} notice={feedback.notice}/>{!locked&&<div className="cw-action-bar"><div><p>{reconciliation.ready?'Ready for verification.':'Resolve the items above, or run verification for a full report.'}</p></div><div className="cw-actions"><Button variant="outline" disabled={!!feedback.busy||!!editor} onClick={()=>void feedback.run('save',()=>save())}>{feedback.busy==='save'?'Saving…':'Save draft'}</Button><Button disabled={!!feedback.busy||!!editor||!p.client||(p.approvalMode!=='preview'&&(!certified||!intakeComplete))} onClick={()=>void feedback.run('submit',submit)}>{feedback.busy==='submit'?'Verifying…':p.approvalMode==='preview'?'Save voucher':'Verify voucher'}<ArrowRight size={16}/></Button></div></div>}
  </details></>;
 }
+function ReceiptSyncNotice(){
+ const p=usePlatform(),feedback=useFeedback();
+ if(p.sync.state!=='blocked'||!p.sync.message)return null;
+ return <div className="cw-feedback cw-error" role="alert"><p>{p.sync.message}</p><Button type="button" variant="outline" disabled={!!feedback.busy||!p.engine} onClick={()=>void feedback.run('sync',()=>p.engine!.sync())}>{feedback.busy?'Retrying…':'Retry sync'}</Button><Feedback error={feedback.error} notice={feedback.notice}/></div>;
+}
 function ReceiptInbox({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
  const p=usePlatform(),feedback=useFeedback();const [review,setReview]=useState<string|null>(null);
  const documents=rows.filter(r=>r.kind==='document'&&r.local.tripId===trip.id).map(r=>r.local);
  const selected=documents.find(d=>d.id===review);
- return <><div className="cw-section-heading"><h2>Receipts</h2><label className="cw-upload-button"><Upload size={15}/> Add receipt<input type="file" accept="image/jpeg,image/png,application/pdf" multiple disabled={!!feedback.busy} onChange={e=>{const files=Array.from(e.target.files||[]);e.target.value='';void feedback.run('upload',async()=>{for(const file of files)await p.repository!.captureReceipt(trip.id,file);await p.engine?.sync()})}}/></label></div>
+ return <><ReceiptIntake disabled={!!feedback.busy} onFiles={files=>void feedback.run('upload',async()=>{for(const file of files)await p.repository!.captureReceipt(trip.id,file);await p.engine?.sync();return 'Receipts saved. Their processing status appears below.'})}/>
  <div className="cw-card cw-receipt-list">{documents.length?documents.map(doc=><div className="cw-receipt" key={doc.id}><FileText size={19}/><div><strong>{text(doc.data.filename)}</strong><span>{receiptStatus(doc.status)}</span></div>{['needs_review','ready'].includes(doc.status)&&<Button variant="ghost" onClick={()=>setReview(doc.id)}>Review</Button>}{['failed','awaiting_provider'].includes(doc.status)&&<Button variant="ghost" disabled={!!feedback.busy} onClick={()=>void feedback.run('retry',async()=>{await onlineCommand(p,'document.reprocess',doc.id)})}>Retry</Button>}</div>):<p className="cw-muted">JPEG, PNG or PDF · 20 MB max</p>}</div>
+ <ReceiptSyncNotice/>
  {selected&&<ReceiptReview key={selected.id} id={selected.id} document={selected} locked={false} onConfirmed={()=>setReview(null)}/>}
  <Feedback error={feedback.error} notice={feedback.notice}/></>;
 }
