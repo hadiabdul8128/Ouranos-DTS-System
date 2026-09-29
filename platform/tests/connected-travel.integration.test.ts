@@ -174,6 +174,24 @@ describe('connected planning and Voucher Copilot',()=>{
   for(const user of ['outsider','peer'] as const)expect((await request(user,'GET',url)).status).toBe(404);
  });
 
+ it('persists original foreign money, verifies USD totals and replaces currency details on edit',async()=>{
+  const id=crypto.randomUUID();
+  const payload:PayloadOf<'expense.save'>={tripId,merchant:'Travel Cafe',incurredOn:'2026-10-12',amountMinor:1800,currency:'USD',category:'meals',authorizationItemId:itemId,paymentMethod:'personal',documentIds:[],description:'Travel-day meal',originalReceipt:{currency:'EUR',amountMinor:1600,taxesMinor:0,feesMinor:0,usdBasis:'card_statement',conversionNote:'USD amount from card statement'}};
+  const foreign=expectSuccess(await send('traveler','expense.save',id,0,payload));
+  const fetched=await request('traveler','GET',`/v1/entities/expense/${id}?organizationId=${organizationId}`);
+  expect(fetched.body.entity.data.originalReceipt).toEqual(payload.originalReceipt);
+  const usd=expectSuccess(await send('traveler','expense.save',id,foreign.version,{...payload,originalReceipt:undefined}));
+  expect(usd.data.originalReceipt).toBeUndefined();
+  const restored=expectSuccess(await send('traveler','expense.save',id,usd.version,payload));
+  const voucher=await saveVoucher(restored);
+  const verified=expectSuccess(await send('traveler','voucher.submit',voucher.id,voucher.version,{}));
+  expect(verified.status).toBe('verified');
+  const report=await request('traveler','GET',`/v1/vouchers/${voucher.id}/verification?organizationId=${organizationId}`);
+  expect(report.body.report.claimedTotalMinor).toBe(1800);
+  const snapshot=(await pool.query('select snapshot from ouranos.submission_revisions where voucher_id=$1 order by created_at desc limit 1',[voucher.id])).rows[0].snapshot;
+  expect(snapshot.expenses[0].data.originalReceipt).toEqual(payload.originalReceipt);
+ });
+
  it('verifies a receipt-exempt meal without creating a human Voucher approval',async()=>{
   const expense=await saveMeal();
   const voucher=await saveVoucher(expense);
