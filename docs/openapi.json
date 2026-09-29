@@ -2736,6 +2736,77 @@
           },
           "bookedOnline": {
             "type": "boolean"
+          },
+          "originalReceipt": {
+            "type": "object",
+            "properties": {
+              "currency": {
+                "type": "string",
+                "enum": [
+                  "USD",
+                  "EUR",
+                  "GBP",
+                  "CAD",
+                  "AUD",
+                  "NZD",
+                  "CHF",
+                  "JPY",
+                  "KRW",
+                  "MXN",
+                  "INR",
+                  "AED",
+                  "SAR",
+                  "SGD",
+                  "HKD",
+                  "PHP",
+                  "THB",
+                  "TWD",
+                  "CNY",
+                  "BHD",
+                  "KWD"
+                ]
+              },
+              "amountMinor": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "taxesMinor": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "default": 0
+              },
+              "feesMinor": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "default": 0
+              },
+              "usdBasis": {
+                "type": "string",
+                "enum": [
+                  "card_statement",
+                  "documented_conversion"
+                ]
+              },
+              "conversionNote": {
+                "type": "string",
+                "maxLength": 2000,
+                "default": ""
+              }
+            },
+            "required": [
+              "currency",
+              "amountMinor",
+              "usdBasis"
+            ],
+            "additionalProperties": false
+          },
+          "receiptCurrencyCorrection": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 2000
           }
         },
         "required": [
@@ -3196,6 +3267,77 @@
                   },
                   "bookedOnline": {
                     "type": "boolean"
+                  },
+                  "originalReceipt": {
+                    "type": "object",
+                    "properties": {
+                      "currency": {
+                        "type": "string",
+                        "enum": [
+                          "USD",
+                          "EUR",
+                          "GBP",
+                          "CAD",
+                          "AUD",
+                          "NZD",
+                          "CHF",
+                          "JPY",
+                          "KRW",
+                          "MXN",
+                          "INR",
+                          "AED",
+                          "SAR",
+                          "SGD",
+                          "HKD",
+                          "PHP",
+                          "THB",
+                          "TWD",
+                          "CNY",
+                          "BHD",
+                          "KWD"
+                        ]
+                      },
+                      "amountMinor": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "taxesMinor": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                        "default": 0
+                      },
+                      "feesMinor": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                        "default": 0
+                      },
+                      "usdBasis": {
+                        "type": "string",
+                        "enum": [
+                          "card_statement",
+                          "documented_conversion"
+                        ]
+                      },
+                      "conversionNote": {
+                        "type": "string",
+                        "maxLength": 2000,
+                        "default": ""
+                      }
+                    },
+                    "required": [
+                      "currency",
+                      "amountMinor",
+                      "usdBasis"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "receiptCurrencyCorrection": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 2000
                   }
                 },
                 "required": [
@@ -4230,6 +4372,77 @@
                         },
                         "bookedOnline": {
                           "type": "boolean"
+                        },
+                        "originalReceipt": {
+                          "type": "object",
+                          "properties": {
+                            "currency": {
+                              "type": "string",
+                              "enum": [
+                                "USD",
+                                "EUR",
+                                "GBP",
+                                "CAD",
+                                "AUD",
+                                "NZD",
+                                "CHF",
+                                "JPY",
+                                "KRW",
+                                "MXN",
+                                "INR",
+                                "AED",
+                                "SAR",
+                                "SGD",
+                                "HKD",
+                                "PHP",
+                                "THB",
+                                "TWD",
+                                "CNY",
+                                "BHD",
+                                "KWD"
+                              ]
+                            },
+                            "amountMinor": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "taxesMinor": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991,
+                              "default": 0
+                            },
+                            "feesMinor": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991,
+                              "default": 0
+                            },
+                            "usdBasis": {
+                              "type": "string",
+                              "enum": [
+                                "card_statement",
+                                "documented_conversion"
+                              ]
+                            },
+                            "conversionNote": {
+                              "type": "string",
+                              "maxLength": 2000,
+                              "default": ""
+                            }
+                          },
+                          "required": [
+                            "currency",
+                            "amountMinor",
+                            "usdBasis"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "receiptCurrencyCorrection": {
+                          "type": "string",
+                          "minLength": 8,
+                          "maxLength": 2000
                         }
                       },
                       "required": [

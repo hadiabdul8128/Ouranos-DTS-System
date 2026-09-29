@@ -1,7 +1,8 @@
+import {parseReceiptAmount,originalReceiptSchema} from '../contracts/expense-currency';
 import type {Entity} from '../contracts';
 import type {ApprovedRevision,Reconciliation} from './voucher-adapter';
 
-export const VOUCHER_VERIFICATION_RULE_VERSION='ouranos.voucher.verify.v1';
+export const VOUCHER_VERIFICATION_RULE_VERSION='ouranos.voucher.verify.v2';
 
 export type VerificationIssue={id:string;code:string;message:string;action:string;expenseId?:string;documentId?:string};
 export type VerificationCheck={code:string;status:'passed'|'resolved';expenseId?:string;documentId?:string};
@@ -14,25 +15,30 @@ export type VerificationReport={
  documentIds:string[];receiptEvidence:ReceiptExtraction[];checks:VerificationCheck[];warnings:string[];
  blockingIssues:VerificationIssue[];reconciliation:Reconciliation;
 };
-export type ReceiptExtraction={documentId:string;amountMinor:number|null;confidence:number;fieldName?:string};
+export type ReceiptExtraction={documentId:string;amountMinor:number|null;confidence:number;fieldName?:string;currency?:string;currencyConfidence?:number};
 
 /** Accept a provider's explicit paid-total field only. Conflicting candidates
  * stay uncertain rather than promoting an arbitrary OCR number to evidence. */
 export function receiptExtractionFromFields(documentId:string,fields:unknown):ReceiptExtraction{
- const candidates=(Array.isArray(fields)?fields:[]).flatMap(raw=>{
+ const values=Array.isArray(fields)?fields:[];
+ const currencyFields=values.filter(f=>f&&typeof f==='object'&&f.name==='currency'&&typeof f.value==='string'&&/^[A-Z]{3}$/.test(f.value));
+ const currency=currencyFields.length&&new Set(currencyFields.map(f=>f.value)).size===1?currencyFields[0].value as string:undefined;
+ if(new Set(currencyFields.map(f=>f.value)).size>1)return {documentId,amountMinor:null,confidence:0};
+ const currencyConfidence=currency?Math.min(...currencyFields.map(f=>typeof f.confidence==='number'&&f.confidence>=0&&f.confidence<=1?f.confidence:0)):0;
+ const metadata=currency?{currency,currencyConfidence}:{};
+ const candidates=values.flatMap(raw=>{
   if(!raw||typeof raw!=='object')return [];
   const field=raw as {name?:unknown;value?:unknown;confidence?:unknown};
   if(!['paid_total','amount','total'].includes(String(field.name)))return [];
-  const numeric=typeof field.value==='number'?field.value:typeof field.value==='string'&&/^\$?\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?$/.test(field.value.trim())?Number(field.value.replace(/[$,\s]/g,'')):NaN;
-  const cents=Math.round(numeric*100);
-  if(!Number.isFinite(numeric)||numeric<0||!Number.isSafeInteger(cents)||Math.abs(numeric*100-cents)>1e-6)return [];
+  let cents:number;
+  try{const value=typeof field.value==='number'?String(field.value):typeof field.value==='string'?field.value.trim().replace(/^\$\s*/,''):'';cents=parseReceiptAmount(value,currency||'USD')}catch{return []}
   const confidence=typeof field.confidence==='number'&&field.confidence>=0&&field.confidence<=1?field.confidence:0;
   return [{name:String(field.name),amountMinor:cents,confidence}];
  });
- if(!candidates.length||new Set(candidates.map(candidate=>candidate.amountMinor)).size!==1)return {documentId,amountMinor:null,confidence:0};
+ if(!candidates.length||new Set(candidates.map(candidate=>candidate.amountMinor)).size!==1)return {documentId,amountMinor:null,confidence:0,...metadata};
  const priority:Record<string,number>={paid_total:0,amount:1,total:2};
  candidates.sort((a,b)=>priority[a.name]-priority[b.name]||b.confidence-a.confidence);
- return {documentId,amountMinor:candidates[0].amountMinor,confidence:candidates[0].confidence,fieldName:candidates[0].name};
+ return {documentId,amountMinor:candidates[0].amountMinor,confidence:candidates[0].confidence,fieldName:candidates[0].name,...metadata};
 }
 
 /** This report is built from server-loaded records, never a client verdict. An
@@ -71,7 +77,24 @@ export function buildVoucherVerification(input:{
   const extraction=extractionById.get(id);
   if(!extraction||extraction.amountMinor===null){warnings.push(`Receipt ${id} has no reliable OCR total; the traveler confirmed the original.`);continue}
   if(extraction.confidence<.85){warnings.push(`Receipt ${id} has an uncertain OCR total; the traveler confirmed the original.`);continue}
-  if(linked[0].data.amountMinor!==extraction.amountMinor){
+  const original=originalReceiptSchema.safeParse(linked[0].data.originalReceipt);
+  const expectedCurrency=original.success?original.data.currency:String(linked[0].data.currency);
+  if(extraction.currency&&extraction.currencyConfidence!==undefined&&extraction.currencyConfidence>=.85&&extraction.currency!==expectedCurrency){
+   if(typeof linked[0].data.receiptCurrencyCorrection==='string'&&linked[0].data.receiptCurrencyCorrection.trim().length>=8){
+    warnings.push(`Receipt ${id} currency was corrected by the traveler: ${linked[0].data.receiptCurrencyCorrection}`);
+    checks.push({code:'receipt_currency_corrected',status:'resolved',expenseId:linked[0].id,documentId:id});
+   }else{
+    blockingIssues.push({id:`${linked[0].id}:receipt_currency_mismatch`,code:'receipt_currency_mismatch',expenseId:linked[0].id,documentId:id,message:'Receipt currency differs from the expense. Check the original and correct the currency, or explain an OCR currency error.',action:'Review expense currency'});continue;
+   }
+  }
+  if(original.success){
+   warnings.push(`Expense ${linked[0].id} uses a traveler-supplied USD amount (${original.data.usdBasis.replaceAll('_',' ')}). Original: ${original.data.currency}; conversion evidence remains subject to DTS review.`);
+   // Do not compare units when OCR currency is missing/uncertain or corrected.
+   if(extraction.currency!==expectedCurrency||(extraction.currencyConfidence||0)<.85){warnings.push(`Receipt ${id} original currency/total needs traveler confirmation.`);continue}
+  }else if(extraction.currency&&extraction.currency!==expectedCurrency)continue;
+  const expectedAmount=original.success?original.data.amountMinor:linked[0].data.amountMinor;
+  if(expectedAmount!==extraction.amountMinor){
+
    blockingIssues.push({id:`${linked[0].id}:receipt_total_mismatch`,code:'receipt_total_mismatch',expenseId:linked[0].id,documentId:id,message:'The expense amount differs from the receipt total. Check the original receipt and correct the expense or attach the right receipt.',action:'Review expense and receipt'});
   }else checks.push({code:'receipt_total_match',status:'passed',expenseId:linked[0].id,documentId:id});
  }
