@@ -120,6 +120,26 @@ beforeAll(async()=>{
 afterAll(async()=>{await app?.close();await pool?.end()});
 
 describe('connected planning and Voucher Copilot',()=>{
+ it('lets one assigned reviewer complete a single-step approval',async()=>{
+  const organization=await request('peer','POST','/v1/organizations',{name:'Single reviewer test'});
+  expect(organization.status).toBe(201);
+  const savedOrg=organizationId;organizationId=organization.body.id;
+  try{
+   expect((await request('peer','PUT',`/v1/organizations/${organizationId}/members`,{userId:users.reviewer.id,role:'reviewer'})).status).toBe(200);
+   for(const kind of ['authorization','voucher'] as const)expectSuccess(await send('peer','workflow.configure',crypto.randomUUID(),0,{kind,name:'Single reviewer',steps:[{assigneeId:users.reviewer.id,role:'reviewer'}]}));
+   const trip=expectSuccess(await send('peer','trip.save',crypto.randomUUID(),0,{destination:'Washington, DC',departure:'2026-10-12',returnDate:'2026-10-15',purpose:'Single reviewer test',timezone:'America/New_York'}));
+   const plan=expectSuccess(await send('peer','authorization.save',crypto.randomUUID(),0,{tripId:trip.id,formSchemaVersion:PLANNING_SCHEMA_VERSION,formData:planning}));
+   expectSuccess(await send('peer','authorization.submit',plan.id,plan.version,{}));
+   const approval=await approvalFor(plan.id);
+   expect((await send('peer','approval.decide',approval.id,approval.version,{decision:'approved',comment:''})).status).toBe(403);
+   expect((await send('outsider','approval.decide',approval.id,approval.version,{decision:'approved',comment:''})).body.ok).toBe(false);
+   expect(expectSuccess(await send('reviewer','approval.decide',approval.id,approval.version,{decision:'approved',comment:''})).status).toBe('approved');
+   const handoff=await request('peer','GET',`/v1/authorizations/${plan.id}/approved?organizationId=${organizationId}`);
+   expect(handoff.status).toBe(200);
+   const history=await request('reviewer','GET',`/v1/approvals/${approval.id}/revision?organizationId=${organizationId}`);
+   expect(history.body.steps).toHaveLength(1);expect(history.body.decisions).toHaveLength(1);
+  }finally{organizationId=savedOrg}
+ });
  it('approves a real planning form only through the assigned review sequence',async()=>{
   expect((await request('traveler','GET','/v1/session')).body.approvalMode).toBe('required');
   await expectVoucherBlockedUntilApproved();
