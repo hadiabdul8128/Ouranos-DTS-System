@@ -1,4 +1,5 @@
 "use client";
+import {InboxLink} from '@/components/inbox/inbox-link';
 import {useRouter} from 'next/navigation';
 import {workspaceIntent} from '@/packages/domain/workspace-intent';
 import Link from 'next/link';
@@ -43,7 +44,7 @@ export default function Workspace() {
     else setMessage("You can plan travel or explore life after the military.");
   }
   return <main className="quiet-page prompt-page">
-    <header className="quiet-header"><Link href="/dashboard" className="quiet-brand">Ouranos</Link><button onClick={() => void platform.signOut()} className="exit-link" aria-label="Sign out"><LogOut size={17}/></button></header>
+    <header className="quiet-header"><Link href="/dashboard" className="quiet-brand">Ouranos</Link><nav className="inbox-header-actions" aria-label="Workspace"><InboxLink/><button onClick={() => void platform.signOut()} className="exit-link" aria-label="Sign out"><LogOut size={17}/></button></nav></header>
     <section className="intent-stage" aria-labelledby="intent-heading">
       <h1 id="intent-heading">What do you want to do?</h1>
       <form className="intent-input" onSubmit={submit}>

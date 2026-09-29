@@ -1,4 +1,5 @@
 'use client';
+import {InboxLink} from '@/components/inbox/inbox-link';
 import Link from 'next/link';
 
 import {useEffect,useMemo,useRef,useState,useSyncExternalStore,type ReactNode} from 'react';
@@ -73,7 +74,7 @@ function subscribeLocation(callback:()=>void){window.addEventListener('popstate'
 const currentTripId=()=>new URLSearchParams(window.location.search).get('tripId')||'';
 export function ConnectedWorkflow({module}:{module:Module}){
  const p=usePlatform();const tripId=useSyncExternalStore(subscribeLocation,currentTripId,()=>null);
- return <main className="quiet-page cw-page"><header className="quiet-header"><Link href="/dashboard" className="quiet-brand">Ouranos</Link><Link className="cw-workspace-link" href="/dashboard/platform">Settings</Link></header>
+ return <main className="quiet-page cw-page"><header className="quiet-header"><Link href="/dashboard" className="quiet-brand">Ouranos</Link><nav className="inbox-header-actions" aria-label="Workspace"><InboxLink/><Link className="cw-workspace-link" href="/dashboard/platform">Settings</Link></nav></header>
   {tripId===null||!p.repository||p.repository.organizationId!==p.organizationId?<section className="cw-shell"><p className="cw-muted">{p.loading||p.organizationId?'Opening your workspace…':'Choose an organization in workspace settings to continue.'}</p></section>:<WorkflowLoader key={`${p.repository.db.name}:${tripId}:${module}`} module={module} tripId={tripId}/>}
   <footer className="cw-footer"><span/><SyncIndicator/></footer>
  </main>;
@@ -121,7 +122,7 @@ function PlanningForm({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
   await p.repository!.stage('authorization.save',id,{tripId:trip.id,formSchemaVersion:PLANNING_SCHEMA_VERSION,formData:form});baselineVersion.current=(await p.repository!.db.entities.get(`authorization:${id}`))!.local.version;setDirty(false);return stageMessage(p,id,'authorization');
  }
  async function submit(){
-  if(dirty||!row)await save();if(p.approvalMode==='preview'){await readyToSubmit(p,trip.id);window.location.assign(`/dashboard/travel/vouchers?tripId=${trip.id}`);return}await readyToSubmit(p,trip.id);const result=await onlineCommand(p,'authorization.submit',id);setDirty(false);return result.status==='approved'?(p.approvalMode==='automatic'?'Plan verified by Ouranos. You can now prepare your voucher.':'This plan is approved.'):'Submitted.';
+  if(dirty||!row)await save();if(p.approvalMode==='preview'){await readyToSubmit(p,trip.id);window.location.assign(`/dashboard/travel/vouchers?tripId=${trip.id}`);return}await readyToSubmit(p,trip.id);const result=await onlineCommand(p,'authorization.submit',id);setDirty(false);return result.status==='approved'?(p.approvalMode==='automatic'?'Plan verified by Ouranos. You can now prepare your voucher.':'This plan is approved.'):'Submitted for review. Your confirmation is in Inbox.';
  }
  if(unsupported)return <div className="cw-card"><h2>A different planning form is attached.</h2><p className="cw-muted">This saved authorization uses an older or partner form. Its data has been preserved.</p><Link href="/dashboard/platform">Return to workspace</Link></div>;
  return <><div className="cw-section-heading"><h2>Travel details</h2><Status value={status}/></div>
