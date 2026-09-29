@@ -25,7 +25,8 @@ const planning:PlanningModuleInput={
 let app:Awaited<ReturnType<typeof buildApp>>,pool:Pool,organizationId:string;
 
 async function request(user:TestUser,method:'GET'|'POST'|'PUT',url:string,payload?:unknown){
- const response=await app.inject({method,url,headers:{authorization:`Bearer ${users[user].token}`},payload:payload as object});
+ const remoteAddress=`127.0.0.${['traveler','reviewer','approver','peer','outsider'].indexOf(user)+1}`;
+ const response=await app.inject({method,url,remoteAddress,headers:{authorization:`Bearer ${users[user].token}`},payload:payload as object});
  return {status:response.statusCode,body:response.json()};
 }
 async function send<T extends CommandType>(user:TestUser,type:T,entityId:string,expectedVersion:number,payload:PayloadOf<T>){
@@ -43,6 +44,18 @@ async function approvalFor(entityId:string){
  const approval=list.body.entities.find((row:Entity)=>row.data.entityId===entityId&&row.status==='in_review') as Entity|undefined;
  expect(approval,`Approval request for ${entityId}`).toBeTruthy();
  return approval!;
+}
+async function expectVoucherBlockedUntilApproved(){
+ const unavailable=await request('traveler','GET',`/v1/authorizations/${authorizationId}/approved?organizationId=${organizationId}`);
+ expect(unavailable.status).toBe(409);
+ const voucherId=crypto.randomUUID();
+ const expense=await saveMeal();
+ const attempt=await send('traveler','voucher.save',voucherId,0,{
+  tripId,authorizationId,expenseIds:[expense.id],formSchemaVersion:VOUCHER_MODULE_SCHEMA_VERSION,formData:voucherForm(expense),
+ });
+ expect(attempt.body.ok,JSON.stringify(attempt.body)).toBe(false);
+ expect(attempt.body.error.code).toBe('INVALID_STATE_TRANSITION');
+ expect((await request('traveler','GET',`/v1/entities/voucher/${voucherId}?organizationId=${organizationId}`)).status).toBe(404);
 }
 async function saveMeal(amountMinor=1800,authorizationItemId=itemId){
  return expectSuccess(await send('traveler','expense.save',crypto.randomUUID(),0,{
@@ -108,10 +121,11 @@ afterAll(async()=>{await app?.close();await pool?.end()});
 
 describe('connected planning and Voucher Copilot',()=>{
  it('approves a real planning form only through the assigned review sequence',async()=>{
-  const unavailable=await request('traveler','GET',`/v1/authorizations/${authorizationId}/approved?organizationId=${organizationId}`);
-  expect(unavailable.status).toBe(409);
+  expect((await request('traveler','GET','/v1/session')).body.approvalMode).toBe('required');
+  await expectVoucherBlockedUntilApproved();
   const submitted=expectSuccess(await send('traveler','authorization.submit',authorizationId,1,{}));
   expect(submitted.status).toBe('in_review');
+  await expectVoucherBlockedUntilApproved();
   const approval=await approvalFor(authorizationId);
   for(const user of ['traveler','approver'] as const){
    const denied=await send(user,'approval.decide',approval.id,approval.version,{decision:'approved',comment:''});
@@ -120,6 +134,7 @@ describe('connected planning and Voucher Copilot',()=>{
   }
   const first=expectSuccess(await send('reviewer','approval.decide',approval.id,approval.version,{decision:'approved',comment:''}));
   expect(first.status).toBe('in_review');
+  await expectVoucherBlockedUntilApproved();
   const final=expectSuccess(await send('approver','approval.decide',approval.id,first.version,{decision:'approved',comment:''}));
   expect(final.status).toBe('approved');
  });
@@ -248,8 +263,8 @@ describe('connected planning and Voucher Copilot',()=>{
   expect(detail.body.report.blockingIssues).toContainEqual(expect.objectContaining({code:'receipt_unconfirmed'}));
   const pendingId=crypto.randomUUID();
   expectSuccess(await send('traveler','authorization.save',pendingId,0,{tripId,formSchemaVersion:PLANNING_SCHEMA_VERSION,formData:planning}));
-  const pending=expectSuccess(await send('traveler','voucher.save',crypto.randomUUID(),0,{tripId,authorizationId:pendingId,expenseIds:[expense.id],formSchemaVersion:VOUCHER_MODULE_SCHEMA_VERSION,formData:{...form,authorizationId:pendingId}}));
-  const denied=await send('traveler','voucher.submit',pending.id,pending.version,{});
+  const denied=await send('traveler','voucher.save',crypto.randomUUID(),0,{tripId,authorizationId:pendingId,expenseIds:[expense.id],formSchemaVersion:VOUCHER_MODULE_SCHEMA_VERSION,formData:{...form,authorizationId:pendingId}});
+  expect(denied.body.ok).toBe(false);
   expect(denied.body.error.code).toBe('INVALID_STATE_TRANSITION');
  });
  it('replays one verification command without duplicating its report and rejects a spoofed verdict',async()=>{

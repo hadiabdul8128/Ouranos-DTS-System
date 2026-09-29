@@ -62,6 +62,7 @@ async function apply(db:PoolClient,storage:SupabaseClient,c:Command,userId:strin
   }
   if(c.type==='voucher.save'){
    const a=await loadEntity(db,'authorization',c.payload.authorizationId,org);check(a.trip_id===payload.tripId,'VALIDATION_FAILED','Authorization belongs to another trip');
+   if(approvalMode!=='preview')await loadApprovedAuthorization(db,org,c.payload.authorizationId);
    for(const eid of c.payload.expenseIds){const e=await loadEntity(db,'expense',eid,org);check(e.trip_id===payload.tripId,'VALIDATION_FAILED','Expense belongs to another trip')}
   }
   const r=current?await db.query(`update ouranos.${TABLES[kind]} set data=$3,version=version+1,status='draft',updated_at=now()${kind==='voucher'?',authorization_id=$4':''} where organization_id=$1 and id=$2 returning *`,kind==='voucher'?[org,id,payload,(c.payload as any).authorizationId]:[org,id,payload]):await db.query(`insert into ouranos.${TABLES[kind]}(id,organization_id,trip_id,data,created_by${kind==='voucher'?',authorization_id':''}) values($1,$2,$3,$4,$5${kind==='voucher'?',$6':''}) returning *`,kind==='voucher'?[id,org,payload.tripId,payload,userId,(c.payload as any).authorizationId]:[id,org,payload.tripId,payload,userId]);
