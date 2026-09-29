@@ -2,9 +2,9 @@
 import {useState} from 'react';
 import {ArrowUpRight,Copy} from 'lucide-react';
 import {Button} from '@/components/ui/button';
-import {canonicalLocation,hotelMapUrl,searchHotels,type HotelCatalog} from '@/packages/domain/hotel-discovery';
+import {canonicalLocation,hotelMapUrl,searchHotels,type HotelCatalog,type HotelProperty} from '@/packages/domain/hotel-discovery';
 
-export function HotelResults({catalog,destination,workZip,hotelName,limit,onMore,onSelectLocation}:{catalog:HotelCatalog;destination:string;workZip:string;hotelName:string;limit:number;onMore:()=>void;onSelectLocation:(value:string)=>void}){
+export function HotelResults({catalog,destination,workZip,hotelName,limit,onMore,onSelectLocation,onSelectHotel}:{catalog:HotelCatalog;destination:string;workZip:string;hotelName:string;limit:number;onMore:()=>void;onSelectLocation:(value:string)=>void;onSelectHotel?:(property:HotelProperty)=>void}){
  const [copied,setCopied]=useState('');
  const result=searchHotels(catalog,destination,{workZip,hotelName,limit});
  if(result.status==='empty')return <div className="hotel-empty">Enter the city or ZIP where you will stay.</div>;
@@ -17,7 +17,7 @@ export function HotelResults({catalog,destination,workZip,hotelName,limit,onMore
    const key=[name,address,postal,country].join('|');
    const exactZip=workZip.length===5&&postal.slice(0,5)===workZip;
    const copy=async()=>{try{await navigator.clipboard.writeText(`${name}\n${address}\n${canonicalLocation(property)} ${postal}`);setCopied(key)}catch{setCopied('error')}};
-   return <article className="hotel-card" key={key}><div className="hotel-card-main"><div><h3>{name}</h3><p>{address}<br/>{canonicalLocation(property)} {postal}</p></div>{exactZip&&<span className="hotel-zip-match">Work ZIP match</span>}</div><div className="hotel-card-actions"><button type="button" onClick={copy}><Copy size={14}/>{copied===key?'Copied':copied==='error'?'Copy unavailable':'Copy details'}</button><a href={hotelMapUrl(property)} target="_blank" rel="noopener noreferrer">View on map <ArrowUpRight size={15}/></a></div></article>
+   return <article className="hotel-card" key={key}><div className="hotel-card-main"><div><h3>{name}</h3><p>{address}<br/>{canonicalLocation(property)} {postal}</p></div>{exactZip&&<span className="hotel-zip-match">Work ZIP match</span>}</div><div className="hotel-card-actions">{onSelectHotel&&<button type="button" onClick={()=>onSelectHotel(property)}>Use this hotel</button>}<button type="button" onClick={copy}><Copy size={14}/>{copied===key?'Copied':copied==='error'?'Copy unavailable':'Copy details'}</button><a href={hotelMapUrl(property)} target="_blank" rel="noopener noreferrer">View on map <ArrowUpRight size={15}/></a></div></article>
   })}</div>}
   {result.total>result.properties.length&&<Button variant="outline" onClick={onMore} className="hotel-more">Show more hotels ({result.total-result.properties.length} remaining)</Button>}
  </section>;
