@@ -128,7 +128,10 @@ describe('connected planning and Voucher Copilot',()=>{
    expect((await request('peer','PUT',`/v1/organizations/${organizationId}/members`,{userId:users.reviewer.id,role:'reviewer'})).status).toBe(200);
    for(const kind of ['authorization','voucher'] as const)expectSuccess(await send('peer','workflow.configure',crypto.randomUUID(),0,{kind,name:'Single reviewer',steps:[{assigneeId:users.reviewer.id,role:'reviewer'}]}));
    const trip=expectSuccess(await send('peer','trip.save',crypto.randomUUID(),0,{destination:'Washington, DC',departure:'2026-10-12',returnDate:'2026-10-15',purpose:'Single reviewer test',timezone:'America/New_York'}));
-   const plan=expectSuccess(await send('peer','authorization.save',crypto.randomUUID(),0,{tripId:trip.id,formSchemaVersion:PLANNING_SCHEMA_VERSION,formData:planning}));
+   const originalEstimate={currency:'EUR',amountMinor:2000,conversionNote:'Estimated rate 1 EUR = 1.25 USD on Oct 1'};
+   const foreignPlanning={...planning,approvedExpenseItems:planning.approvedExpenseItems.map(item=>({...item,originalEstimate}))};
+   const plan=expectSuccess(await send('peer','authorization.save',crypto.randomUUID(),0,{tripId:trip.id,formSchemaVersion:PLANNING_SCHEMA_VERSION,formData:foreignPlanning}));
+   expect(plan.data.formData).toEqual(foreignPlanning);
    expectSuccess(await send('peer','authorization.submit',plan.id,plan.version,{}));
    const approval=await approvalFor(plan.id);
    expect((await send('peer','approval.decide',approval.id,approval.version,{decision:'approved',comment:''})).status).toBe(403);
@@ -136,6 +139,7 @@ describe('connected planning and Voucher Copilot',()=>{
    expect(expectSuccess(await send('reviewer','approval.decide',approval.id,approval.version,{decision:'approved',comment:''})).status).toBe('approved');
    const handoff=await request('peer','GET',`/v1/authorizations/${plan.id}/approved?organizationId=${organizationId}`);
    expect(handoff.status).toBe(200);
+   expect(handoff.body.revision.snapshot.entity.data.formData.approvedExpenseItems[0]).toMatchObject({authorizedAmountMinor:2500,originalEstimate});
    const history=await request('reviewer','GET',`/v1/approvals/${approval.id}/revision?organizationId=${organizationId}`);
    expect(history.body.steps).toHaveLength(1);expect(history.body.decisions).toHaveLength(1);
   }finally{organizationId=savedOrg}

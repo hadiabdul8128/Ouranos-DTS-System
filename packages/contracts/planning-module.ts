@@ -1,11 +1,14 @@
 import {z} from 'zod';
+import {receiptCurrencies} from './expense-currency';
 import {dateOnly, uuid} from './index';
 
 export const PLANNING_SCHEMA_VERSION = 'ouranos.planning.v1';
 export const travelCategories = ['airfare','lodging','rental_car','fuel','meals','parking','ground_transport','baggage','other'] as const;
+export const originalEstimateSchema=z.object({currency:z.enum(receiptCurrencies).refine(c=>c!=='USD','Use original estimate details only for foreign currency'),amountMinor:z.number().int().positive().max(Number.MAX_SAFE_INTEGER),conversionNote:z.string().trim().min(8).max(2000)}).strict();
 export const plannedExpenseSchema = z.object({
   id:uuid, category:z.enum(travelCategories), description:z.string().trim().min(1).max(300),
   authorizedAmountMinor:z.number().int().positive().max(1_000_000_000),
+  originalEstimate:originalEstimateSchema.optional(),
   merchant:z.string().trim().max(200).optional(),
   expectedPaymentMethod:z.enum(['gtcc','personal']).optional(),
   date:dateOnly.optional(), startDate:dateOnly.optional(), endDate:dateOnly.optional(),
