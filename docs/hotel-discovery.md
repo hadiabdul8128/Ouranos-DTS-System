@@ -1,19 +1,23 @@
-# Hotel discovery
+# Standalone hotel discovery
 
-The travel hub links to `/dashboard/travel/hotels`. The traveler selects a saved trip; its destination and dates prefill the hotel finder. When an authorization has lodging items, the page shows their total as a **planned** or **approved lodging budget**. It is not a hotel quote. A traveler can search another city or ZIP, prioritize a work ZIP within that city, and narrow by hotel name. The page offers property addresses, map links, and a copy action.
+Open `/dashboard/travel/hotels` and enter a US city and state or five-digit ZIP. No trip or authorization is required. The optional worksite ZIP changes the search center; a distance selector and hotel-name filter narrow the results. Dates are optional for the FedRooms property list and required for live room offers.
 
-## Property data and refresh
+## Property list
 
-The checked-in catalog at `public/lodging/fedrooms-2026.json` was generated from [GSA's FedRooms accepted-properties workbook](https://www.gsa.gov/travel/plan-a-trip/lodging/fedrooms), published August 31, 2026. It has 12,265 distinct property records. Its metadata includes the exact workbook URL, publication date, and SHA-256 digest. The importer rejects changed columns, incomplete properties, and unexpectedly small lists.
+`public/lodging/fedrooms-2026.json` was generated from [GSA's FedRooms accepted-properties workbook](https://www.gsa.gov/travel/plan-a-trip/lodging/fedrooms), published August 31, 2026. Its 12,265 records contain names and addresses, not rates, photos, ratings, or current availability. `scripts/update-fedrooms-catalog.py` validates a replacement workbook before generating the catalog.
 
-To refresh, verify GSA's latest workbook and publication date, update `SOURCE` and `PUBLISHED` in `scripts/update-fedrooms-catalog.py`, and run `python3 scripts/update-fedrooms-catalog.py /path/to/downloaded.xlsx`. Review the source and the generated diff before committing. The catalog is public property information; it contains no traveler data. It is loaded in the browser and searched locally.
+`public/lodging/us-postal-centroids.json` contains 41,488 US postal-code centers from [GeoNames](https://www.geonames.org/export/) (CC BY 4.0). `scripts/update-us-postal-centroids.py` can regenerate it from the source ZIP file. Nearby ranking uses approximate postal-center distances; it is not a driving-distance calculation or a property geocode. The UI says so. Both files are public and searched in the browser; no traveler data is stored for a hotel search.
+
+## Live offers
+
+The optional server-side adapter uses [Booking.com Demand API 3.2](https://developers.booking.com/demand/docs/accommodations/search-for-available-properties) to search by coordinates and stay dates. It requests [accommodation details and photos](https://developers.booking.com/demand/docs/accommodations/look-accommodation-details) for priced results, then shows the public total for the stay, an average per night calculated from that total, guest review score, stars, photo, and offer link when those fields exist. The nightly figure is an average of the full stay cost, not a claim that each night has the same tariff. Missing or invalid values stay absent. These public offers are separate from GSA listings and are **not** identified as government rates or policy-compliant options.
+
+An approved Demand API partner account supplies `BOOKING_DEMAND_API_KEY` and `BOOKING_DEMAND_AFFILIATE_ID` in the **server** environment. No credentials are embedded in the browser. `BOOKING_DEMAND_MODE=production` is the default; sandbox mode is only for development and is labeled as test inventory. Without credentials, the route returns `unavailable`, and the page continues showing sourced FedRooms listings with an honest message that live prices, photos, and ratings are not connected. The browser sends only search coordinates and dates to Ouranos; when configured, the server sends those search parameters to Booking.com. Search responses are not persisted.
 
 ## Booking boundary
 
-The GSA list is a candidate list, **not** a live availability, price, distance, eligibility, or policy decision. A property may no longer participate. The finder never marks a hotel as approved, selects a reimbursable rate, or reserves a room. The traveler must check the applicable lodging priority and current inventory in [DTS](https://dtsproweb.defensetravel.osd.mil/dts-app/pubsite/all/view). [DTMO's Integrated Lodging Program guidance](https://www.travel.dod.mil/Programs/Lodging/ILP-site/) and [DoD lodging guidance](https://www.travel.dod.mil/Programs/Lodging/DoD-Lodging/) explain why DoD or DoD Preferred options may take priority over a FedRooms candidate. The page links to the [DoD Preferred resources](https://www.travel.dod.mil/Programs/Lodging/DoD-Preferred-Commercial-Lodging/Resources/).
-
-This implementation does not use a DTS, GSA booking, or geocoding API. It does not send trip details to a hotel provider. Opening a map shares only the public property address with Google Maps. A future approved integration can replace the catalog/search adapter while preserving the trip context and booking boundary.
+The page does not reserve rooms, decide reimbursement, or determine which lodging is authorized. Travelers should check applicable lodging priority and current inventory in [DTS](https://dtsproweb.defensetravel.osd.mil/dts-app/pubsite/all/view). [DTMO's Integrated Lodging Program guidance](https://www.travel.dod.mil/Programs/Lodging/ILP-site/) explains why DoD or DoD Preferred lodging may take priority. Opening a map shares the public property address with Google Maps.
 
 ## Verification
 
-`platform/tests/hotel-discovery.test.ts` exercises search, ambiguity, ZIP ranking, source validation, and overseas address handling against the real catalog. `platform/tests/hotel-trip.test.ts` covers trip prefill and approved versus draft lodging budgets.
+`platform/tests/hotel-discovery.test.ts` covers the GSA catalog. `platform/tests/hotel-nearby.test.ts` covers independent city and ZIP search. `platform/tests/hotel-provider.test.ts` covers live-offer mapping and rejects questionable prices. The older `platform/tests/hotel-trip.test.ts` remains to protect the separate optional trip helper even though this page no longer requires a trip.
