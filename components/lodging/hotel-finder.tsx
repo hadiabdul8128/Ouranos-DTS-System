@@ -6,7 +6,7 @@ import {ArrowLeft,ArrowRight} from 'lucide-react';
 import {usePlatform,SyncIndicator} from '@/components/platform/provider';
 import type {LocalRecord} from '@/packages/offline/database';
 import {hotelTripContext,type HotelTripContext} from '@/packages/domain/hotel-trip';
-import type {HotelCatalog} from '@/packages/domain/hotel-discovery';
+import type {HotelCatalog,HotelProperty} from '@/packages/domain/hotel-discovery';
 import {HotelSearchFields} from './search-fields';
 import {HotelResults} from './hotel-results';
 import {HotelBookingGuidance} from './booking-guidance';
@@ -15,17 +15,17 @@ import {useHotelCatalog} from './use-hotel-catalog';
 const date=(value:string)=>new Date(`${value}T12:00:00`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
 const money=(minor:number)=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(minor/100);
 
-function HotelTripSearch({trip,catalog,catalogError,catalogLoading,retry}:{trip:HotelTripContext;catalog:HotelCatalog|null;catalogError:string|null;catalogLoading:boolean;retry:()=>void}){
+export function HotelTripSearch({trip,catalog,catalogError,catalogLoading,retry,embedded=false,onSelectHotel}:{trip:HotelTripContext;catalog:HotelCatalog|null;catalogError:string|null;catalogLoading:boolean;retry:()=>void;embedded?:boolean;onSelectHotel?:(property:HotelProperty)=>void}){
  const [destination,setDestination]=useState(trip.destination),[workZip,setWorkZip]=useState(''),[hotelName,setHotelName]=useState(''),[limit,setLimit]=useState(12);
  function changeDestination(value:string){setDestination(value);setWorkZip('');setHotelName('');setLimit(12)}
  function changeWorkZip(value:string){setWorkZip(value);setLimit(12)}
  function changeHotelName(value:string){setHotelName(value);setLimit(12)}
  return <>
-  <p className="cw-eyebrow">Travel · hotel finder</p><h1>Find a place to stay.</h1><p className="hotel-lead">Start with real FedRooms properties near your destination. Confirm the lodging order, room availability, and final rate in DTS.</p>
+  {!embedded&&<><p className="cw-eyebrow">Travel · hotel finder</p><h1>Find a place to stay.</h1></>}<p className="hotel-lead">Start with real FedRooms properties near your destination. Confirm the lodging order, room availability, and final rate in DTS.</p>
   <div className="hotel-trip"><div><span>Saved trip</span><strong>{trip.destination}</strong><small>{date(trip.departure)} – {date(trip.returnDate)}</small></div>{trip.lodgingBudgetMinor!==null&&<div><span>{trip.budgetLabel}</span><strong>{money(trip.lodgingBudgetMinor)}</strong><small>Total in your travel plan · not a hotel quote</small></div>}</div>
   <HotelSearchFields destination={destination} onDestination={changeDestination} workZip={workZip} onWorkZip={changeWorkZip} hotelName={hotelName} onHotelName={changeHotelName}/>
   <HotelBookingGuidance/>
-  {catalogLoading?<p className="hotel-empty" role="status">Loading real hotel properties…</p>:catalogError?<div className="hotel-empty" role="alert"><p>{catalogError}</p><button type="button" onClick={retry}>Try loading again</button></div>:catalog&&<HotelResults catalog={catalog} destination={destination} workZip={workZip} hotelName={hotelName} limit={limit} onMore={()=>setLimit(value=>value+12)} onSelectLocation={changeDestination}/>}
+  {catalogLoading?<p className="hotel-empty" role="status">Loading real hotel properties…</p>:catalogError?<div className="hotel-empty" role="alert"><p>{catalogError}</p><button type="button" onClick={retry}>Try loading again</button></div>:catalog&&<HotelResults catalog={catalog} destination={destination} workZip={workZip} hotelName={hotelName} limit={limit} onMore={()=>setLimit(value=>value+12)} onSelectLocation={changeDestination} onSelectHotel={onSelectHotel}/>}
   <p className="hotel-source-note">Property information: <a href={catalog?.source||'https://www.gsa.gov/travel/plan-a-trip/lodging/fedrooms'} target="_blank" rel="noopener noreferrer">GSA FedRooms accepted properties ↗</a>. Listings may change. Ouranos does not check booking inventory or reserve rooms.</p>
  </>;
 }
