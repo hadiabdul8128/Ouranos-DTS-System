@@ -32,8 +32,12 @@ function addDays(date, days) {
 }
 
 export function parseDestination(value) {
-  const match = /^\s*(.+?),\s*([A-Za-z]{2})\s*$/.exec(String(value || ''));
-  return match ? { city: match[1].trim(), state: match[2].toUpperCase() } : { city: String(value || '').trim(), state: '' };
+  const match = /^\s*(.+?),\s*([A-Za-z ]+)\s*$/.exec(String(value || ''));
+  if (!match) return { city: String(value || '').trim(), state: '' };
+  const region = match[2].trim();
+  const state = region.length === 2 ? region.toUpperCase()
+    : Object.entries(stateNames).find(([, name]) => norm(name) === norm(region))?.[0] || '';
+  return { city: match[1].trim(), state };
 }
 
 /** Locality lookup: exact city, then a county/city list that names it, then the state standard rate. */
