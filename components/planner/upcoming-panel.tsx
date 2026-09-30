@@ -1,8 +1,11 @@
 'use client';
 import {useState} from 'react';
+import {useLiveQuery} from 'dexie-react-hooks';
 import Link from 'next/link';
 import {ArrowUpRight,Check,Plus,Trash2,X} from 'lucide-react';
 import {Calendar} from '@/components/ui/calendar';
+import {usePlatform} from '@/components/platform/provider';
+import type {LocalRecord} from '@/packages/offline/database';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {addDays,plannerKinds,upcomingEntries,type PlannerKind,type UpcomingEntry} from '@/packages/domain/planner';
@@ -11,16 +14,18 @@ import {usePlanner} from './store';
 import './planner.css';
 
 const kindNames:Record<UpcomingEntry['kind'],string>={appointment:'Appointment',deadline:'Deadline',deployment:'Deployment',other:'Reminder',trip:'Travel',voucher:'Voucher',checklist:'Checklist'};
+const text=(value:unknown)=>typeof value==='string'?value:'';
 const daysBetween=(from:string,to:string)=>Math.round((Date.parse(`${to}T12:00:00Z`)-Date.parse(`${from}T12:00:00Z`))/86400000);
 function when(date:string,today:string){const d=daysBetween(today,date);return d<0?`${-d} day${d===-1?'':'s'} overdue`:d===0?'Today':d===1?'Tomorrow':d<14?`In ${d} days`:d<60?`In ${Math.round(d/7)} weeks`:`In ${Math.round(d/30)} months`}
 function group(date:string,today:string){const d=daysBetween(today,date);return d<0?'Overdue':d<7?'This week':d<31?'This month':'Later'}
 
-/** Appointments, deadlines, deployment dates, checklist due dates and travel dates, soonest first. */
-/** Items the traveler added, within the next year. Trips and vouchers are not listed yet. */
+/** Added items plus trip departure and return dates within the next year, soonest first. Voucher deadlines are left out. */
 export function useUpcoming(){
- const {state,update}=usePlanner(),[today]=useState(localToday);
- const entries=upcomingEntries(state.items,[],[],today).filter(e=>e.date<=addDays(today,365));
- return {entries,today,update,soon:entries.filter(e=>daysBetween(today,e.date)<7).length};
+ const p=usePlatform(),{state,update}=usePlanner(),[today]=useState(localToday);
+ const rows=useLiveQuery<LocalRecord[]>(()=>p.repository?.db.entities.where('kind').equals('trip').toArray()||Promise.resolve([]),[p.repository]);
+ const trips=(rows||[]).map(r=>({id:r.id,destination:text(r.local.data.destination),departure:text(r.local.data.departure),returnDate:text(r.local.data.returnDate)})).filter(t=>t.destination&&t.departure&&t.returnDate);
+ const entries=upcomingEntries(state.items,[],trips,today,{vouchers:false}).filter(e=>e.date<=addDays(today,365));
+ return {entries,trips,today,update,soon:entries.filter(e=>daysBetween(today,e.date)<7).length};
 }
 const toDate=(value:string)=>new Date(`${value}T12:00:00`);
 const fromDate=(date:Date)=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
