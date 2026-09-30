@@ -76,6 +76,124 @@
         "description": "Read-only AI assistant. At most 10 messages; the last must be from the user. Rate limited to 10 requests per minute per user."
       }
     },
+    "/v1/guide/checklist": {
+      "post": {
+        "operationId": "guideChecklist",
+        "summary": "Turn instructions into a checklist",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuideChecklistResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuideChecklistInput"
+              }
+            }
+          }
+        },
+        "description": "AI-generated checklist from the caller’s instructions. Nothing is stored or sent elsewhere. Returns 503 when AI is not connected; clients build a local checklist instead. Rate limited to 10 requests per minute per user."
+      }
+    },
+    "/v1/guide/ask": {
+      "post": {
+        "operationId": "guideAsk",
+        "summary": "Answer a question about a checklist",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuideAskResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuideAskInput"
+              }
+            }
+          }
+        },
+        "description": "Read-only AI answer. At most 10 messages; the last must be from the user. Rate limited to 10 requests per minute per user."
+      }
+    },
     "/health": {
       "get": {
         "operationId": "health",
@@ -1628,6 +1746,176 @@
         "additionalProperties": false
       },
       "CompanionResponse": {
+        "type": "object",
+        "properties": {
+          "answer": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "answer"
+        ],
+        "additionalProperties": false
+      },
+      "GuideChecklistInput": {
+        "type": "object",
+        "properties": {
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "instructions": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 6000
+          },
+          "today": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        "required": [
+          "organizationId",
+          "instructions",
+          "today"
+        ],
+        "additionalProperties": false
+      },
+      "GuideChecklistResponse": {
+        "type": "object",
+        "properties": {
+          "checklist": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "steps": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 160
+                    },
+                    "detail": {
+                      "type": "string",
+                      "maxLength": 800
+                    },
+                    "due": {
+                      "type": "string",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "title",
+                    "detail",
+                    "due"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 1,
+                "maxItems": 20
+              }
+            },
+            "required": [
+              "title",
+              "steps"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "checklist"
+        ],
+        "additionalProperties": false
+      },
+      "GuideAskInput": {
+        "type": "object",
+        "properties": {
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "checklist": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "steps": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string",
+                      "maxLength": 160
+                    },
+                    "detail": {
+                      "type": "string",
+                      "maxLength": 800
+                    },
+                    "done": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "title"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 30
+              }
+            },
+            "required": [
+              "title",
+              "steps"
+            ],
+            "additionalProperties": false
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "user",
+                    "assistant"
+                  ]
+                },
+                "content": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2000
+                }
+              },
+              "required": [
+                "role",
+                "content"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 10
+          }
+        },
+        "required": [
+          "organizationId",
+          "checklist",
+          "messages"
+        ],
+        "additionalProperties": false
+      },
+      "GuideAskResponse": {
         "type": "object",
         "properties": {
           "answer": {

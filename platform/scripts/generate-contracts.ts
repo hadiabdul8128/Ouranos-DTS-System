@@ -1,4 +1,5 @@
 import {companionInput} from '../../packages/contracts/companion';
+import {guideAskInput,guideBuildInput,guideChecklistSchema} from '../../packages/contracts/guide';
 import {readFile, mkdir, writeFile} from 'node:fs/promises';
 import {z} from 'zod';
 import {zodToJsonSchema} from 'zod-to-json-schema';
@@ -26,6 +27,7 @@ const approvalDecision = z.object({id:uuid, organization_id:uuid, request_id:uui
 
 const models = {
   CompanionInput:companionInput, CompanionResponse:z.object({answer:z.string()}),
+  GuideChecklistInput:guideBuildInput, GuideChecklistResponse:z.object({checklist:guideChecklistSchema}), GuideAskInput:guideAskInput, GuideAskResponse:z.object({answer:z.string()}),
   TransitionProfile:transitionProfileSchema,TransitionRecommendation:transitionRecommendationSchema,TransitionSave:transitionSaveSchema,TransitionPlan:transitionPlanSchema,
   TransitionResponse:z.object({plan:transitionPlanSchema}),TransitionOptionalResponse:z.object({plan:transitionPlanSchema.nullable()}),
   Role:roleSchema, EntityKind:entityKindSchema, TripInput:tripInput,
@@ -74,6 +76,8 @@ function operation(operationId:string, summary:string, result:SchemaName, extra:
 const commandError = {description:'Command rejected. Domain failures include commandId and ok:false; request/database failures use the error envelope.',content:json({oneOf:[ref('CommandFailure'),ref('ErrorResponse')]})};
 const paths:Record<string,Record<string,SpecObject>> = {
   '/v1/companion/chat':{post:operation('companionChat','Answer using the caller’s own recent travel status','CompanionResponse',{requestBody:request('CompanionInput'),description:'Read-only AI assistant. At most 10 messages; the last must be from the user. Rate limited to 10 requests per minute per user.'})},
+  '/v1/guide/checklist':{post:operation('guideChecklist','Turn instructions into a checklist','GuideChecklistResponse',{requestBody:request('GuideChecklistInput'),description:'AI-generated checklist from the caller’s instructions. Nothing is stored or sent elsewhere. Returns 503 when AI is not connected; clients build a local checklist instead. Rate limited to 10 requests per minute per user.'})},
+  '/v1/guide/ask':{post:operation('guideAsk','Answer a question about a checklist','GuideAskResponse',{requestBody:request('GuideAskInput'),description:'Read-only AI answer. At most 10 messages; the last must be from the user. Rate limited to 10 requests per minute per user.'})},
   '/health':{get:operation('health','Process health','Health',{security:[]})},
   '/ready':{get:operation('ready','Database connectivity','Ready',{security:[]})},
   '/openapi.json':{get:{operationId:'openapi',summary:'This generated OpenAPI document',security:[],responses:{'200':{description:'OpenAPI 3.0 document',content:json({type:'object',additionalProperties:true})},default:error}}},
@@ -115,7 +119,7 @@ const document = {
 };
 
 // Prevent route additions/renames from silently disappearing from the handoff.
-const apiSource = (await Promise.all(['app.ts','transition.ts','companion.ts'].map(file=>readFile(new URL(`../api/${file}`,import.meta.url),'utf8')))).join('\n');
+const apiSource = (await Promise.all(['app.ts','transition.ts','companion.ts','guide.ts'].map(file=>readFile(new URL(`../api/${file}`,import.meta.url),'utf8')))).join('\n');
 const implemented = [...apiSource.matchAll(/app\.(get|post|put|patch|delete)\('([^']+)'/g)].map(([,method,path])=>`${method} ${path.replace(/:([A-Za-z]+)/g,'{$1}')}`).sort();
 const documented = Object.entries(paths).flatMap(([path,methods])=>Object.keys(methods).map(method=>`${method} ${path}`)).sort();
 if(JSON.stringify(implemented)!==JSON.stringify(documented))throw new Error('API route inventory differs from OpenAPI. Update generate-contracts.ts before generating.');
