@@ -21,6 +21,7 @@ import type {VerificationReport} from '@/packages/domain/voucher-verification';
 import {PlanningHotelFinder} from './planning-hotel-finder';
 import {hotelPlanTarget} from '@/packages/domain/planning-hotel';
 import {FlightSuggestions,type SelectedFlight} from './flight-suggestions';
+import {ApprovalTracker} from './approval-tracker';
 import {PlaceField} from './place-field';
 import type {FlightOption} from '@/packages/domain/flight-search';
 const originKey='ouranos.travel.origin';
@@ -108,6 +109,7 @@ function PlanningForm({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
  useEffect(()=>{let active=true;const abort=new AbortController();void fetch('/api/exchange-rates',{signal:abort.signal}).then(async response=>{if(!response.ok)throw new Error('Exchange rates unavailable.');return validateExchangeRates(await response.json())}).then(value=>{if(active){setRates(value);setRateError('');setItems(current=>current.map(item=>item.currency!=='USD'&&!item.usdAmount?{...item,...editPlanningAmount(item,item.amount,value)}:item))}}).catch(()=>{if(active)setRateError('Exchange rates are unavailable. USD still works; retry to convert currencies.')});return()=>{active=false;abort.abort()}},[rateReload]);
  const [dirty,setDirty]=useState(false);const baselineVersion=useRef(initial?.local.version||0);useUnsaved(dirty);
  const row=rows.find(r=>r.id===id&&r.kind==='authorization'),locked=!editable(row);
+ const approval=rows.filter(r=>r.kind==='approval'&&r.local.data.entityId===id).sort((a,b)=>b.local.updatedAt.localeCompare(a.local.updatedAt))[0]?.local;
  const unsupported=Boolean(initial&&initial.local.data.formSchemaVersion!==PLANNING_SCHEMA_VERSION);
  const total=items.reduce<number|null>((sum,item)=>{if(sum===null)return null;if(!item.amount.trim())return sum;try{return sum+parseAmountMinor(item.currency==='USD'?item.amount:item.usdAmount)}catch{return null}},0);
  const status=row?.server?.status||row?.local.status||'draft';
@@ -144,6 +146,7 @@ function PlanningForm({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
  if(unsupported)return <div className="cw-card"><h2>A different planning form is attached.</h2><p className="cw-muted">This saved authorization uses an older or partner form. Its data has been preserved.</p><Link href="/dashboard/platform">Return to workspace</Link></div>;
  return <><div className="cw-section-heading"><h2>Travel details</h2><Status value={status}/></div>
  {locked&&<div className="cw-banner"><Check size={18}/><div><strong>{status==='approved'&&p.approvalMode==='automatic'?'Verified by Ouranos.':status==='approved'?'Approved.':status==='in_review'?'In review.':'This revision is closed.'}</strong><p>{status==='approved'&&p.approvalMode==='automatic'?'Internal checks passed. This is not DTS approval.':''}</p></div>{status==='approved'&&<Link href={`/dashboard/travel/vouchers?tripId=${trip.id}`}>Open voucher <ArrowRight size={16}/></Link>}</div>}
+ {approval&&p.approvalMode==='required'&&<ApprovalTracker request={approval}/>}
  <PlanningHotelFinder trip={{id:trip.id,destination:text(trip.data.destination),departure:text(trip.data.departure),returnDate:text(trip.data.returnDate),lodgingBudgetMinor:items.filter(item=>item.category==='lodging').reduce<number|null>((sum,item)=>{if(sum===null)return null;try{return sum+parseAmountMinor(item.currency==='USD'?item.amount:item.usdAmount)}catch{return null}},0)||null,budgetLabel:status==='approved'?'Approved lodging budget':'Planned lodging budget'}} onSelectHotel={locked||!!feedback.busy?undefined:selectHotel}/>
  <form onSubmit={e=>{e.preventDefault();void feedback.run('save',save)}}><fieldset disabled={locked||!!feedback.busy} className="cw-fieldset"><div className="cw-card cw-grid"><Field label="Traveler name"><Input value={traveler} onChange={e=>{setTraveler(e.target.value);setDirty(true)}} autoComplete="name" maxLength={200} required/></Field><PlaceField id="origin" label="Starting location" variant="plan" value={origin} onChange={value=>{setOrigin(value);setDirty(true);try{localStorage.setItem(originKey,value)}catch{}}}/><div className="cw-span-full cw-purpose"><span>Purpose</span><p>{text(trip.data.purpose)}</p></div></div>
  <FlightSuggestions from={origin} to={text(trip.data.destination)} departure={text(trip.data.departure)} returnDate={text(trip.data.returnDate)} selected={flight} onSelect={selectFlight} disabled={locked||!!feedback.busy}/>
