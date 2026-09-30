@@ -1,10 +1,6 @@
 # Upcoming
 
-**Upcoming** is in the home screen header on every screen size, with a count of items due in the next 7 days. It opens a side panel with a month calendar and a list, soonest first, grouped into Overdue, This week, This month and Later:
-
-- appointments, deadlines, deployment dates and other reminders the user adds;
-- trip departure and return dates;
-- the voucher due date, 5 working days after returning, until the voucher is submitted.
+**Upcoming** is in the home screen header on every screen size, with a count of items due in the next 7 days. It opens a side panel with a month calendar and a list, soonest first, grouped into Overdue, This week, This month and Later. It shows appointments, deadlines, deployment dates and other reminders the user adds. Trip dates and voucher deadlines are not listed for now; which records should appear automatically is still to be decided (`upcomingEntries` in `packages/domain/planner.ts` can already include them).
 
 Calendar days with items have a dot (red when overdue). Choosing a day shows only that day's items, and **Add** starts with that date. Items can be marked done or removed.
 
