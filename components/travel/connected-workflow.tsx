@@ -43,7 +43,22 @@ const record=(value:unknown):Record<string,unknown>=>value&&typeof value==='obje
 const displayDate=(value:unknown)=>text(value)?new Date(`${value}T12:00:00`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
 const editable=(row?:LocalRecord)=>!row||['draft','changes_requested','needs_action'].includes(row.server?.status||row.local.status);
 const recent=(rows:LocalRecord[],kind:string,tripId:string)=>rows.filter(r=>r.kind===kind&&r.local.tripId===tripId).sort((a,b)=>b.local.updatedAt.localeCompare(a.local.updatedAt))[0];
-function message(error:unknown){return error instanceof z.ZodError?error.issues.map(i=>i.message).filter((v,i,a)=>a.indexOf(v)===i).join(' '):error instanceof Error?error.message:'Unable to complete this action. Please try again.'}
+/** Plain-language names for form fields the validator can reject. */
+function issueText(issue:z.ZodIssue){
+ const [field,index,sub]=issue.path;
+ if(field==='traveler')return 'Enter the traveler’s name.';
+ if(field==='origin')return 'Choose your starting city and state.';
+ if(field==='approvedExpenseItems'&&typeof index==='number'){const n=index+1;return sub==='authorizedAmountMinor'?`Enter a planned amount for expense ${n}.`:sub==='description'?`Add a description for expense ${n}.`:`Check the details of expense ${n}.`}
+ if(field==='approvedExpenseItems')return 'Add at least one planned expense.';
+ return issue.message;
+}
+function message(error:unknown){return error instanceof z.ZodError?error.issues.map(issueText).filter((v,i,a)=>a.indexOf(v)===i).join(' '):error instanceof Error?error.message:'Unable to complete this action. Please try again.'}
+/** What is missing from a plan, in the order it appears on the page. */
+function planProblems(traveler:string,origin:string,items:Array<{amount:string;currency:string;usdAmount:string}>){
+ const problems=[!traveler.trim()&&'Enter the traveler’s name.',!origin.trim()&&'Choose your starting city and state.'];
+ items.forEach((item,i)=>{const amount=(item.currency==='USD'?item.amount:item.usdAmount).trim();problems.push(!item.amount.trim()?`Enter a planned amount for expense ${i+1}.`:amount&&!/^(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d{1,2})?$/.test(amount)?`Expense ${i+1}: use an amount like 355.00.`:!amount?`Expense ${i+1}: exchange rates are still loading; try again in a moment.`:false)});
+ return problems.filter(Boolean).join(' ');
+}
 function useFeedback(){
  const [busy,setBusy]=useState(''),[error,setError]=useState(''),[notice,setNotice]=useState('');const active=useRef(false);
  async function run(name:string,fn:()=>Promise<string|void>){if(active.current)return;active.current=true;setBusy(name);setError('');setNotice('');try{const result=await fn();if(result)setNotice(result)}catch(e){setError(message(e))}finally{active.current=false;setBusy('')}}
@@ -148,6 +163,7 @@ function PlanningForm({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
   setDirty(true);feedback.setError('');feedback.setNotice(`${option.airline} flight added to planned airfare. Adjust the amount if needed.`);
  }
  async function save(){
+  const problems=planProblems(traveler,origin,items);if(problems)throw new Error(problems);
   const current=await p.repository!.db.entities.get(`authorization:${id}`);if(!editable(current))throw new Error('This plan has already been submitted. Refresh to see its review status.');
   if((current?.local.version||0)!==baselineVersion.current)throw new Error('This plan changed in another session. Your edits are still here; reload to review the newer version before saving.');
   const normalized=items.map(item=>item.currency!=='USD'&&!item.usdAmount?{...item,...editPlanningAmount(item,item.amount,rates)}:item);
