@@ -35,3 +35,12 @@ export function parseFlightOptions(html:string):FlightOption[]{
  }
  return options;
 }
+
+export async function searchFlights(input:FlightQuery,fetcher:typeof fetch=fetch,now=new Date()):Promise<FlightResults>{
+ const query=flightQuerySchema.parse(input),searchUrl=flightSearchUrl(query);
+ const response=await fetcher(searchUrl,{signal:AbortSignal.timeout(12000),headers:{'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36','Accept-Language':'en-US,en;q=0.9',Accept:'text/html'}});
+ if(!response.ok)throw new Error('Flight search is unavailable.');
+ return {source:'Google Flights',searchUrl,fetchedAt:now.toISOString(),options:parseFlightOptions(await response.text()).slice(0,8)};
+}
+
+export function cheapestFlight(options:FlightOption[]){return options.reduce<FlightOption|null>((best,option)=>!best||option.price<best.price?option:best,null)}
