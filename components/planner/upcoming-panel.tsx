@@ -8,7 +8,7 @@ import {usePlatform} from '@/components/platform/provider';
 import type {LocalRecord} from '@/packages/offline/database';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
-import {addDays,plannerKinds,upcomingEntries,type PlannerKind,type UpcomingEntry} from '@/packages/domain/planner';
+import {addDays,plannerKinds,travelDays,upcomingEntries,type PlannerKind,type UpcomingEntry} from '@/packages/domain/planner';
 import {localToday} from '@/packages/domain/flight-search';
 import {usePlanner} from './store';
 import './planner.css';
@@ -31,11 +31,11 @@ const toDate=(value:string)=>new Date(`${value}T12:00:00`);
 const fromDate=(date:Date)=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
 
 export function UpcomingPanel(){
- const {entries:all,today,update}=useUpcoming();
+ const {entries:all,trips,today,update}=useUpcoming();
  const [adding,setAdding]=useState(false),[draft,setDraft]=useState({kind:'appointment' as PlannerKind,title:'',date:'',time:''}),[error,setError]=useState(''),[day,setDay]=useState<string|null>(null);
  const entries=day?all.filter(e=>e.date===day):all;
  const groups=day?[{name:new Date(`${day}T12:00:00Z`).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',timeZone:'UTC'}),entries}]:['Overdue','This week','This month','Later'].map(name=>({name,entries:entries.filter(e=>group(e.date,today)===name)})).filter(g=>g.entries.length);
- const busy=[...new Set(all.map(e=>e.date))].map(toDate),overdue=[...new Set(all.filter(e=>e.date<today).map(e=>e.date))].map(toDate);
+ const traveling=travelDays(trips,today).map(toDate),busy=[...new Set(all.map(e=>e.date))].map(toDate),overdue=[...new Set(all.filter(e=>e.date<today).map(e=>e.date))].map(toDate);
  function add(e:React.FormEvent){
   e.preventDefault();setError('');
   if(!draft.title.trim()||!draft.date){setError('Add a title and a date.');return}
@@ -56,7 +56,8 @@ export function UpcomingPanel(){
    {error&&<p role="alert" className="upcoming-error">{error}</p>}
    <Button type="submit" className="upcoming-save">Save</Button>
   </form>}
-  <Calendar mode="single" className="upcoming-calendar" selected={day?toDate(day):undefined} onSelect={date=>setDay(date?fromDate(date):null)} modifiers={{busy,overdue}} modifiersClassNames={{busy:'has-items',overdue:'has-overdue'}} defaultMonth={toDate(today)}/>
+  <Calendar mode="single" className="upcoming-calendar" selected={day?toDate(day):undefined} onSelect={date=>setDay(date?fromDate(date):null)} modifiers={{busy,overdue,traveling}} modifiersClassNames={{busy:'has-items',overdue:'has-overdue',traveling:'is-traveling'}} defaultMonth={toDate(today)}/>
+  {traveling.length>0&&<p className="upcoming-legend"><i aria-hidden="true"/> Travel days</p>}
   {day&&<button type="button" className="upcoming-all" onClick={()=>setDay(null)}>Show everything</button>}
   {!groups.length?<p className="upcoming-empty">Deadlines and appointments will be added here.</p>:
   groups.map(g=><div key={g.name} className="upcoming-group"><h3 className={g.name==='Overdue'?'is-overdue':''}>{g.name}</h3><ul>{g.entries.map(entry=>{const d=new Date(`${entry.date}T12:00:00Z`);return <li key={entry.key} className={`upcoming-row kind-${entry.kind}`}>
