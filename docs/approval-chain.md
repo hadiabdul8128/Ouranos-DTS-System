@@ -9,9 +9,13 @@ Travel authorizations go up one or two levels:
 
 An administrator sets the chain in **Settings → Approvers**: the S1 reviewer's user ID is required, and the command approver's is optional. Leaving command empty makes S1 the only level. Each person must already have the matching role in **Team access**, and a traveler can never approve their own request.
 
+## Before approvers are set
+
+Submitting never fails just because approvers are missing. The submission is frozen, the authorization moves to review, and the traveler receives the full *Authorization submitted* confirmation marked as waiting for approvers. Planning shows *Submitted · waiting for approvers*. Once an admin sets approvers, the next time the traveler opens that plan it is sent to S1 automatically (a repeated `authorization.submit` on the waiting authorization); it is never sent twice.
+
 ## What the traveler sees
 
-When an authorization is submitted, the request records each level as `pending` in `approval_requests.data.levels`. Each decision updates that level (`approved`, `changes_requested` or `rejected`, with the time and any comment) and the request's version, and syncs to the traveler.
+After submitting, the traveler is taken to the inbox with the confirmation open. When an authorization is routed, the request records each level as `pending` in `approval_requests.data.levels`. Each decision updates that level (`approved`, `changes_requested` or `rejected`, with the time and any comment) and the request's version, and syncs to the traveler.
 
 - **Planning** shows one line saying where the request is: *With S1 · Administration · Step 1 of 2*, *With Command approval · Step 2 of 2*, or *Changes requested* / *Not approved* with the reviewer's comment. Once approved, the existing approved banner is shown instead.
 - **Inbox** receives:
