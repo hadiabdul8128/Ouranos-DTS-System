@@ -1,10 +1,10 @@
 .cw-intake-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .cw-intake-actions button{gap:9px}
 .cw-camera-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.cw-camera-preview{position:relative;margin:18px 0;background:#161d24;border-radius:8px;overflow:hidden;min-height:200px}
+.cw-camera-preview{position:relative;margin:18px 0;background:#303b2b;border-radius:8px;overflow:hidden;min-height:200px}
 .cw-camera-preview video{display:block;width:100%;max-height:55vh;object-fit:contain}
-.cw-camera-preview p{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:#fff;font-size:13px;line-height:1.6;padding:24px;margin:0}
+.cw-camera-preview p{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:#edf0e8;font-size:13px;line-height:1.6;padding:24px;margin:0}
 .cw-camera-footer{display:flex;align-items:center;justify-content:space-between;gap:20px}
 .cw-camera-footer>.cw-muted{max-width:380px;margin:0}
-.cw-intake-actions button:focus-visible{outline:2px solid #7594bc;outline-offset:3px}
+.cw-intake-actions button:focus-visible{outline:2px solid #a5b38a;outline-offset:3px}
 @media(max-width:600px){.cw-intake-heading{align-items:flex-start;flex-direction:column}.cw-intake-actions{width:100%}.cw-intake-actions>button,.cw-intake-actions>.cw-upload-button{flex:1;justify-content:center}.cw-camera-footer{align-items:flex-start;flex-direction:column}.cw-camera-footer>.cw-muted{max-width:none}}

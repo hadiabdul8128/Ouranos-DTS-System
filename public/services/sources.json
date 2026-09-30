@@ -1,0 +1,32 @@
+[
+  {
+    "name": "army",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/2/24/Mark_of_the_United_States_Army.svg",
+    "file": "/services/army.svg"
+  },
+  {
+    "name": "marine-corps",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/9/9f/Emblem_of_the_United_States_Marine_Corps.svg",
+    "file": "/services/marine-corps.svg"
+  },
+  {
+    "name": "navy",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/b/b1/Emblem_of_the_United_States_Navy.svg",
+    "file": "/services/navy.svg"
+  },
+  {
+    "name": "air-force",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/1/1a/U.S._Air_Force_service_mark.svg",
+    "file": "/services/air-force.svg"
+  },
+  {
+    "name": "space-force",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/2/29/Seal_of_the_United_States_Space_Force.svg",
+    "file": "/services/space-force.svg"
+  },
+  {
+    "name": "coast-guard",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/5/57/Seal_of_the_United_States_Coast_Guard.svg",
+    "file": "/services/coast-guard.svg"
+  }
+]
