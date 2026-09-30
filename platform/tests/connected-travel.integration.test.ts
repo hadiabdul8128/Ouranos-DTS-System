@@ -189,9 +189,17 @@ describe('connected planning and Voucher Copilot',()=>{
   }
   const first=expectSuccess(await send('reviewer','approval.decide',approval.id,approval.version,{decision:'approved',comment:''}));
   expect(first.status).toBe('in_review');
+  expect(first.data.levels).toMatchObject([{position:0,label:'S1 · Administration',status:'approved'},{position:1,label:'Command approval',status:'pending'}]);
+  const updates=async()=>(await request('traveler','GET',`/v1/entities/notification?organizationId=${organizationId}`)).body.entities.filter((n:Entity)=>n.data.type==='approval_update'&&n.data.requestId===approval.id);
+  expect(await updates()).toEqual([expect.objectContaining({data:expect.objectContaining({title:'Approved by S1 · Administration',decision:'approved',final:false,nextLevel:'Command approval',level:{position:0,label:'S1 · Administration'},recipientId:users.traveler.id,entityId:authorizationId})})]);
   await expectVoucherBlockedUntilApproved();
   const final=expectSuccess(await send('approver','approval.decide',approval.id,first.version,{decision:'approved',comment:''}));
   expect(final.status).toBe('approved');
+  expect((final.data.levels as Array<{status:string}>).map(l=>l.status)).toEqual(['approved','approved']);
+  const titles=(await updates()).map((n:Entity)=>n.data.title).sort();
+  expect(titles).toEqual(['Approved by S1 · Administration','Authorization approved']);
+  const reviewerInbox=(await request('reviewer','GET',`/v1/entities/notification?organizationId=${organizationId}`)).body.entities;
+  expect(reviewerInbox.some((n:Entity)=>n.data.type==='approval_update')).toBe(false);
  });
 
  it('returns the frozen approved handoff and denies another tenant or unassigned traveler',async()=>{
