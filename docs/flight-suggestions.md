@@ -15,3 +15,7 @@ Suggestions are commercial fares for planning estimates. They are not GSA City P
 ## Verification
 
 `platform/tests/flight-search.test.ts` covers label parsing (including codeshares, entities and duplicates), search URLs, input validation and unavailable responses.
+
+## Editing a trip
+
+Until its authorization is submitted, a trip's destination, dates and purpose can be changed from **Edit trip** on the planning screen. Flight suggestions follow the new trip. If planned expense dates fall outside the new dates, planning says so before submission. Once the authorization is in review or approved, the trip is locked, matching the server's rule.
