@@ -30,3 +30,16 @@ export function parseDue(text:string,today:string):string|undefined{
  m=/\bin (\d{1,3}) (day|week)s?\b/.exec(t);if(m)return addDays(today,Number(m[1])*(m[2]==='week'?7:1));
  return undefined;
 }
+
+const newId=()=>globalThis.crypto?.randomUUID?.()??Math.random().toString(36).slice(2);
+/** Each bullet, numbered line or sentence becomes a step; dates in it become the step's due date. */
+export function stepsFromInstructions(text:string,today:string):ChecklistStep[]{
+ const lines=text.split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
+ const pieces=(lines.length>1?lines:text.split(/(?<=[.;!?])\s+(?=[A-Z0-9])/))
+  .map(piece=>piece.replace(/^(?:[-*•▪◦]|\(?\d{1,2}[.)]|\(?[a-z][.)])\s+/i,'').trim()).filter(piece=>piece.length>=3);
+ return pieces.slice(0,30).map(piece=>{
+  const sentence=piece.replace(/\s+/g,' ');const cut=sentence.length>110?sentence.slice(0,sentence.lastIndexOf(' ',100)||100)+'…':sentence;
+  const due=parseDue(sentence,today);
+  return {id:newId(),title:cut.replace(/[.;]$/,''),...(cut!==sentence?{detail:sentence}:{}),...(due?{due}:{})};
+ });
+}
