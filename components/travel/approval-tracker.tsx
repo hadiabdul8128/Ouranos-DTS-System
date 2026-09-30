@@ -1,30 +1,23 @@
 import React from 'react';
-import {Check,CornerUpLeft,X} from 'lucide-react';
-import {approvalLevelsOf,currentApprovalLevel,type ApprovalLevel} from '../../packages/contracts/approval-chain';
+import {approvalLevelsOf,currentApprovalLevel} from '../../packages/contracts/approval-chain';
 import type {Entity} from '../../packages/contracts';
 import './approval-tracker.css';
 
-const day=(value:string)=>new Date(value).toLocaleDateString('en-US',{month:'short',day:'numeric'});
-function levelState(level:ApprovalLevel,current:ApprovalLevel|null,requestStatus:string){
- if(level.status==='approved')return {tone:'done',text:`Approved${level.decidedAt?` · ${day(level.decidedAt)}`:''}`};
- if(level.status==='changes_requested')return {tone:'returned',text:`Changes requested${level.decidedAt?` · ${day(level.decidedAt)}`:''}`};
- if(level.status==='rejected')return {tone:'rejected',text:`Not approved${level.decidedAt?` · ${day(level.decidedAt)}`:''}`};
- if(requestStatus==='in_review'&&current?.position===level.position)return {tone:'active',text:'Reviewing now'};
- return {tone:'waiting',text:requestStatus==='in_review'?'Waiting':'Not reached'};
-}
+const day=(value?:string)=>value?` · ${new Date(value).toLocaleDateString('en-US',{month:'short',day:'numeric'})}`:'';
 
-/** Where a submitted request is in the chain of command. */
-export function ApprovalTracker({request,submittedAt}:{request:Pick<Entity,'status'|'data'|'updatedAt'>;submittedAt?:string}){
- const levels=approvalLevelsOf(request),current=currentApprovalLevel(levels);
- const headline=request.status==='approved'?'Approved by the full chain':request.status==='changes_requested'?`Returned by ${current?.label??'a reviewer'}`:request.status==='rejected'?`Not approved by ${current?.label??'a reviewer'}`:`With ${current?.label??'reviewers'}`;
- return <section className="approval-tracker" aria-label="Chain of command">
-  <div className="approval-tracker-head"><span>Chain of command</span><strong>{headline}</strong></div>
-  <ol>
-   <li className="is-done"><span className="approval-dot"><Check size={12}/></span><div><strong>Submitted</strong><small>{submittedAt?`Sent ${day(submittedAt)}`:'Sent for review'}</small></div></li>
-   {levels.map(level=>{const state=levelState(level,current,request.status);return <li key={level.position} className={`is-${state.tone}`} aria-current={state.tone==='active'?'step':undefined}>
-    <span className="approval-dot">{state.tone==='done'?<Check size={12}/>:state.tone==='returned'?<CornerUpLeft size={12}/>:state.tone==='rejected'?<X size={12}/>:level.position+1}</span>
-    <div><strong><em>Level {level.position+1}</em>{level.label}</strong><small>{state.text}</small>{level.comment&&<blockquote>“{level.comment}”</blockquote>}</div>
-   </li>})}
-  </ol>
+/** One line saying where a submitted request is now. */
+export function ApprovalTracker({request}:{request:Pick<Entity,'status'|'data'>}){
+ const levels=approvalLevelsOf(request),current=currentApprovalLevel(levels),last=levels[levels.length-1]!;
+ const previous=current?levels.filter(level=>level.position<current.position&&level.status==='approved').at(-1):undefined;
+ if(request.status==='approved')return <section className="approval-status is-done" role="status"><strong>Approved</strong><span>{last.label}{day(last.decidedAt)}</span></section>;
+ if(!current)return null;
+ if(request.status==='changes_requested'||request.status==='rejected')return <section className={`approval-status ${request.status==='rejected'?'is-rejected':'is-returned'}`} role="status">
+  <strong>{request.status==='rejected'?'Not approved':'Changes requested'}</strong><span>{current.label}{day(current.decidedAt)}</span>
+  {current.comment&&<blockquote>“{current.comment}”</blockquote>}
+ </section>;
+ return <section className="approval-status is-active" role="status">
+  <strong>With {current.label}</strong>
+  <span>{levels.length>1?`Step ${current.position+1} of ${levels.length}`:'Waiting for review'}{previous?` · ${previous.label} approved${day(previous.decidedAt)}`:''}</span>
+  {levels.length>1&&<div className="approval-steps" aria-hidden="true">{levels.map(level=><i key={level.position} className={level.status==='approved'?'is-done':level.position===current.position?'is-current':''}/>)}</div>}
  </section>;
 }
