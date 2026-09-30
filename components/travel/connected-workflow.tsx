@@ -21,7 +21,7 @@ import type {VerificationReport} from '@/packages/domain/voucher-verification';
 import {PlanningHotelFinder} from './planning-hotel-finder';
 import {hotelPlanTarget} from '@/packages/domain/planning-hotel';
 import {FlightSuggestions,type SelectedFlight} from './flight-suggestions';
-import {ApprovalTracker} from './approval-tracker';
+import {ApprovalTracker,WaitingForApprovers} from './approval-tracker';
 import {PlaceField} from './place-field';
 import type {FlightOption} from '@/packages/domain/flight-search';
 const originKey='ouranos.travel.origin';
@@ -59,6 +59,15 @@ async function readyToSubmit(p:Platform,tripId:string){
  await p.engine.sync();
  const pending=await p.repository.db.outbox.toArray();
  if(pending.some(q=>q.command.entityId===tripId||record(q.command.payload).tripId===tripId))throw new Error('Some trip changes are still on this device. Sync them before submitting. Check workspace settings if a change needs attention.');
+}
+/** Ask the server to send a submission that was waiting for approvers; quietly does nothing until they exist. */
+async function routeWaiting(p:Platform,id:string){
+ if(!p.client||!p.engine||!p.organizationId)return false;
+ try{
+  const {entity}=await p.client.get('authorization',id,p.organizationId);if(entity.status!=='in_review')return false;
+  const result=await p.client.command({type:'authorization.submit',commandId:crypto.randomUUID(),organizationId:p.organizationId,deviceId:await deviceId(p),entityId:id,expectedVersion:entity.version,schemaVersion:1,payload:{}});
+  if(!result.ok)return false;await p.engine.merge(result.entity);return true;
+ }catch{return false}
 }
 async function onlineCommand(p:Platform,type:'authorization.submit'|'voucher.submit'|'document.confirm'|'document.reprocess',id:string){
  if(!p.client||!p.repository||!p.engine||!p.organizationId)throw new Error('A connection to your workspace is required.');
@@ -113,6 +122,9 @@ function PlanningForm({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
  const unsupported=Boolean(initial&&initial.local.data.formSchemaVersion!==PLANNING_SCHEMA_VERSION);
  const total=items.reduce<number|null>((sum,item)=>{if(sum===null)return null;if(!item.amount.trim())return sum;try{return sum+parseAmountMinor(item.currency==='USD'?item.amount:item.usdAmount)}catch{return null}},0);
  const status=row?.server?.status||row?.local.status||'draft';
+ // A plan submitted before approvers were set is sent to S1 once they exist.
+ const waiting=p.approvalMode==='required'&&status==='in_review'&&!approval&&Boolean(row?.server);
+ useEffect(()=>{if(!waiting)return;let active=true;void routeWaiting(p,id).then(routed=>{if(active&&routed)void p.engine?.sync()});return()=>{active=false}},[waiting]);// eslint-disable-line react-hooks/exhaustive-deps
  function updateItem(index:number,patch:Partial<BudgetDraft>){setItems(current=>current.map((item,i)=>i===index?{...item,...patch}:item));setDirty(true)}
  function changeCurrency(index:number,currency:ReceiptCurrency){try{updateItem(index,changePlanningCurrency(items[index],currency,rates));feedback.setError('')}catch(error){feedback.setError(message(error))}}
  function selectHotel(property:HotelProperty){
@@ -148,8 +160,8 @@ function PlanningForm({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
  }
  if(unsupported)return <div className="cw-card"><h2>A different planning form is attached.</h2><p className="cw-muted">This saved authorization uses an older or partner form. Its data has been preserved.</p><Link href="/dashboard/platform">Return to workspace</Link></div>;
  return <><div className="cw-section-heading"><h2>Travel details</h2><Status value={status}/></div>
- {locked&&!(status==='in_review'&&approval)&&<div className="cw-banner"><Check size={18}/><div><strong>{status==='approved'&&p.approvalMode==='automatic'?'Verified by Ouranos.':status==='approved'?'Approved.':status==='in_review'?'In review.':'This revision is closed.'}</strong><p>{status==='approved'&&p.approvalMode==='automatic'?'Internal checks passed. This is not DTS approval.':''}</p></div>{status==='approved'&&<Link href={`/dashboard/travel/vouchers?tripId=${trip.id}`}>Open voucher <ArrowRight size={16}/></Link>}</div>}
- {approval&&p.approvalMode==='required'&&status!=='approved'&&<ApprovalTracker request={approval}/>}
+ {locked&&status!=='in_review'&&<div className="cw-banner"><Check size={18}/><div><strong>{status==='approved'&&p.approvalMode==='automatic'?'Verified by Ouranos.':status==='approved'?'Approved.':status==='in_review'?'In review.':'This revision is closed.'}</strong><p>{status==='approved'&&p.approvalMode==='automatic'?'Internal checks passed. This is not DTS approval.':''}</p></div>{status==='approved'&&<Link href={`/dashboard/travel/vouchers?tripId=${trip.id}`}>Open voucher <ArrowRight size={16}/></Link>}</div>}
+ {p.approvalMode==='required'&&status!=='approved'&&(approval?<ApprovalTracker request={approval}/>:status==='in_review'&&row?.server&&<WaitingForApprovers/>)}
  <PlanningHotelFinder trip={{id:trip.id,destination:text(trip.data.destination),departure:text(trip.data.departure),returnDate:text(trip.data.returnDate),lodgingBudgetMinor:items.filter(item=>item.category==='lodging').reduce<number|null>((sum,item)=>{if(sum===null)return null;try{return sum+parseAmountMinor(item.currency==='USD'?item.amount:item.usdAmount)}catch{return null}},0)||null,budgetLabel:status==='approved'?'Approved lodging budget':'Planned lodging budget'}} onSelectHotel={locked||!!feedback.busy?undefined:selectHotel}/>
  <form onSubmit={e=>{e.preventDefault();void feedback.run('save',save)}}><fieldset disabled={locked||!!feedback.busy} className="cw-fieldset"><div className="cw-card cw-grid"><Field label="Traveler name"><Input value={traveler} onChange={e=>{setTraveler(e.target.value);setDirty(true)}} autoComplete="name" maxLength={200} required/></Field><PlaceField id="origin" label="Starting location" variant="plan" value={origin} onChange={value=>{setOrigin(value);setDirty(true);try{localStorage.setItem(originKey,value)}catch{}}}/><div className="cw-span-full cw-purpose"><span>Purpose</span><p>{text(trip.data.purpose)}</p></div></div>
  <FlightSuggestions from={origin} to={text(trip.data.destination)} departure={text(trip.data.departure)} returnDate={text(trip.data.returnDate)} selected={flight} onSelect={selectFlight} disabled={locked||!!feedback.busy}/>
