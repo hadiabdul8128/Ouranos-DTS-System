@@ -23,8 +23,8 @@ async function requireOwner(db:PoolClient,org:string,trip:string){const r=await 
 async function verifyVersion(row:Record<string,any>|undefined,expected:number){if((row?.version||0)!==expected)throw new DomainError('VERSION_CONFLICT','This record changed. Review the current server version before retrying.',409,{serverVersion:row?.version||0})}
 async function enqueue(db:PoolClient,type:string,org:string,entityId:string,key:string){await db.query('select ouranos.enqueue_job($1)',[JSON.stringify({type,organizationId:org,entityId,jobKey:key})])}
 async function audit(db:PoolClient,c:Command,userId:string,e:Entity){await db.query('insert into ouranos.audit_events(organization_id,trip_id,actor_id,command_id,action,entity_id,details) values($1,$2,$3,$4,$5,$6,$7)',[c.organizationId,e.tripId||(e.kind==='trip'?e.id:null),userId,c.commandId,c.type,e.id,JSON.stringify({version:e.version})])}
-async function notify(db:PoolClient,org:string,trip:string,userId:string,title:string,requestId:string,details:Record<string,unknown>={}){
- const id=randomUUID();const data={...details,title:title||details.title,requestId,recipientId:userId};
+async function notify(db:PoolClient,org:string,trip:string,userId:string,title:string,requestId:string|null,details:Record<string,unknown>={}){
+ const id=randomUUID();const data={...details,title:title||details.title,...(requestId?{requestId}:{}),recipientId:userId};
  await db.query("insert into ouranos.notifications(id,organization_id,trip_id,user_id,data) values($1,$2,$3,$4,$5)",[id,org,trip,userId,data]);
  await publishChange(db,'notification',{id,organization_id:org,trip_id:trip,data,status:'unread',version:1,updated_at:new Date()});
 }
@@ -112,7 +112,8 @@ async function apply(db:PoolClient,storage:SupabaseClient,c:Command,userId:strin
 
 async function submitAuthorization(db:PoolClient,c:Extract<Command,{type:'authorization.submit'}>,userId:string,development:boolean,approvalMode:PlatformConfig['APPROVAL_MODE']){
  const org=c.organizationId;
- const entity=await loadEntity(db,'authorization',c.entityId,org,true);await verifyVersion(entity,c.expectedVersion);await requireOwner(db,org,entity.trip_id);check(['draft','changes_requested'].includes(entity.status),'INVALID_STATE_TRANSITION','This revision has already been submitted',409);
+ const entity=await loadEntity(db,'authorization',c.entityId,org,true);await verifyVersion(entity,c.expectedVersion);await requireOwner(db,org,entity.trip_id);if(entity.status==='in_review'&&approvalMode==='required')return routeWaitingSubmission(db,org,entity,userId);
+ check(['draft','changes_requested'].includes(entity.status),'INVALID_STATE_TRANSITION','This revision has already been submitted',409);
  const issues=validatePlanning(entity.data.formSchemaVersion,entity.data.formData,development);check(!issues.length,'VALIDATION_FAILED',issues.join('; '));
  check(approvalMode!=='preview','INVALID_STATE_TRANSITION','Formal submission is disabled in preview mode',409);
  if(approvalMode==='automatic')check(entity.data.formSchemaVersion===PLANNING_SCHEMA_VERSION,'VALIDATION_FAILED','Automatic verification requires the current planning form');
@@ -137,15 +138,33 @@ async function submitAuthorization(db:PoolClient,c:Extract<Command,{type:'author
   await db.query('insert into ouranos.submission_revisions(organization_id,trip_id,authorization_id,entity_version,snapshot,sha256,submitted_by) values($1,$2,$3,$4,$5,$6,$7)',[org,entity.trip_id,entity.id,entity.version,snapshot,hash(snapshot),userId]);
   return updateStatus(db,'authorization',entity.id,org,'approved');
  }
- const workflow=(await db.query("select * from ouranos.workflow_definitions where organization_id=$1 and kind='authorization' and status='active'",[org])).rows[0];check(workflow,'DEPENDENCY_PENDING','An administrator must configure approval routing',409);
- check(workflow.data.steps.every((s:any)=>s.assigneeId!==userId),'PERMISSION_DENIED','A traveler cannot review their own submission',403);
- snapshot.workflow=workflow.data;snapshot.workflowVersion=workflow.version;
+ const workflow=await activeWorkflow(db,org);
+ if(workflow)check(workflow.data.steps.every((s:any)=>s.assigneeId!==userId),'PERMISSION_DENIED','A traveler cannot review their own submission',403);
+ snapshot.workflow=workflow?.data??null;snapshot.workflowVersion=workflow?.version??0;
  const rev=(await db.query('insert into ouranos.submission_revisions(organization_id,trip_id,authorization_id,entity_version,snapshot,sha256,submitted_by) values($1,$2,$3,$4,$5,$6,$7) returning *',[org,entity.trip_id,entity.id,entity.version,snapshot,hash(snapshot),userId])).rows[0];
+ // Without approvers the submission is still frozen and confirmed; it is sent to S1 once approvers are set.
+ const req=workflow?await createApprovalRequest(db,org,entity,trip,rev,workflow,userId):null;
+ const notice=authorizationSubmissionNotice({authorization:toEntity('authorization',entity),trip:toEntity('trip',trip),recipientId:userId,...(req?{requestId:req.id}:{}),revisionId:rev.id,submittedAt:new Date(rev.created_at).toISOString()});
+ await notify(db,org,entity.trip_id,userId,notice.title,req?.id??null,notice);
+ return updateStatus(db,'authorization',entity.id,org,'in_review');
+}
+
+const activeWorkflow=async(db:PoolClient,org:string)=>(await db.query("select * from ouranos.workflow_definitions where organization_id=$1 and kind='authorization' and status='active'",[org])).rows[0];
+async function createApprovalRequest(db:PoolClient,org:string,entity:Record<string,any>,trip:Record<string,any>,rev:Record<string,any>,workflow:Record<string,any>,userId:string){
  const req=(await db.query('insert into ouranos.approval_requests(organization_id,trip_id,revision_id,workflow_id,workflow_version,data,created_by) values($1,$2,$3,$4,$5,$6,$7) returning *',[org,entity.trip_id,rev.id,workflow.id,workflow.version,{kind:'authorization',entityId:entity.id,revisionId:rev.id,destination:trip.data.destination,levels:initialApprovalLevels(workflow.data.steps)},userId])).rows[0];
  for(const [i,step] of workflow.data.steps.entries())await db.query('insert into ouranos.approval_steps(organization_id,request_id,position,assignee_id,required_role) values($1,$2,$3,$4,$5)',[org,req.id,i,step.assigneeId,step.role]);
- const notice=authorizationSubmissionNotice({authorization:toEntity('authorization',entity),trip:toEntity('trip',trip),recipientId:userId,requestId:req.id,revisionId:rev.id,submittedAt:new Date(rev.created_at).toISOString()});
- await notify(db,org,entity.trip_id,userId,notice.title,req.id,notice);
- await notify(db,org,entity.trip_id,workflow.data.steps[0].assigneeId,'A travel submission needs review',req.id);await publishChange(db,'approval',req);return updateStatus(db,'authorization',entity.id,org,'in_review');
+ await notify(db,org,entity.trip_id,workflow.data.steps[0].assigneeId,'A travel submission needs review',req.id);await publishChange(db,'approval',req);
+ return req;
+}
+/** Send a submission made before approvers existed to the now-configured approvers. */
+async function routeWaitingSubmission(db:PoolClient,org:string,entity:Record<string,any>,userId:string){
+ const rev=(await db.query('select * from ouranos.submission_revisions where organization_id=$1 and authorization_id=$2 order by created_at desc limit 1',[org,entity.id])).rows[0];
+ const routed=rev&&(await db.query('select 1 from ouranos.approval_requests where organization_id=$1 and revision_id=$2',[org,rev.id])).rowCount;
+ check(rev&&!routed,'INVALID_STATE_TRANSITION','This revision has already been submitted',409);
+ const workflow=await activeWorkflow(db,org);check(workflow,'DEPENDENCY_PENDING','Approvers are not set yet',409);
+ check(workflow.data.steps.every((s:any)=>s.assigneeId!==userId),'PERMISSION_DENIED','A traveler cannot review their own submission',403);
+ await createApprovalRequest(db,org,entity,await loadEntity(db,'trip',entity.trip_id,org),rev,workflow,userId);
+ return updateStatus(db,'authorization',entity.id,org,'in_review');
 }
 
 async function verifyVoucher(db:PoolClient,c:Extract<Command,{type:'voucher.submit'}>,userId:string,development:boolean){
