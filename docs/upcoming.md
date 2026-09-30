@@ -1,8 +1,8 @@
 # Upcoming
 
-**Upcoming** is in the home screen header on every screen size, with a count of items due in the next 7 days. It opens a side panel with a month calendar and a list, soonest first, grouped into Overdue, This week, This month and Later. It shows appointments, deadlines, deployment dates and other reminders the user adds. Trip dates and voucher deadlines are not listed for now; which records should appear automatically is still to be decided (`upcomingEntries` in `packages/domain/planner.ts` can already include them).
+**Upcoming** is in the home screen header on every screen size, with a count of items due in the next 7 days. It opens a side panel with a month calendar and a list, soonest first, grouped into Overdue, This week, This month and Later. It shows appointments, deadlines, deployment dates and other reminders the user adds, plus the departure and return date of each current or upcoming trip, linked to its plan. Voucher status and deadlines are left out on purpose (`upcomingEntries(…, {vouchers:false})`).
 
-Calendar days with items have a dot (red when overdue). Choosing a day shows only that day's items, and **Add** starts with that date. Items can be marked done or removed.
+Calendar days with items have a dot (red when overdue), and every day of a current or upcoming trip is shaded as a travel day. Choosing a day shows only that day's items, and **Add** starts with that date. Items can be marked done or removed.
 
 Added items are saved in this browser for the signed-in account and workspace; they do not sync to other devices yet. Syncing them would need a new server record type and migration.
 
