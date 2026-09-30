@@ -2,7 +2,7 @@ import {createHash,randomUUID} from 'node:crypto';
 import type {Pool,PoolClient} from 'pg';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import {authorizationSubmissionNotice} from '../../packages/contracts/authorization-notice';
-import {initialApprovalLevels} from '../../packages/contracts/approval-chain';
+import {approvalLevelsOf,approvalUpdateNotice,decideApprovalLevel,initialApprovalLevels} from '../../packages/contracts/approval-chain';
 import {commandSchema,type Command,type CommandResult,type Entity} from '../../packages/contracts/index';
 import {DomainError,requireCondition as check} from '../../packages/domain/errors';
 import {withActor} from '../shared/database';
@@ -24,7 +24,7 @@ async function verifyVersion(row:Record<string,any>|undefined,expected:number){i
 async function enqueue(db:PoolClient,type:string,org:string,entityId:string,key:string){await db.query('select ouranos.enqueue_job($1)',[JSON.stringify({type,organizationId:org,entityId,jobKey:key})])}
 async function audit(db:PoolClient,c:Command,userId:string,e:Entity){await db.query('insert into ouranos.audit_events(organization_id,trip_id,actor_id,command_id,action,entity_id,details) values($1,$2,$3,$4,$5,$6,$7)',[c.organizationId,e.tripId||(e.kind==='trip'?e.id:null),userId,c.commandId,c.type,e.id,JSON.stringify({version:e.version})])}
 async function notify(db:PoolClient,org:string,trip:string,userId:string,title:string,requestId:string,details:Record<string,unknown>={}){
- const id=randomUUID();const data={...details,title,requestId,recipientId:userId};
+ const id=randomUUID();const data={...details,title:title||details.title,requestId,recipientId:userId};
  await db.query("insert into ouranos.notifications(id,organization_id,trip_id,user_id,data) values($1,$2,$3,$4,$5)",[id,org,trip,userId,data]);
  await publishChange(db,'notification',{id,organization_id:org,trip_id:trip,data,status:'unread',version:1,updated_at:new Date()});
 }
@@ -204,6 +204,11 @@ async function decide(db:PoolClient,c:Extract<Command,{type:'approval.decide'}>,
  const next=(await db.query("select * from ouranos.approval_steps where request_id=$1 and status='pending' order by position limit 1",[req.id])).rows[0];
  const status=c.payload.decision==='approved'&&next?'in_review':c.payload.decision;
  if(status!=='in_review')await updateStatus(db,req.data.kind,req.data.entityId,c.organizationId,status);
- await notify(db,c.organizationId,req.trip_id,status==='in_review'?next.assignee_id:req.created_by,status==='in_review'?'A travel submission needs review':`Submission ${status.replaceAll('_',' ')}`,req.id);
+ // Record the level on the request so the traveler can follow it up the chain.
+ const decidedAt=new Date().toISOString(),levels=approvalLevelsOf({status:req.status,data:req.data}),level=levels.find(l=>l.position===step.position)??{position:step.position,label:`Level ${step.position+1}`};
+ const nextLevel=status==='in_review'?levels.find(l=>l.position===next.position)?.label??`Level ${next.position+1}`:undefined;
+ if(Array.isArray(req.data.levels))await db.query('update ouranos.approval_requests set data=$2 where id=$1',[req.id,{...req.data,levels:decideApprovalLevel(levels,step.position,c.payload.decision,decidedAt,c.payload.comment)}]);
+ await notify(db,c.organizationId,req.trip_id,req.created_by,'',req.id,approvalUpdateNotice({recipientId:req.created_by,requestId:req.id,tripId:req.trip_id,entityKind:req.data.kind,entityId:req.data.entityId,...(typeof req.data.destination==='string'?{destination:req.data.destination}:{}),level:{position:level.position,label:level.label},decision:c.payload.decision,...(nextLevel?{nextLevel}:{}),comment:c.payload.comment,decidedAt}));
+ if(status==='in_review')await notify(db,c.organizationId,req.trip_id,next.assignee_id,'A travel submission needs review',req.id);
  return updateStatus(db,'approval',req.id,c.organizationId,status);
 }
