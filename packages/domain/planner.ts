@@ -119,9 +119,9 @@ export function upcomingEntries(items:PlannerItem[],checklists:Checklist[],trips
  return entries.sort((a,b)=>a.date.localeCompare(b.date)||(a.time??'').localeCompare(b.time??''));
 }
 
-/** Every day of trips that have not ended yet, capped at 60 days per trip. */
+/** Remaining days of trips that have not ended, from today on, capped at 60 days per trip. */
 export function travelDays(trips:Array<{departure:string;returnDate:string}>,today:string){
  const days=new Set<string>();
- for(const trip of trips){if(trip.returnDate<today||trip.returnDate<trip.departure)continue;for(let day=trip.departure,n=0;day<=trip.returnDate&&n<60;day=addDays(day,1),n++)days.add(day)}
+ for(const trip of trips){if(trip.returnDate<today||trip.returnDate<trip.departure)continue;for(let day=trip.departure<today?today:trip.departure,n=0;day<=trip.returnDate&&n<60;day=addDays(day,1),n++)days.add(day)}
  return [...days].sort();
 }
