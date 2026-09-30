@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { PlatformProvider } from "@/components/platform/provider";
+import { DotPattern } from "@/components/ui/dot-pattern";
 
 export const metadata: Metadata = {
   title: "Ouranos | Your operational workspace",
@@ -18,7 +19,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className="antialiased"><PlatformProvider>{children}</PlatformProvider></body>
+      <body className="antialiased">
+        <div className="ambient-dots" aria-hidden="true"><DotPattern width={24} height={24} cr={0.8} glow={false} /></div>
+        <div className="app-surface"><PlatformProvider>{children}</PlatformProvider></div>
+      </body>
     </html>
   );
 }
