@@ -141,7 +141,10 @@ function PlanningForm({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
   await p.repository!.stage('authorization.save',id,{tripId:trip.id,formSchemaVersion:PLANNING_SCHEMA_VERSION,formData:form});baselineVersion.current=(await p.repository!.db.entities.get(`authorization:${id}`))!.local.version;setDirty(false);return stageMessage(p,id,'authorization');
  }
  async function submit(){
-  if(dirty||!row)await save();if(p.approvalMode==='preview'){await readyToSubmit(p,trip.id);window.location.assign(`/dashboard/travel/vouchers?tripId=${trip.id}`);return}await readyToSubmit(p,trip.id);const result=await onlineCommand(p,'authorization.submit',id);setDirty(false);return result.status==='approved'?(p.approvalMode==='automatic'?'Plan verified by Ouranos. You can now prepare your voucher.':'This plan is approved.'):'Submitted for review. Your confirmation is in Inbox.';
+  if(dirty||!row)await save();if(p.approvalMode==='preview'){await readyToSubmit(p,trip.id);window.location.assign(`/dashboard/travel/vouchers?tripId=${trip.id}`);return}await readyToSubmit(p,trip.id);const result=await onlineCommand(p,'authorization.submit',id);setDirty(false);
+  // Take the traveler to their confirmation, which holds the submitted details.
+  if(result.status==='in_review'){await p.engine?.sync();window.location.assign(`/dashboard/inbox?authorization=${id}`);return 'Submitted. Opening your inbox…'}
+  return result.status==='approved'?(p.approvalMode==='automatic'?'Plan verified by Ouranos. You can now prepare your voucher.':'This plan is approved.'):'Submitted for review. Your confirmation is in Inbox.';
  }
  if(unsupported)return <div className="cw-card"><h2>A different planning form is attached.</h2><p className="cw-muted">This saved authorization uses an older or partner form. Its data has been preserved.</p><Link href="/dashboard/platform">Return to workspace</Link></div>;
  return <><div className="cw-section-heading"><h2>Travel details</h2><Status value={status}/></div>
