@@ -132,7 +132,7 @@ body { background:var(--background); color:var(--foreground); }
 body { isolation:isolate; }
 .app-surface { position:relative; z-index:1; }
 .ambient-dots { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
-.ambient-dots svg { color:#a7afa3; opacity:.075; }
+.ambient-dots svg { color:#a7afa3; opacity:.12; }
 .inbox-sprite { display:block; object-fit:contain; flex-shrink:0; filter:invert(1); mix-blend-mode:screen; }
 .gateway-wordmark,.hyper-wordmark { letter-spacing:-1px; }
 .quiet-page { background:transparent; }
