@@ -1,32 +1,25 @@
 'use client';
 import {useState} from 'react';
 import Link from 'next/link';
-import {useLiveQuery} from 'dexie-react-hooks';
 import {ArrowUpRight,Check,Plus,Trash2,X} from 'lucide-react';
-import {usePlatform} from '@/components/platform/provider';
 import {Calendar} from '@/components/ui/calendar';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {addDays,plannerKinds,upcomingEntries,type PlannerKind,type UpcomingEntry} from '@/packages/domain/planner';
 import {localToday} from '@/packages/domain/flight-search';
-import type {LocalRecord} from '@/packages/offline/database';
 import {usePlanner} from './store';
 import './planner.css';
 
 const kindNames:Record<UpcomingEntry['kind'],string>={appointment:'Appointment',deadline:'Deadline',deployment:'Deployment',other:'Reminder',trip:'Travel',voucher:'Voucher',checklist:'Checklist'};
-const text=(value:unknown)=>typeof value==='string'?value:'';
 const daysBetween=(from:string,to:string)=>Math.round((Date.parse(`${to}T12:00:00Z`)-Date.parse(`${from}T12:00:00Z`))/86400000);
 function when(date:string,today:string){const d=daysBetween(today,date);return d<0?`${-d} day${d===-1?'':'s'} overdue`:d===0?'Today':d===1?'Tomorrow':d<14?`In ${d} days`:d<60?`In ${Math.round(d/7)} weeks`:`In ${Math.round(d/30)} months`}
 function group(date:string,today:string){const d=daysBetween(today,date);return d<0?'Overdue':d<7?'This week':d<31?'This month':'Later'}
 
 /** Appointments, deadlines, deployment dates, checklist due dates and travel dates, soonest first. */
-/** Everything coming up for the signed-in traveler, within the next year. */
+/** Items the traveler added, within the next year. Trips and vouchers are not listed yet. */
 export function useUpcoming(){
- const p=usePlatform(),{state,update}=usePlanner(),[today]=useState(localToday);
- const rows=useLiveQuery<LocalRecord[]>(()=>p.repository?.db.entities.where('kind').anyOf('trip','voucher').toArray()||Promise.resolve([]),[p.repository]);
- const trips=(rows||[]).filter(r=>r.kind==='trip').map(r=>({id:r.id,destination:text(r.local.data.destination),departure:text(r.local.data.departure),returnDate:text(r.local.data.returnDate),
-  voucherDone:(rows||[]).some(v=>v.kind==='voucher'&&v.local.tripId===r.id&&['in_review','approved','verified'].includes(v.server?.status||v.local.status))})).filter(t=>t.departure&&t.returnDate);
- const entries=upcomingEntries(state.items,[],trips,today).filter(e=>e.date<=addDays(today,365));
+ const {state,update}=usePlanner(),[today]=useState(localToday);
+ const entries=upcomingEntries(state.items,[],[],today).filter(e=>e.date<=addDays(today,365));
  return {entries,today,update,soon:entries.filter(e=>daysBetween(today,e.date)<7).length};
 }
 const toDate=(value:string)=>new Date(`${value}T12:00:00`);
