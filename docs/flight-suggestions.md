@@ -1,6 +1,6 @@
 # Flight suggestions
 
-The planning screen shows **Suggested flights** under Starting location. Once the plan has a starting location, the trip's destination and dates are used to look up flights. The first result is Google's best pick; the lowest fare is also marked. Nothing is added to the plan until the traveler chooses a flight. Choosing one fills a single editable airfare row with the airline, route and price; choosing another replaces that row. Other airfare rows are left alone. The last starting location is remembered on the device so later plans show suggestions immediately.
+Destination and starting location are entered as a city plus a state or territory (or a city and country for travel outside the U.S.), so searches name a real place. Installation names such as "Fort Bragg, NC" return no flights; the form asks for the nearest city with an airport instead. The planning screen shows **Suggested flights** under Starting location. Once the plan has a starting location, the trip's destination and dates are used to look up flights. The first result is Google's best pick; the lowest fare is also marked. Nothing is added to the plan until the traveler chooses a flight. Choosing one fills a single editable airfare row with the airline, route and price; choosing another replaces that row. Other airfare rows are left alone. The last starting location is remembered on the device so later plans show suggestions immediately.
 
 ## How results are gathered
 
