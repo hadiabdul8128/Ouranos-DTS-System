@@ -53,7 +53,7 @@ export function UpcomingPanel(){
   </form>}
   <Calendar mode="single" className="upcoming-calendar" selected={day?toDate(day):undefined} onSelect={date=>setDay(date?fromDate(date):null)} modifiers={{busy,overdue}} modifiersClassNames={{busy:'has-items',overdue:'has-overdue'}} defaultMonth={toDate(today)}/>
   {day&&<button type="button" className="upcoming-all" onClick={()=>setDay(null)}>Show everything</button>}
-  {!groups.length?<p className="upcoming-empty">{day?'Nothing on this day.':'Nothing coming up. Add appointments, deadlines or deployment dates.'}</p>:
+  {!groups.length?<p className="upcoming-empty">Deadlines and appointments will be added here.</p>:
   groups.map(g=><div key={g.name} className="upcoming-group"><h3 className={g.name==='Overdue'?'is-overdue':''}>{g.name}</h3><ul>{g.entries.map(entry=>{const d=new Date(`${entry.date}T12:00:00Z`);return <li key={entry.key} className={`upcoming-row kind-${entry.kind}`}>
    <span className="upcoming-date" aria-hidden="true"><b>{d.toLocaleDateString('en-US',{month:'short',timeZone:'UTC'})}</b>{d.getUTCDate()}</span>
    <div className="upcoming-body"><span className="upcoming-kind">{kindNames[entry.kind]}{entry.time?` · ${entry.time}`:''}</span><strong>{entry.href?<Link href={entry.href}>{entry.title} <ArrowUpRight size={12}/></Link>:entry.title}</strong><small>{when(entry.date,today)}{entry.detail?` · ${entry.detail}`:''}</small></div>
