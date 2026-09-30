@@ -44,3 +44,6 @@ export async function searchFlights(input:FlightQuery,fetcher:typeof fetch=fetch
 }
 
 export function cheapestFlight(options:FlightOption[]){return options.reduce<FlightOption|null>((best,option)=>!best||option.price<best.price?option:best,null)}
+
+/** Today's date on the traveler's device, as YYYY-MM-DD. */
+export function localToday(now=new Date()){return new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,10)}
