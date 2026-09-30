@@ -2,7 +2,7 @@
 import {useEffect,useState} from 'react';
 import {Check,ChevronDown,ExternalLink,Plane,RotateCw} from 'lucide-react';
 import {Popover,PopoverContent,PopoverTrigger} from '@/components/ui/popover';
-import {cheapestFlight,type FlightOption,type FlightResults} from '@/packages/domain/flight-search';
+import {cheapestFlight,localToday,type FlightOption,type FlightResults} from '@/packages/domain/flight-search';
 import './flight-suggestions.css';
 
 const stops=(n:number)=>n===0?'Nonstop':`${n} stop${n>1?'s':''}`;
@@ -13,7 +13,8 @@ export type SelectedFlight={key:string;option:FlightOption};
 export const flightSearchKey=(from:string,to:string,departure:string,returnDate:string)=>[from,to,departure,returnDate].map(v=>v.trim().toLocaleLowerCase('en-US')).join('|');
 type Props={from:string;to:string;departure:string;returnDate:string;selected:SelectedFlight|null;onSelect:(value:SelectedFlight|null)=>void;disabled?:boolean};
 export function FlightSuggestions({from,to,departure,returnDate,selected:chosen,onSelect,disabled}:Props){
- const ready=from.trim().length>=2&&to.trim().length>=2&&Boolean(departure)&&(!returnDate||returnDate>=departure);
+ const [today]=useState(localToday),past=Boolean(departure)&&departure<today;
+ const ready=!past&&from.trim().length>=2&&to.trim().length>=2&&Boolean(departure)&&(!returnDate||returnDate>=departure);
  const key=flightSearchKey(from,to,departure,returnDate);
  const [attempt,setAttempt]=useState(0),[open,setOpen]=useState(false),requestKey=`${key}#${attempt}`;
  const [state,setState]=useState<{requestKey:string;results:FlightResults|null;error:string}>({requestKey:'',results:null,error:''});
@@ -31,11 +32,12 @@ export function FlightSuggestions({from,to,departure,returnDate,selected:chosen,
   // eslint-disable-next-line react-hooks/exhaustive-deps
  },[ready,requestKey]);
 
+ if(past)return <p className="flight-hint"><Plane size={14}/> These trip dates have passed, so there are no flights to suggest.</p>;
  if(!ready)return <p className="flight-hint"><Plane size={14}/> Add your starting location to see suggested flights.</p>;
  if(loading)return <p className="flight-hint" role="status"><span className="flight-spinner"/> Finding the best flights from {from.trim()} to {to.trim()}…</p>;
  if(error)return <p className="flight-hint flight-error" role="alert">{error} <button type="button" onClick={()=>setAttempt(n=>n+1)}><RotateCw size={12}/> Retry</button></p>;
  if(!results)return null;
- if(!results.options.length)return <p className="flight-hint">No flights found for this route. Try an airport code, like SAT. <a href={results.searchUrl} target="_blank" rel="noreferrer">Search Google Flights <ExternalLink size={11}/></a></p>;
+ if(!results.options.length)return <p className="flight-hint">No flights found for this route. Check the city and state, or use the nearest city with an airport. <a href={results.searchUrl} target="_blank" rel="noreferrer">Search Google Flights <ExternalLink size={11}/></a></p>;
  const cheapest=cheapestFlight(results.options),trip=results.options[0]!.roundTrip?'round trip':'one way';
  return <div className="flight-field"><label id="flight-label">Suggested flights <span>{trip} · via Google Flights</span></label>
   <Popover open={open} onOpenChange={setOpen}><PopoverTrigger asChild><button type="button" className="flight-trigger" aria-labelledby="flight-label" disabled={disabled}>
