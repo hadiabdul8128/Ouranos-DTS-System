@@ -144,15 +144,33 @@ describe('connected planning and Voucher Copilot',()=>{
    expect(history.body.steps).toHaveLength(1);expect(history.body.decisions).toHaveLength(1);
   }finally{organizationId=savedOrg}
  });
- it('does not send a submission confirmation when approval routing is missing',async()=>{
+ it('accepts a submission before approvers are set and sends it to S1 once they are',async()=>{
   const savedOrg=organizationId;
   try{
    organizationId=(await request('peer','POST','/v1/organizations',{name:'Missing routing test'})).body.id;
    const trip=expectSuccess(await send('peer','trip.save',crypto.randomUUID(),0,{destination:'Washington, DC',departure:'2026-10-12',returnDate:'2026-10-15',purpose:'Missing routing',timezone:'UTC'}));
    const plan=expectSuccess(await send('peer','authorization.save',crypto.randomUUID(),0,{tripId:trip.id,formSchemaVersion:PLANNING_SCHEMA_VERSION,formData:planning}));
-   const attempt=await send('peer','authorization.submit',plan.id,plan.version,{});
-   expect(attempt.body.error.code).toBe('DEPENDENCY_PENDING');
-   expect((await request('peer','GET',`/v1/entities/notification?organizationId=${organizationId}`)).body.entities).toEqual([]);
+   const submitted=expectSuccess(await send('peer','authorization.submit',plan.id,plan.version,{}));
+   expect(submitted.status).toBe('in_review');
+   const notices=(await request('peer','GET',`/v1/entities/notification?organizationId=${organizationId}`)).body.entities;
+   expect(notices).toHaveLength(1);
+   expect(notices[0].data).toMatchObject({type:'authorization_submitted',authorizationId:plan.id,awaitingApprovers:true,submission:{formData:planning}});
+   expect(notices[0].data.requestId).toBeUndefined();
+   expect((await request('peer','GET',`/v1/entities/approval?organizationId=${organizationId}`)).body.entities).toEqual([]);
+   const early=await send('peer','authorization.submit',plan.id,submitted.version,{});
+   expect(early.body.error.code).toBe('DEPENDENCY_PENDING');
+   expect((await request('peer','PUT',`/v1/organizations/${organizationId}/members`,{userId:users.reviewer.id,role:'reviewer'})).status).toBe(200);
+   expectSuccess(await send('peer','workflow.configure',crypto.randomUUID(),0,{kind:'authorization',name:'Single reviewer',steps:[{assigneeId:users.reviewer.id,role:'reviewer'}]}));
+   const routed=expectSuccess(await send('peer','authorization.submit',plan.id,submitted.version,{}));
+   expect(routed.status).toBe('in_review');
+   const again=await send('peer','authorization.submit',plan.id,routed.version,{});
+   expect(again.body.error.code).toBe('INVALID_STATE_TRANSITION');
+   const approval=await approvalFor(plan.id);
+   expect(approval.data.levels).toMatchObject([{label:'S1 · Administration',status:'pending'}]);
+   const review=(await request('reviewer','GET',`/v1/entities/notification?organizationId=${organizationId}`)).body.entities;
+   expect(review.some((n:Entity)=>n.data.requestId===approval.id&&n.data.title==='A travel submission needs review')).toBe(true);
+   expect((await request('peer','GET',`/v1/entities/notification?organizationId=${organizationId}`)).body.entities).toHaveLength(1);
+   expect(expectSuccess(await send('reviewer','approval.decide',approval.id,approval.version,{decision:'approved',comment:''})).status).toBe('approved');
   }finally{organizationId=savedOrg}
  });
  it('approves a real planning form only through the assigned review sequence',async()=>{
