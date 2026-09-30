@@ -2928,6 +2928,11 @@
                     "reviewer",
                     "approver"
                   ]
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80
                 }
               },
               "required": [
@@ -3938,6 +3943,11 @@
                             "reviewer",
                             "approver"
                           ]
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 80
                         }
                       },
                       "required": [
@@ -5043,6 +5053,11 @@
                                   "reviewer",
                                   "approver"
                                 ]
+                              },
+                              "label": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 80
                               }
                             },
                             "required": [
