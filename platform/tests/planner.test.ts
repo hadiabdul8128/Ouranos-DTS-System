@@ -1,5 +1,5 @@
 import {describe,expect,it,vi} from 'vitest';
-import {localChecklist,parseDue,stepsFromInstructions,upcomingEntries,voucherDue} from '../../packages/domain/planner';
+import {localChecklist,parseDue,stepsFromInstructions,travelDays,upcomingEntries,voucherDue} from '../../packages/domain/planner';
 import {guideAskInput} from '../../packages/contracts/guide';
 import {answerGuideQuestion,buildGuideChecklist} from '../api/guide';
 
@@ -42,6 +42,14 @@ describe('upcoming',()=>{
   expect(entries.map(e=>[e.date,e.kind,e.title])).toEqual([
    ['2026-10-02','appointment','Dental'],['2026-10-05','trip','Travel to Denver, CO'],['2026-10-09','trip','Return from Denver, CO'],
    ['2026-10-15','checklist','Complete PHA'],['2026-10-16','voucher','Voucher due · Denver, CO'],['2027-02-01','deployment','Deploy']]);
+ });
+ it('can list trip dates without voucher deadlines',()=>{
+  const trips=[{id:'t1',destination:'Denver, CO',departure:'2026-10-05',returnDate:'2026-10-09'},{id:'t0',destination:'Austin, TX',departure:'2026-09-01',returnDate:'2026-09-04'}];
+  expect(upcomingEntries([],[],trips,today,{vouchers:false}).map(e=>[e.date,e.kind,e.title])).toEqual([['2026-10-05','trip','Travel to Denver, CO'],['2026-10-09','trip','Return from Denver, CO']]);
+  expect(upcomingEntries([],[],[{...trips[0]!,departure:'2026-09-28'}],today,{vouchers:false}).map(e=>e.title)).toEqual(['Return from Denver, CO']);
+ });
+ it('marks every day of current and upcoming trips',()=>{
+  expect(travelDays([{departure:'2026-10-30',returnDate:'2026-11-02'},{departure:'2026-09-01',returnDate:'2026-09-04'},{departure:'2026-09-29',returnDate:'2026-09-30'}],today)).toEqual(['2026-09-29','2026-09-30','2026-10-30','2026-10-31','2026-11-01','2026-11-02']);
  });
  it('counts five working days for the voucher',()=>{expect(voucherDue('2026-10-09')).toBe('2026-10-16');expect(voucherDue('2026-10-07')).toBe('2026-10-14')});
 });
