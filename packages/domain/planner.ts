@@ -43,3 +43,60 @@ export function stepsFromInstructions(text:string,today:string):ChecklistStep[]{
   return {id:newId(),title:cut.replace(/[.;]$/,''),...(cut!==sentence?{detail:sentence}:{}),...(due?{due}:{})};
  });
 }
+
+type Guide={title:string;match:RegExp;steps:Array<[string,string]>};
+const CONFIRM:[string,string]=['Confirm your unit’s requirements','Your command, S1 and orders set the actual requirements and deadlines. Use this list as a starting point and follow their direction where it differs.'];
+/** General starting points for common tasks. They are not service- or unit-specific policy. */
+export const GUIDES:Guide[]=[
+ {title:'Prepare for deployment',match:/\b(deploy(?:ment|ing)?|mobiliz\w*|pre-?deployment)\b/i,steps:[
+  ['Review your orders and report date','Read your orders for report date, location and any required training or gear, and ask your chain of command about anything unclear.'],
+  ['Update your Record of Emergency Data (DD Form 93)','Make sure next of kin and contact information are current. Your S1 or admin office can help.'],
+  ['Review SGLI coverage and beneficiaries','Check and update life insurance beneficiaries in the SGLI Online Enrollment System (SOES) through milConnect.'],
+  ['Complete medical and dental readiness','Schedule any overdue periodic health assessment, dental exam, immunizations or other readiness items with your clinic.'],
+  ['Set up legal documents','Visit the installation legal assistance office for powers of attorney and a will if you need them.'],
+  ['Arrange family care and household matters','Update your family care plan if required, and plan for pets, vehicles, housing and bills while you are gone.'],
+  ['Check pay and allotments','Review your pay, direct deposit and any allotments in myPay before you leave.'],
+  ['Pack required gear','Use your unit packing list and inventory issued equipment.'],
+  CONFIRM]},
+ {title:'Prepare for a PCS move',match:/\b(pcs|permanent change of station|change of station|relocat\w*|new duty station)\b/i,steps:[
+  ['Get your orders','You need official PCS orders before scheduling a move or making travel arrangements.'],
+  ['Schedule your household goods move','Start your shipment request early through move.mil or your installation transportation office.'],
+  ['Plan travel','Arrange travel through DTS or your travel office as your orders allow.'],
+  ['Handle housing','Give notice to base housing or your landlord, and contact the housing office at your new installation.'],
+  ['Out-process your current installation','Complete your unit and installation checkout requirements.'],
+  ['Hand-carry important records','Keep orders, medical and dental records, and family documents with you rather than in the shipment.'],
+  ['Request advance pay if you need it','Ask your finance office about advance pay and allowances.'],
+  ['Submit your travel voucher','File your PCS travel claim after you arrive, within the time your finance office requires.'],
+  CONFIRM]},
+ {title:'Request leave',match:/\b(leave|pto|time off|vacation)\b/i,steps:[
+  ['Check your leave balance','Look up your balance on your leave and earnings statement in myPay.'],
+  ['Choose dates and talk to your supervisor','Agree on dates with your chain of command before submitting.'],
+  ['Submit the leave request','Use your service’s leave system or form, including your address and phone while on leave.'],
+  ['Get approval before you go','Make sure your request is approved and you have a copy.'],
+  ['Sign out and sign back in','Follow your unit’s procedure for starting and ending leave.'],
+  CONFIRM]},
+ {title:'Prepare for separation or retirement',match:/\b(separat\w*|retir\w*|ets|eas|getting out|leaving the military)\b/i,steps:[
+  ['Start the Transition Assistance Program (TAP)','Contact your installation transition office; TAP generally starts at least 365 days before separation.'],
+  ['Schedule your separation health assessment','Book it with your clinic, and consider filing a VA disability claim before separation.'],
+  ['Plan your next step','Compare employment, training and education options. Ouranos Transition can help you compare them.'],
+  ['Review benefits','Look at GI Bill, VA health care, insurance conversion and final pay.'],
+  ['Get copies of your records','Collect your service, medical and training records before you leave.'],
+  CONFIRM]},
+ {title:'Temporary duty (TDY) travel',match:/\b(tdy|temporary duty|travel orders)\b/i,steps:[
+  ['Create your trip in Ouranos','Enter where and when you are going, then plan your expenses.'],
+  ['Get your authorization approved','Submit your plan for S1 and command review before you travel.'],
+  ['Book travel','Book through DTS or your travel office; Ouranos suggestions are estimates only.'],
+  ['Keep your receipts','Save lodging and other required receipts during the trip.'],
+  ['File your voucher after you return','Submit your travel voucher within 5 working days of returning.'],
+  CONFIRM]},
+];
+export const matchGuide=(text:string)=>GUIDES.find(guide=>guide.match.test(text));
+
+/** A checklist built on the device: a matching guide for short requests, otherwise the instructions themselves. */
+export function localChecklist(text:string,today:string,now=new Date()):Checklist{
+ // Only a short one-line request gets a starting guide; pasted instructions always keep their own tasks.
+ const guide=text.trim().length<100&&!/\n/.test(text.trim())?matchGuide(text):undefined;
+ const steps=guide?guide.steps.map(([title,detail])=>({id:newId(),title,detail})):stepsFromInstructions(text,today);
+ const title=guide?.title??(steps.length>1?`${steps[0]!.title.slice(0,48)}${steps[0]!.title.length>48?'…':''} and ${steps.length-1} more`:steps[0]?.title.slice(0,70))??'Checklist';
+ return {id:newId(),title,source:guide?'guide':'instructions',instructions:text,createdAt:now.toISOString(),steps};
+}
