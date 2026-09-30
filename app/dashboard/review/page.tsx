@@ -7,6 +7,7 @@ import {usePlatform} from '@/components/platform/provider';
 import {Button} from '@/components/ui/button';
 import {Textarea} from '@/components/ui/textarea';
 import type {Entity, Role} from '@/packages/contracts';
+import {approvalLevelName} from '@/packages/contracts/approval-chain';
 import {planningModuleSchema, PLANNING_SCHEMA_VERSION, type PlanningModuleInput} from '@/packages/contracts/planning-module';
 import {voucherModuleSchema, VOUCHER_MODULE_SCHEMA_VERSION, type VoucherModuleInput} from '@/packages/contracts/voucher-module';
 import {AllowanceDetails} from '@/components/travel/allowance';
@@ -254,6 +255,7 @@ function ReviewInbox({client, organizationId, actorId, role}: {client: OuranosCl
 
   const steps = rows(detail?.steps).sort((a, b) => Number(a.position) - Number(b.position));
   const current = steps.find(step => step.status === 'pending');
+  const levelLabels = rows(record(selected?.data).levels).map(level => typeof level.label === 'string' ? level.label : undefined);
   const kind = string(selected?.data.kind, '');
   const supported = Boolean(detail && (kind === 'authorization' ? planningForm(detail.revision.snapshot.entity) : kind === 'voucher' ? voucherForm(detail.revision.snapshot.entity) && planningForm(record(record(detail.revision.snapshot.authorizationRevision).snapshot).entity) : false));
   const canDecide = Boolean(selected?.status === 'in_review' && supported && current?.assignee_id === actorId && current?.required_role === role && record(detail?.revision).submitted_by !== actorId);
@@ -270,7 +272,7 @@ function ReviewInbox({client, organizationId, actorId, role}: {client: OuranosCl
       if (!result.ok) throw new Error(result.error.message);
       if (result.entity.id !== selected.id || result.entity.organizationId !== organizationId || result.entity.kind !== 'approval') throw new Error('The response could not be matched to this request. Refresh the inbox to confirm the recorded decision.');
       ++detailGeneration.current; setSelected(null); setDetail(null); setComment('');
-      setNotice(decision === 'approved' ? result.entity.status === 'approved' ? 'Revision approved.' : 'Your approval was recorded. The next assigned reviewer can now continue.' : decision === 'changes_requested' ? 'Changes requested. Your decision was recorded.' : 'Revision rejected. Your decision was recorded.');
+      setNotice(decision === 'approved' ? result.entity.status === 'approved' ? 'Revision approved.' : `Approved at your level. Forwarded to ${approvalLevelName(steps.indexOf(current!) + 1, levelLabels[steps.indexOf(current!) + 1])}; the traveler was notified.` : decision === 'changes_requested' ? 'Changes requested. Your decision was recorded.' : 'Revision rejected. Your decision was recorded.');
       await refresh();
       if (alive.current) void platform.engine?.sync().catch(() => { /* The server decision is already recorded; workspace sync can retry independently. */ });
     } catch (reason) {
@@ -302,7 +304,7 @@ function ReviewInbox({client, organizationId, actorId, role}: {client: OuranosCl
         <Submission detail={detail} kind={kind}/>
         <section className="connected-review-section">
           <h3>Approval route</h3>
-          <ol className="connected-review-route">{steps.map((step, index) => <li key={string(step.id, String(index))}><strong>{index + 1}. {label(step.required_role)}</strong><span className="connected-review-status">{step.status === 'pending' && step !== current ? 'Waiting for prior step' : label(step.status)}</span><p className="connected-review-meta">{step.assignee_id === actorId ? 'Assigned to you' : <>Assigned to <code>{string(step.assignee_id)}</code></>}</p></li>)}</ol>
+          <ol className="connected-review-route">{steps.map((step, index) => <li key={string(step.id, String(index))}><strong>Level {index + 1} · {approvalLevelName(index, levelLabels[index])}</strong><span className="connected-review-status">{step.status === 'pending' && step !== current ? 'Waiting for prior step' : label(step.status)}</span><p className="connected-review-meta">{step.assignee_id === actorId ? 'Assigned to you' : <>Assigned to <code>{string(step.assignee_id)}</code></>}</p></li>)}</ol>
           {rows(detail.decisions).length > 0 && <><h3>Recorded decisions</h3>{rows(detail.decisions).map((decision, index) => <article className="connected-review-item" key={string(decision.id, String(index))}><div className="connected-review-item-header"><strong>{label(decision.decision)}</strong><span className="connected-review-meta">{timestamp(decision.created_at)}</span></div><p className="connected-review-meta">{decision.actor_id === actorId ? 'You' : <>Reviewer <code>{string(decision.actor_id)}</code></>}</p>{decision.comment ? <p>{string(decision.comment)}</p> : null}</article>)}</>}
         </section>
         {canDecide ? <section className="connected-review-section connected-review-actions">
