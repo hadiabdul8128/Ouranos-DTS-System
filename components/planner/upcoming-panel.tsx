@@ -4,6 +4,7 @@ import Link from 'next/link';
 import {useLiveQuery} from 'dexie-react-hooks';
 import {ArrowUpRight,Check,Plus,Trash2,X} from 'lucide-react';
 import {usePlatform} from '@/components/platform/provider';
+import {Calendar} from '@/components/ui/calendar';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {addDays,plannerKinds,upcomingEntries,type PlannerKind,type UpcomingEntry} from '@/packages/domain/planner';
@@ -19,14 +20,24 @@ function when(date:string,today:string){const d=daysBetween(today,date);return d
 function group(date:string,today:string){const d=daysBetween(today,date);return d<0?'Overdue':d<7?'This week':d<31?'This month':'Later'}
 
 /** Appointments, deadlines, deployment dates, checklist due dates and travel dates, soonest first. */
-export function UpcomingPanel(){
+/** Everything coming up for the signed-in traveler, within the next year. */
+export function useUpcoming(){
  const p=usePlatform(),{state,update}=usePlanner(),[today]=useState(localToday);
- const [adding,setAdding]=useState(false),[draft,setDraft]=useState({kind:'appointment' as PlannerKind,title:'',date:'',time:''}),[error,setError]=useState('');
  const rows=useLiveQuery<LocalRecord[]>(()=>p.repository?.db.entities.where('kind').anyOf('trip','voucher').toArray()||Promise.resolve([]),[p.repository]);
  const trips=(rows||[]).filter(r=>r.kind==='trip').map(r=>({id:r.id,destination:text(r.local.data.destination),departure:text(r.local.data.departure),returnDate:text(r.local.data.returnDate),
   voucherDone:(rows||[]).some(v=>v.kind==='voucher'&&v.local.tripId===r.id&&['in_review','approved','verified'].includes(v.server?.status||v.local.status))})).filter(t=>t.departure&&t.returnDate);
- const entries=upcomingEntries(state.items,state.checklists,trips,today).filter(e=>e.date<=addDays(today,365));
- const groups=['Overdue','This week','This month','Later'].map(name=>({name,entries:entries.filter(e=>group(e.date,today)===name)})).filter(g=>g.entries.length);
+ const entries=upcomingEntries(state.items,[],trips,today).filter(e=>e.date<=addDays(today,365));
+ return {entries,today,update,soon:entries.filter(e=>daysBetween(today,e.date)<7).length};
+}
+const toDate=(value:string)=>new Date(`${value}T12:00:00`);
+const fromDate=(date:Date)=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+
+export function UpcomingPanel(){
+ const {entries:all,today,update}=useUpcoming();
+ const [adding,setAdding]=useState(false),[draft,setDraft]=useState({kind:'appointment' as PlannerKind,title:'',date:'',time:''}),[error,setError]=useState(''),[day,setDay]=useState<string|null>(null);
+ const entries=day?all.filter(e=>e.date===day):all;
+ const groups=day?[{name:new Date(`${day}T12:00:00Z`).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',timeZone:'UTC'}),entries}]:['Overdue','This week','This month','Later'].map(name=>({name,entries:entries.filter(e=>group(e.date,today)===name)})).filter(g=>g.entries.length);
+ const busy=[...new Set(all.map(e=>e.date))].map(toDate),overdue=[...new Set(all.filter(e=>e.date<today).map(e=>e.date))].map(toDate);
  function add(e:React.FormEvent){
   e.preventDefault();setError('');
   if(!draft.title.trim()||!draft.date){setError('Add a title and a date.');return}
@@ -39,7 +50,7 @@ export function UpcomingPanel(){
  }
  const remove=(id:string)=>update(s=>({...s,items:s.items.filter(i=>i.id!==id)}));
  return <section className="upcoming" aria-labelledby="upcoming-title">
-  <div className="upcoming-head"><h2 id="upcoming-title">Upcoming</h2><button type="button" className="upcoming-add" onClick={()=>{setAdding(v=>!v);setError('')}} aria-expanded={adding}>{adding?<X size={14}/>:<Plus size={14}/>}{adding?'Close':'Add'}</button></div>
+  <div className="upcoming-head"><h2 id="upcoming-title">Upcoming</h2><button type="button" className="upcoming-add" onClick={()=>{setAdding(v=>!v);setError('');if(day)setDraft(d=>({...d,date:day}))}} aria-expanded={adding}>{adding?<X size={14}/>:<Plus size={14}/>}{adding?'Close':'Add'}</button></div>
   {adding&&<form className="upcoming-form" onSubmit={add}>
    <div className="upcoming-kinds" role="radiogroup" aria-label="Type">{plannerKinds.map(kind=><button key={kind} type="button" role="radio" aria-checked={draft.kind===kind} className={draft.kind===kind?'is-on':''} onClick={()=>setDraft(d=>({...d,kind}))}>{kindNames[kind]}</button>)}</div>
    <Input aria-label="Title" placeholder={draft.kind==='appointment'?'Dental appointment':draft.kind==='deployment'?'Deployment date':draft.kind==='deadline'?'Annual training due':'What to remember'} value={draft.title} onChange={e=>setDraft(d=>({...d,title:e.target.value}))} maxLength={120} autoFocus/>
@@ -47,7 +58,9 @@ export function UpcomingPanel(){
    {error&&<p role="alert" className="upcoming-error">{error}</p>}
    <Button type="submit" className="upcoming-save">Save</Button>
   </form>}
-  {!groups.length?<p className="upcoming-empty">Nothing coming up. Add appointments, deadlines or deployment dates, or turn instructions into a checklist with due dates.</p>:
+  <Calendar mode="single" className="upcoming-calendar" selected={day?toDate(day):undefined} onSelect={date=>setDay(date?fromDate(date):null)} modifiers={{busy,overdue}} modifiersClassNames={{busy:'has-items',overdue:'has-overdue'}} defaultMonth={toDate(today)}/>
+  {day&&<button type="button" className="upcoming-all" onClick={()=>setDay(null)}>Show everything</button>}
+  {!groups.length?<p className="upcoming-empty">{day?'Nothing on this day.':'Nothing coming up. Add appointments, deadlines or deployment dates.'}</p>:
   groups.map(g=><div key={g.name} className="upcoming-group"><h3 className={g.name==='Overdue'?'is-overdue':''}>{g.name}</h3><ul>{g.entries.map(entry=>{const d=new Date(`${entry.date}T12:00:00Z`);return <li key={entry.key} className={`upcoming-row kind-${entry.kind}`}>
    <span className="upcoming-date" aria-hidden="true"><b>{d.toLocaleDateString('en-US',{month:'short',timeZone:'UTC'})}</b>{d.getUTCDate()}</span>
    <div className="upcoming-body"><span className="upcoming-kind">{kindNames[entry.kind]}{entry.time?` · ${entry.time}`:''}</span><strong>{entry.href?<Link href={entry.href}>{entry.title} <ArrowUpRight size={12}/></Link>:entry.title}</strong><small>{when(entry.date,today)}{entry.detail?` · ${entry.detail}`:''}</small></div>
