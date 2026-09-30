@@ -3,7 +3,7 @@ import Link from 'next/link';
 import {ArrowUpRight,Check} from 'lucide-react';
 import type {AuthorizationNotice} from '../../packages/contracts/authorization-notice';
 import type {Entity} from '../../packages/contracts';
-import {ApprovalTracker} from '../travel/approval-tracker';
+import {ApprovalTracker,WaitingForApprovers} from '../travel/approval-tracker';
 import {planningModuleSchema} from '../../packages/contracts/planning-module';
 import {formatReceiptAmount} from '../../packages/contracts/expense-currency';
 const usd=(minor:number)=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(minor/100);
@@ -13,8 +13,8 @@ export function AuthorizationMessage({notice,request}:{notice:AuthorizationNotic
  const {trip,formData}=notice.submission;
  const form=planningModuleSchema.safeParse(formData);
  return <>
-  <div className="inbox-confirmation"><span className="inbox-check"><Check size={19} aria-hidden="true"/></span><div><strong>Sent for review</strong><p>Your authorization was submitted successfully. It went to S1 for review; submission does not mean approval.</p></div></div>
-  {request&&<ApprovalTracker request={request}/>}
+  <div className="inbox-confirmation"><span className="inbox-check"><Check size={19} aria-hidden="true"/></span><div><strong>{notice.awaitingApprovers&&!request?'Submitted':'Sent for review'}</strong><p>Your authorization was submitted successfully. {notice.awaitingApprovers&&!request?'It will go to S1 as soon as approvers are set':'It went to S1 for review'}; submission does not mean approval.</p></div></div>
+  {request?<ApprovalTracker request={request}/>:notice.awaitingApprovers&&<WaitingForApprovers/>}
   <section aria-labelledby="submitted-trip"><div className="inbox-section-heading"><h2 id="submitted-trip">{trip.destination}</h2><span>{date(trip.departure)} — {date(trip.returnDate)}</span></div>
    <dl className="inbox-trip-details">{form.success&&<><div><dt>Traveler</dt><dd>{form.data.traveler}</dd></div><div><dt>Starting location</dt><dd>{form.data.origin}</dd></div></>}<div><dt>Destination</dt><dd>{trip.destination}</dd></div><div><dt>Time zone</dt><dd>{trip.timezone}</dd></div><div className="inbox-wide"><dt>Purpose</dt><dd>{trip.purpose}</dd></div></dl>
   </section>
@@ -23,6 +23,6 @@ export function AuthorizationMessage({notice,request}:{notice:AuthorizationNotic
   </section>}
   <p className="inbox-snapshot-note">This message keeps a copy of the form you submitted. The status above shows where it is now.</p>
   <Link className="inbox-open-plan" href={`/dashboard/travel/planning?tripId=${notice.tripId}`}>View authorization <ArrowUpRight size={16} aria-hidden="true"/></Link>
-  <details className="cw-disclosure inbox-record"><summary>Complete submitted record</summary><dl><div><dt>Authorization ID</dt><dd>{notice.authorizationId}</dd></div><div><dt>Submission ID</dt><dd>{notice.revisionId}</dd></div><div><dt>Approval request ID</dt><dd>{notice.requestId}</dd></div><div><dt>Form version</dt><dd>{notice.submission.formSchemaVersion}</dd></div></dl><pre>{JSON.stringify(notice.submission,null,2)}</pre></details>
+  <details className="cw-disclosure inbox-record"><summary>Complete submitted record</summary><dl><div><dt>Authorization ID</dt><dd>{notice.authorizationId}</dd></div><div><dt>Submission ID</dt><dd>{notice.revisionId}</dd></div>{notice.requestId&&<div><dt>Approval request ID</dt><dd>{notice.requestId}</dd></div>}<div><dt>Form version</dt><dd>{notice.submission.formSchemaVersion}</dd></div></dl><pre>{JSON.stringify(notice.submission,null,2)}</pre></details>
  </>;
 }
