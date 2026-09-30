@@ -100,3 +100,21 @@ export function localChecklist(text:string,today:string,now=new Date()):Checklis
  const title=guide?.title??(steps.length>1?`${steps[0]!.title.slice(0,48)}${steps[0]!.title.length>48?'…':''} and ${steps.length-1} more`:steps[0]?.title.slice(0,70))??'Checklist';
  return {id:newId(),title,source:guide?'guide':'instructions',instructions:text,createdAt:now.toISOString(),steps};
 }
+
+type TripRow={id:string;destination:string;departure:string;returnDate:string;voucherDone:boolean};
+/** Travelers file vouchers within 5 working days of returning. */
+export function voucherDue(returnDate:string){let date=returnDate,left=5;while(left>0){date=addDays(date,1);const day=new Date(`${date}T12:00:00Z`).getUTCDay();if(day!==0&&day!==6)left--}return date}
+
+/** Everything coming up, oldest first, from today back to overdue items still open. */
+export function upcomingEntries(items:PlannerItem[],checklists:Checklist[],trips:TripRow[],today:string):UpcomingEntry[]{
+ const entries:UpcomingEntry[]=[];
+ for(const item of items)if(!item.done)entries.push({key:`item:${item.id}`,date:item.date,...(item.time?{time:item.time}:{}),title:item.title,kind:item.kind,...(item.notes?{detail:item.notes}:{}),itemId:item.id});
+ for(const list of checklists)for(const step of list.steps)if(step.due&&!step.done)entries.push({key:`step:${list.id}:${step.id}`,date:step.due,title:step.title,kind:'checklist',detail:list.title,href:`/dashboard/guide?checklist=${list.id}`,checklist:{id:list.id,stepId:step.id}});
+ for(const trip of trips){
+  if(trip.departure>=today)entries.push({key:`trip:${trip.id}:out`,date:trip.departure,title:`Travel to ${trip.destination}`,kind:'trip',href:`/dashboard/travel/planning?tripId=${trip.id}`});
+  if(trip.returnDate>=today)entries.push({key:`trip:${trip.id}:back`,date:trip.returnDate,title:`Return from ${trip.destination}`,kind:'trip',href:`/dashboard/travel/planning?tripId=${trip.id}`});
+  const due=voucherDue(trip.returnDate);
+  if(!trip.voucherDone&&due>=addDays(today,-30))entries.push({key:`trip:${trip.id}:voucher`,date:due,title:`Voucher due · ${trip.destination}`,kind:'voucher',detail:'Within 5 working days of returning',href:`/dashboard/travel/vouchers?tripId=${trip.id}`});
+ }
+ return entries.sort((a,b)=>a.date.localeCompare(b.date)||(a.time??'').localeCompare(b.time??''));
+}
