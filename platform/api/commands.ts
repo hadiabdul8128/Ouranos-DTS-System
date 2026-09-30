@@ -2,6 +2,7 @@ import {createHash,randomUUID} from 'node:crypto';
 import type {Pool,PoolClient} from 'pg';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import {authorizationSubmissionNotice} from '../../packages/contracts/authorization-notice';
+import {initialApprovalLevels} from '../../packages/contracts/approval-chain';
 import {commandSchema,type Command,type CommandResult,type Entity} from '../../packages/contracts/index';
 import {DomainError,requireCondition as check} from '../../packages/domain/errors';
 import {withActor} from '../shared/database';
@@ -140,7 +141,7 @@ async function submitAuthorization(db:PoolClient,c:Extract<Command,{type:'author
  check(workflow.data.steps.every((s:any)=>s.assigneeId!==userId),'PERMISSION_DENIED','A traveler cannot review their own submission',403);
  snapshot.workflow=workflow.data;snapshot.workflowVersion=workflow.version;
  const rev=(await db.query('insert into ouranos.submission_revisions(organization_id,trip_id,authorization_id,entity_version,snapshot,sha256,submitted_by) values($1,$2,$3,$4,$5,$6,$7) returning *',[org,entity.trip_id,entity.id,entity.version,snapshot,hash(snapshot),userId])).rows[0];
- const req=(await db.query('insert into ouranos.approval_requests(organization_id,trip_id,revision_id,workflow_id,workflow_version,data,created_by) values($1,$2,$3,$4,$5,$6,$7) returning *',[org,entity.trip_id,rev.id,workflow.id,workflow.version,{kind:'authorization',entityId:entity.id,revisionId:rev.id},userId])).rows[0];
+ const req=(await db.query('insert into ouranos.approval_requests(organization_id,trip_id,revision_id,workflow_id,workflow_version,data,created_by) values($1,$2,$3,$4,$5,$6,$7) returning *',[org,entity.trip_id,rev.id,workflow.id,workflow.version,{kind:'authorization',entityId:entity.id,revisionId:rev.id,destination:trip.data.destination,levels:initialApprovalLevels(workflow.data.steps)},userId])).rows[0];
  for(const [i,step] of workflow.data.steps.entries())await db.query('insert into ouranos.approval_steps(organization_id,request_id,position,assignee_id,required_role) values($1,$2,$3,$4,$5)',[org,req.id,i,step.assigneeId,step.role]);
  const notice=authorizationSubmissionNotice({authorization:toEntity('authorization',entity),trip:toEntity('trip',trip),recipientId:userId,requestId:req.id,revisionId:rev.id,submittedAt:new Date(rev.created_at).toISOString()});
  await notify(db,org,entity.trip_id,userId,notice.title,req.id,notice);
