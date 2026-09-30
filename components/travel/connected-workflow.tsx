@@ -22,6 +22,7 @@ import {PlanningHotelFinder} from './planning-hotel-finder';
 import {hotelPlanTarget} from '@/packages/domain/planning-hotel';
 import {FlightSuggestions,type SelectedFlight} from './flight-suggestions';
 import type {FlightOption} from '@/packages/domain/flight-search';
+const originKey='ouranos.travel.origin';
 import type {HotelProperty} from '@/packages/domain/hotel-discovery';
 import {TravelPackagePanel} from './package-panel';
 import {assessReceipt} from '@/voucher/src/receiptValidity.js';
@@ -98,7 +99,7 @@ function PlanningForm({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
  const p=usePlatform(),feedback=useFeedback();
  const [initial]=useState(()=>recent(rows,'authorization',trip.id));const [id]=useState(()=>initial?.id||crypto.randomUUID());
  const parsed=planningModuleSchema.safeParse(initial?.local.data.formData);
- const [traveler,setTraveler]=useState(()=>parsed.success?parsed.data.traveler:''),[origin,setOrigin]=useState(()=>parsed.success?parsed.data.origin:'');
+ const [traveler,setTraveler]=useState(()=>parsed.success?parsed.data.traveler:''),[origin,setOrigin]=useState(()=>{if(parsed.success)return parsed.data.origin;try{return localStorage.getItem(originKey)||''}catch{return ''}});
  const [items,setItems]=useState<BudgetDraft[]>(()=>parsed.success?parsed.data.approvedExpenseItems.map(budgetDraft):[budgetDraft()]);
  const [flight,setFlight]=useState<SelectedFlight|null>(null),flightItem=useRef<string|null>(null);
  const [allowance]=useState(()=>parsed.success&&parsed.data.allowance?parsed.data.allowance:{enabled:false,governmentMess:false,mealsProvided:{}});
@@ -143,7 +144,7 @@ function PlanningForm({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
  return <><div className="cw-section-heading"><h2>Travel details</h2><Status value={status}/></div>
  {locked&&<div className="cw-banner"><Check size={18}/><div><strong>{status==='approved'&&p.approvalMode==='automatic'?'Verified by Ouranos.':status==='approved'?'Approved.':status==='in_review'?'In review.':'This revision is closed.'}</strong><p>{status==='approved'&&p.approvalMode==='automatic'?'Internal checks passed. This is not DTS approval.':''}</p></div>{status==='approved'&&<Link href={`/dashboard/travel/vouchers?tripId=${trip.id}`}>Open voucher <ArrowRight size={16}/></Link>}</div>}
  <PlanningHotelFinder trip={{id:trip.id,destination:text(trip.data.destination),departure:text(trip.data.departure),returnDate:text(trip.data.returnDate),lodgingBudgetMinor:items.filter(item=>item.category==='lodging').reduce<number|null>((sum,item)=>{if(sum===null)return null;try{return sum+parseAmountMinor(item.currency==='USD'?item.amount:item.usdAmount)}catch{return null}},0)||null,budgetLabel:status==='approved'?'Approved lodging budget':'Planned lodging budget'}} onSelectHotel={locked||!!feedback.busy?undefined:selectHotel}/>
- <form onSubmit={e=>{e.preventDefault();void feedback.run('save',save)}}><fieldset disabled={locked||!!feedback.busy} className="cw-fieldset"><div className="cw-card cw-grid"><Field label="Traveler name"><Input value={traveler} onChange={e=>{setTraveler(e.target.value);setDirty(true)}} autoComplete="name" maxLength={200} required/></Field><Field label="Starting location"><Input value={origin} onChange={e=>{setOrigin(e.target.value);setDirty(true)}} placeholder="City or installation" maxLength={120} required/></Field><div className="cw-span-full cw-purpose"><span>Purpose</span><p>{text(trip.data.purpose)}</p></div></div>
+ <form onSubmit={e=>{e.preventDefault();void feedback.run('save',save)}}><fieldset disabled={locked||!!feedback.busy} className="cw-fieldset"><div className="cw-card cw-grid"><Field label="Traveler name"><Input value={traveler} onChange={e=>{setTraveler(e.target.value);setDirty(true)}} autoComplete="name" maxLength={200} required/></Field><Field label="Starting location"><Input value={origin} onChange={e=>{setOrigin(e.target.value);setDirty(true);try{localStorage.setItem(originKey,e.target.value)}catch{}}} placeholder="City or installation" maxLength={120} required/></Field><div className="cw-span-full cw-purpose"><span>Purpose</span><p>{text(trip.data.purpose)}</p></div></div>
  <FlightSuggestions from={origin} to={text(trip.data.destination)} departure={text(trip.data.departure)} returnDate={text(trip.data.returnDate)} selected={flight} onSelect={selectFlight} disabled={locked||!!feedback.busy}/>
  <div id="cw-planned-expenses" tabIndex={-1} className="cw-section-heading"><div><h2>Planned expenses</h2></div><span className="cw-budget-total">{total===null?'Check amounts':money(total)} <small>USD</small></span></div>
  {!rates&&!rateError&&<p className="cw-muted" role="status">Loading exchange rates…</p>}{rateError&&<p className="cw-muted" role="status">{rateError} <button type="button" className="back-link" disabled={locked} onClick={()=>{setRateError('');setRateReload(n=>n+1)}}>Retry rates</button></p>}
