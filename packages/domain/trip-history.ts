@@ -39,3 +39,15 @@ export function tripHistory(entities:Entity[],payments:Record<string,TripPayment
    planStatus:plan?.status??null,voucherStatus,payment,payStatus};
  }).sort((a,b)=>b.departure.localeCompare(a.departure));
 }
+
+/** Totals for a set of trips; awaiting is what was claimed on filed vouchers not yet marked paid. */
+export function historyTotals(entries:TripHistoryEntry[]){
+ return {
+  trips:entries.length,
+  nights:entries.reduce((s,e)=>s+e.nights,0),
+  plannedMinor:entries.reduce((s,e)=>s+(e.plannedMinor??0),0),
+  claimedMinor:entries.reduce((s,e)=>s+(e.claimedMinor??0),0),
+  paidMinor:entries.reduce((s,e)=>s+(e.payment?.amountMinor??0),0),
+  awaitingMinor:entries.filter(e=>e.payStatus==='awaiting').reduce((s,e)=>s+(e.claimedMinor??0),0),
+ };
+}
