@@ -10,6 +10,9 @@ import { ArrowRight, LogOut } from "lucide-react";
 import { SyncIndicator, usePlatform } from "@/components/platform/provider";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { CalendarDays } from "lucide-react";
+import { UpcomingPanel } from "@/components/planner/upcoming-panel";
 
 export default function Workspace() {
   const router=useRouter();
@@ -41,21 +44,24 @@ export default function Workspace() {
     const text = request.trim();
     if (!text) return;
     const destination=workspaceIntent(text);
-    if(destination){setOpening(true);router.push(destination)}
-    else setMessage("You can plan travel or explore life after the military.");
+    // Anything else becomes a checklist the traveler can work through and ask about.
+    setOpening(true);router.push(destination??`/dashboard/guide?q=${encodeURIComponent(text)}`);
   }
   return <main className="quiet-page prompt-page">
-    <header className="quiet-header"><Link href="/dashboard" className="quiet-brand">Ouranos</Link><nav className="inbox-header-actions" aria-label="Workspace"><InboxLink/><button onClick={() => void platform.signOut()} className="exit-link" aria-label="Sign out"><LogOut size={17}/></button></nav></header>
+    <header className="quiet-header"><Link href="/dashboard" className="quiet-brand">Ouranos</Link><nav className="inbox-header-actions" aria-label="Workspace"><Sheet><SheetTrigger className="home-upcoming-button"><CalendarDays size={16}/> Upcoming</SheetTrigger><SheetContent side="right" className="home-upcoming-sheet"><SheetTitle className="sr-only">Upcoming</SheetTitle><UpcomingPanel/></SheetContent></Sheet><InboxLink/><button onClick={() => void platform.signOut()} className="exit-link" aria-label="Sign out"><LogOut size={17}/></button></nav></header>
+    <div className="home-body">
     <section className="intent-stage" aria-labelledby="intent-heading">
       <ServiceCloud />
       <h1 id="intent-heading">What do you want to do?</h1>
       <form className="intent-input" onSubmit={submit}>
-        <Input aria-label="What do you want to do?" placeholder="Tell us what you need…" value={request} onChange={event => {setRequest(event.target.value); setMessage("");}} autoComplete="off" maxLength={500} disabled={opening}/>
+        <Input aria-label="What do you want to do?" placeholder="Plan a trip, or tell us a task like “prepare for deployment”…" value={request} onChange={event => {setRequest(event.target.value); setMessage("");}} autoComplete="off" maxLength={500} disabled={opening}/>
         <Button type="submit" aria-label="Continue with your request" className="intent-submit" disabled={!request.trim() || opening}><ArrowRight size={20}/></Button>
       </form>
       <p className={`intent-hint ${message ? "has-message" : ""}`} role="status">{opening ? "Opening your workspace…" : message || ''}</p>
-      <Link href="/dashboard/travel" className="back-link">Travel system →</Link>
+      <nav className="home-links" aria-label="Shortcuts"><Link href="/dashboard/travel" className="back-link">Travel system →</Link><Link href="/dashboard/guide" className="back-link">Checklists →</Link></nav>
     </section>
+    <aside className="home-side" aria-label="Upcoming"><UpcomingPanel/></aside>
+    </div>
     <footer className="quiet-footer"><span/><SyncIndicator/></footer>
   </main>;
 }
