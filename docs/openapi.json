@@ -17,6 +17,65 @@
     }
   ],
   "paths": {
+    "/v1/companion/chat": {
+      "post": {
+        "operationId": "companionChat",
+        "summary": "Answer using the caller’s own recent travel status",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompanionInput"
+              }
+            }
+          }
+        },
+        "description": "Read-only AI assistant. At most 10 messages; the last must be from the user. Rate limited to 10 requests per minute per user."
+      }
+    },
     "/health": {
       "get": {
         "operationId": "health",
@@ -1527,6 +1586,59 @@
       }
     },
     "schemas": {
+      "CompanionInput": {
+        "type": "object",
+        "properties": {
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "user",
+                    "assistant"
+                  ]
+                },
+                "content": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2000
+                }
+              },
+              "required": [
+                "role",
+                "content"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 10
+          }
+        },
+        "required": [
+          "organizationId",
+          "messages"
+        ],
+        "additionalProperties": false
+      },
+      "CompanionResponse": {
+        "type": "object",
+        "properties": {
+          "answer": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "answer"
+        ],
+        "additionalProperties": false
+      },
       "TransitionProfile": {
         "type": "object",
         "properties": {

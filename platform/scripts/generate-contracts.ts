@@ -1,3 +1,4 @@
+import {companionInput} from '../../packages/contracts/companion';
 import {readFile, mkdir, writeFile} from 'node:fs/promises';
 import {z} from 'zod';
 import {zodToJsonSchema} from 'zod-to-json-schema';
@@ -24,6 +25,7 @@ const approvalStep = z.object({id:uuid, organization_id:uuid, request_id:uuid, p
 const approvalDecision = z.object({id:uuid, organization_id:uuid, request_id:uuid, step_id:uuid, actor_id:uuid, decision:z.enum(['approved','changes_requested','rejected']), comment:z.string(), created_at:timestamp}).passthrough();
 
 const models = {
+  CompanionInput:companionInput, CompanionResponse:z.object({answer:z.string()}),
   TransitionProfile:transitionProfileSchema,TransitionRecommendation:transitionRecommendationSchema,TransitionSave:transitionSaveSchema,TransitionPlan:transitionPlanSchema,
   TransitionResponse:z.object({plan:transitionPlanSchema}),TransitionOptionalResponse:z.object({plan:transitionPlanSchema.nullable()}),
   Role:roleSchema, EntityKind:entityKindSchema, TripInput:tripInput,
@@ -71,6 +73,7 @@ function operation(operationId:string, summary:string, result:SchemaName, extra:
 }
 const commandError = {description:'Command rejected. Domain failures include commandId and ok:false; request/database failures use the error envelope.',content:json({oneOf:[ref('CommandFailure'),ref('ErrorResponse')]})};
 const paths:Record<string,Record<string,SpecObject>> = {
+  '/v1/companion/chat':{post:operation('companionChat','Answer using the caller’s own recent travel status','CompanionResponse',{requestBody:request('CompanionInput'),description:'Read-only AI assistant. At most 10 messages; the last must be from the user. Rate limited to 10 requests per minute per user.'})},
   '/health':{get:operation('health','Process health','Health',{security:[]})},
   '/ready':{get:operation('ready','Database connectivity','Ready',{security:[]})},
   '/openapi.json':{get:{operationId:'openapi',summary:'This generated OpenAPI document',security:[],responses:{'200':{description:'OpenAPI 3.0 document',content:json({type:'object',additionalProperties:true})},default:error}}},
@@ -112,7 +115,7 @@ const document = {
 };
 
 // Prevent route additions/renames from silently disappearing from the handoff.
-const apiSource = (await Promise.all(['app.ts','transition.ts'].map(file=>readFile(new URL(`../api/${file}`,import.meta.url),'utf8')))).join('\n');
+const apiSource = (await Promise.all(['app.ts','transition.ts','companion.ts'].map(file=>readFile(new URL(`../api/${file}`,import.meta.url),'utf8')))).join('\n');
 const implemented = [...apiSource.matchAll(/app\.(get|post|put|patch|delete)\('([^']+)'/g)].map(([,method,path])=>`${method} ${path.replace(/:([A-Za-z]+)/g,'{$1}')}`).sort();
 const documented = Object.entries(paths).flatMap(([path,methods])=>Object.keys(methods).map(method=>`${method} ${path}`)).sort();
 if(JSON.stringify(implemented)!==JSON.stringify(documented))throw new Error('API route inventory differs from OpenAPI. Update generate-contracts.ts before generating.');
