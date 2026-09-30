@@ -10,4 +10,4 @@ No new database migration, mail provider, API key or external email delivery is 
 
 The meals/lodging estimate controls are removed from planning and Voucher screens. Existing saved expense amounts and allowance data remain intact, and new plans default to estimates disabled. The existing calculator and reconciliation rules are retained for compatibility.
 
-Each level of the chain of command now also sends the traveler an update, and messages show a live chain-of-command tracker. See [chain of command](approval-chain.md).
+Each level of the chain of command now also sends the traveler an update, and messages show the request's current status. See [chain of command](approval-chain.md).
