@@ -18,6 +18,6 @@ export function inboxMessages(entities:Entity[],organizationId:string|null,userI
  return entities.filter(e=>e.kind==='notification'&&e.organizationId===organizationId&&e.data.recipientId===userId).sort((a,b)=>receivedAt(b).localeCompare(receivedAt(a)));
 }
 function receivedAt(entity:Entity){
- const submitted=z.string().datetime().safeParse(entity.data.submittedAt);
+ const submitted=z.string().datetime().safeParse(entity.data.submittedAt??entity.data.decidedAt);
  return submitted.success?submitted.data:entity.updatedAt;
 }
