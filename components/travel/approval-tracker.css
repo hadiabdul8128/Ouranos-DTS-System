@@ -3,3 +3,4 @@
 .approval-status.is-done{border-left-color:#a5b38a}.approval-status.is-returned{border-left-color:#e0bf7a}.approval-status.is-returned strong{color:#e0bf7a}.approval-status.is-rejected{border-left-color:#f0a09a}.approval-status.is-rejected strong{color:#f0a09a}
 .approval-steps{display:flex;gap:6px;margin-top:10px;max-width:220px}.approval-steps i{flex:1;height:4px;border-radius:2px;background:#343c33}.approval-steps i.is-done{background:#a5b38a}.approval-steps i.is-current{background:#d4e0bb66}
 .approval-status blockquote{margin:8px 0 0;padding:8px 12px;border-left:2px solid #4a5448;font-size:12px;color:#c9cfc4;line-height:1.6;overflow-wrap:anywhere}
+.approval-status.is-late{border-left-color:#e0bf7a}.approval-late{margin:8px 0 0;font-size:12px;line-height:1.6;color:#e0bf7a}
