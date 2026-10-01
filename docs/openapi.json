@@ -3967,6 +3967,11 @@
             "minLength": 1,
             "maxLength": 120
           },
+          "installation": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
           "departure": {
             "type": "string",
             "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
@@ -4403,6 +4408,11 @@
                 "type": "object",
                 "properties": {
                   "destination": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "installation": {
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 120
@@ -5513,6 +5523,11 @@
                       "type": "object",
                       "properties": {
                         "destination": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 120
+                        },
+                        "installation": {
                           "type": "string",
                           "minLength": 1,
                           "maxLength": 120
