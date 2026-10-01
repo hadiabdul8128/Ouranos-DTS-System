@@ -7,7 +7,7 @@ import {usePlatform,SyncIndicator} from '@/components/platform/provider';
 import {InboxLink} from '@/components/inbox/inbox-link';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
-import {usePlanner} from '@/components/planner/store';
+import {usePayments} from '@/components/travel/use-payments';
 import {historyTotals,tripHistory,type TripHistoryEntry} from '@/packages/domain/trip-history';
 import {localToday} from '@/packages/domain/flight-search';
 import {parseAmountMinor} from '@/packages/contracts/planning-module';
@@ -23,14 +23,14 @@ type View='past'|'upcoming'|'all';
 
 /** Past and upcoming trips with what was planned, claimed and paid. */
 export function TripHistory(){
- const p=usePlatform(),{state,update}=usePlanner(),[today]=useState(localToday);
+ const p=usePlatform(),{payments,save:savePayment,error:paymentError}=usePayments(),[today]=useState(localToday);
  const [view,setView]=useState<View>('past'),[year,setYear]=useState('all');
  const rows=useLiveQuery<LocalRecord[]>(()=>p.repository?.db.entities.where('kind').anyOf('trip','authorization','expense','voucher').toArray()||Promise.resolve([]),[p.repository]);
- const all=tripHistory((rows||[]).map(r=>({...r.local,status:r.server?.status||r.local.status})),state.payments,today);
+ const all=tripHistory((rows||[]).map(r=>({...r.local,status:r.server?.status||r.local.status})),payments,today);
  const years=[...new Set(all.map(t=>t.departure.slice(0,4)))].sort().reverse();
  const shown=all.filter(t=>(view==='all'||(view==='past'?t.phase==='past':t.phase!=='past'))&&(year==='all'||t.departure.startsWith(year)));
  const totals=historyTotals(shown);
- const setPayment=(id:string,payment:{amountMinor:number;date:string}|null)=>update(s=>{const payments={...s.payments};if(payment)payments[id]=payment;else delete payments[id];return {...s,payments}});
+ const setPayment=(id:string,payment:{amountMinor:number;date:string}|null)=>void savePayment(id,payment);
  const range=year==='all'?(years.length>1?`${years[years.length-1]}–${years[0]}`:years[0]??''):year;
  return <main className="quiet-page cw-page"><header className="quiet-header"><Link className="quiet-brand" href="/dashboard">Ouranos</Link><nav className="inbox-header-actions" aria-label="Workspace"><InboxLink/><Link href="/dashboard/platform">Settings</Link></nav></header>
   <section className="cw-shell claims-shell">
@@ -46,9 +46,10 @@ export function TripHistory(){
     <div><dt>Paid to you</dt><dd>{usd(totals.paidMinor)}</dd></div>
     <div><dt>Still owed</dt><dd>{usd(totals.awaitingMinor)}</dd></div>
    </dl>
+   {paymentError&&<p role="alert" className="form-error">{paymentError}</p>}
    {rows===undefined?<p className="cw-muted" role="status">Loading your trips…</p>:!shown.length?<p className="claims-empty">{view==='past'?'No past trips yet. A trip lands here the day after you return.':'Nothing here yet.'}</p>:
    <ol className="claims-list">{shown.map(trip=><TripCard key={trip.id} trip={trip} today={today} onPayment={payment=>setPayment(trip.id,payment)}/>)}</ol>}
-   <p className="history-note">Amounts in USD. Ouranos isn’t connected to DTS or finance, so a PAID stamp is a payment you recorded here, on this device.</p>
+   <p className="history-note">Amounts in USD. Ouranos isn’t connected to DTS or finance, so a PAID stamp is a payment you recorded here. It’s saved to your account, and your leaders can see it.</p>
   </section>
   <footer className="cw-footer"><span/><SyncIndicator/></footer>
  </main>;
