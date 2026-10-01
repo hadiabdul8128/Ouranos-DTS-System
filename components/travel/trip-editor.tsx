@@ -6,6 +6,7 @@ import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {PlaceField} from './place-field';
 import {PurposeField} from './purpose-field';
+import {InstallationField} from './installation-field';
 import {localToday} from '@/packages/domain/flight-search';
 import type {Entity} from '@/packages/contracts';
 import './trip-editor.css';
@@ -17,8 +18,8 @@ const day=(value:string)=>value?new Date(`${value}T12:00:00Z`).toLocaleDateStrin
 export function TripEditor({trip,editable}:{trip:Entity;editable:boolean}){
  const p=usePlatform();
  const [editing,setEditing]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState('');
- const [draft,setDraft]=useState({destination:'',departure:'',returnDate:'',purpose:''}),[today]=useState(localToday);
- function start(){setDraft({destination:text(trip.data.destination),departure:text(trip.data.departure),returnDate:text(trip.data.returnDate),purpose:text(trip.data.purpose)});setError('');setEditing(true)}
+ const [draft,setDraft]=useState({destination:'',installation:'',departure:'',returnDate:'',purpose:''}),[today]=useState(localToday);
+ function start(){setDraft({destination:text(trip.data.destination),installation:text(trip.data.installation),departure:text(trip.data.departure),returnDate:text(trip.data.returnDate),purpose:text(trip.data.purpose)});setError('');setEditing(true)}
  async function save(e:React.FormEvent){
   e.preventDefault();if(busy)return;setError('');
   if(!draft.destination){setError('Choose the destination city and state.');return}
@@ -26,13 +27,14 @@ export function TripEditor({trip,editable}:{trip:Entity;editable:boolean}){
   if(draft.returnDate<draft.departure){setError('Return must follow departure.');return}
   if(!p.repository){setError('Choose a workspace in Settings.');return}
   setBusy(true);
-  try{await p.repository.stage('trip.save',trip.id,{destination:draft.destination.trim(),departure:draft.departure,returnDate:draft.returnDate,purpose:draft.purpose.trim(),timezone:text(trip.data.timezone)||Intl.DateTimeFormat().resolvedOptions().timeZone});await p.engine?.sync();setEditing(false)}
+  try{await p.repository.stage('trip.save',trip.id,{destination:draft.destination.trim(),...(draft.installation.trim()?{installation:draft.installation.trim()}:{}),departure:draft.departure,returnDate:draft.returnDate,purpose:draft.purpose.trim(),timezone:text(trip.data.timezone)||Intl.DateTimeFormat().resolvedOptions().timeZone});await p.engine?.sync();setEditing(false)}
   catch(err){setError(err instanceof Error?err.message:'Unable to save the trip.')}
   finally{setBusy(false)}
  }
  if(!editing)return <div className="trip-summary"><p className="cw-muted">{day(text(trip.data.departure))} — {day(text(trip.data.returnDate))}</p>{editable&&<button type="button" className="trip-edit-link" onClick={start}><Pencil size={13}/> Edit trip</button>}</div>;
  return <form className="trip-editor" onSubmit={save} aria-label="Edit trip">
   <PlaceField id="trip-destination" label="Destination" value={draft.destination} onChange={destination=>setDraft(d=>({...d,destination}))}/>
+  <InstallationField id="trip-installation" value={draft.installation} onChange={installation=>setDraft(d=>({...d,installation}))}/>
   <div className="travel-date-fields"><div className="travel-field"><label htmlFor="trip-departure">Departure</label><Input type="date" id="trip-departure" min={draft.departure<today?draft.departure:today} value={draft.departure} onChange={e=>setDraft(d=>({...d,departure:e.target.value}))} required/></div><div className="travel-field"><label htmlFor="trip-return">Return</label><Input type="date" id="trip-return" min={draft.departure} value={draft.returnDate} onChange={e=>setDraft(d=>({...d,returnDate:e.target.value}))} required/></div></div>
   <PurposeField value={draft.purpose} onChange={purpose=>setDraft(d=>({...d,purpose}))}/>
   {error&&<p role="alert" className="form-error">{error}</p>}
