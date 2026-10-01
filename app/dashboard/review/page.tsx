@@ -8,6 +8,7 @@ import {Button} from '@/components/ui/button';
 import {Textarea} from '@/components/ui/textarea';
 import type {Entity, Role} from '@/packages/contracts';
 import {approvalLevelName} from '@/packages/contracts/approval-chain';
+import {travelModeSummary} from '@/packages/domain/travel-mode';
 import {planningModuleSchema, PLANNING_SCHEMA_VERSION, type PlanningModuleInput} from '@/packages/contracts/planning-module';
 import {voucherModuleSchema, VOUCHER_MODULE_SCHEMA_VERSION, type VoucherModuleInput} from '@/packages/contracts/voucher-module';
 import {AllowanceDetails} from '@/components/travel/allowance';
@@ -146,6 +147,7 @@ function Submission({detail, kind}: {detail: RevisionDetail; kind: string}) {
       <dl className="connected-review-summary">
         <Field name="Traveler">{plan?.traveler || 'Not provided in this form'}</Field>
         <Field name="From">{plan?.origin || 'Not provided in this form'}</Field>
+        <Field name="Getting there">{travelModeSummary(plan?.travelMode, plan?.mileage)}</Field>
         <Field name="To">{string(trip.destination)}</Field>
         <Field name="Departure">{date(trip.departure)}</Field>
         <Field name="Return">{date(trip.returnDate)}</Field>
