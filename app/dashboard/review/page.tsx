@@ -7,7 +7,7 @@ import {usePlatform} from '@/components/platform/provider';
 import {Button} from '@/components/ui/button';
 import {Textarea} from '@/components/ui/textarea';
 import type {Entity, Role} from '@/packages/contracts';
-import {approvalLevelName} from '@/packages/contracts/approval-chain';
+import {approvalLevelName, approvalWait} from '@/packages/contracts/approval-chain';
 import {travelModeSummary} from '@/packages/domain/travel-mode';
 import {planningModuleSchema, PLANNING_SCHEMA_VERSION, type PlanningModuleInput} from '@/packages/contracts/planning-module';
 import {voucherModuleSchema, VOUCHER_MODULE_SCHEMA_VERSION, type VoucherModuleInput} from '@/packages/contracts/voucher-module';
@@ -205,6 +205,7 @@ export default function Review() {
 function ReviewInbox({client, organizationId, actorId, role}: {client: OuranosClient; organizationId: string; actorId: string; role?: Role}) {
   const platform = usePlatform();
   const [requests, setRequests] = useState<Entity[]>([]);
+  const [now] = useState(() => new Date());
   const [selected, setSelected] = useState<Entity | null>(null);
   const [detail, setDetail] = useState<RevisionDetail | null>(null);
   const [comment, setComment] = useState('');
@@ -296,7 +297,7 @@ function ReviewInbox({client, organizationId, actorId, role}: {client: OuranosCl
     {error && <p className="connected-review-error" role="alert">{error}</p>}
     {!selected ? <div aria-busy={loading}>
       {loading && <p role="status" className="platform-muted">Loading review requests…</p>}
-      {requests.map(request => <button type="button" className="platform-record review-record" key={request.id} disabled={busy || loading} onClick={() => void open(request)}><div><strong>{request.data.kind === 'voucher' ? 'Travel voucher' : 'Travel authorization'}</strong><p className="connected-review-meta">Updated {timestamp(request.updatedAt)}</p></div><span>{label(request.status)} <ArrowUpRight size={14} aria-hidden="true"/></span></button>)}
+      {requests.map(request => <button type="button" className="platform-record review-record" key={request.id} disabled={busy || loading} onClick={() => void open(request)}>{(() => { const wait = approvalWait(request, now); return <div><strong>{request.data.kind === 'voucher' ? 'Travel voucher' : 'Travel authorization'}{typeof request.data.destination === 'string' ? ` · ${request.data.destination}` : ''}</strong><p className="connected-review-meta">Updated {timestamp(request.updatedAt)}</p>{wait?.late && <p className="review-late">Waiting {wait.days} days · past the 72-hour mark</p>}</div>; })()}<span>{label(request.status)} <ArrowUpRight size={14} aria-hidden="true"/></span></button>)}
       {!loading && !requests.length && !error && <div className="platform-block"><h2>Nothing to review yet</h2><p className="platform-muted">Submitted requests appear here when they are available to your workspace role.</p></div>}
     </div> : <div className="platform-block">
       <Button variant="ghost" disabled={busy} onClick={close}><ArrowLeft size={16} aria-hidden="true"/>Back to inbox</Button>
