@@ -26,6 +26,22 @@ export function approvalLevelsOf(request:Pick<Entity,'status'|'data'>):ApprovalL
 }
 export const currentApprovalLevel=(levels:ApprovalLevel[])=>levels.find(level=>level.status!=='approved')??null;
 
+/** DTS asks approvers to act within 72 hours. */
+export const APPROVAL_ALERT_HOURS=72;
+/** When the current level received a request still in review: the prior level's decision, else submission. */
+export function waitingSince(request:Pick<Entity,'status'|'data'>&{updatedAt?:string}):string|null{
+ if(request.status!=='in_review')return null;
+ const levels=approvalLevelsOf(request),current=currentApprovalLevel(levels);if(!current)return null;
+ const prior=levels.filter(level=>level.position<current.position).at(-1)?.decidedAt;
+ return prior??(typeof request.data.submittedAt==='string'?request.data.submittedAt:request.updatedAt??null);
+}
+/** Whole days a request has waited at its current level, and whether it passed the 72-hour mark. */
+export function approvalWait(request:Pick<Entity,'status'|'data'>&{updatedAt?:string},now:Date){
+ const since=waitingSince(request);if(!since)return null;
+ const hours=Math.max(0,(now.getTime()-new Date(since).getTime())/36e5);
+ return {since,days:Math.floor(hours/24),late:hours>=APPROVAL_ALERT_HOURS};
+}
+
 export const approvalUpdateNoticeSchema=z.object({
  type:z.literal('approval_update'),title:z.string().min(1).max(160),recipientId:uuid,requestId:uuid,tripId:uuid,entityKind:z.enum(['authorization','voucher']),entityId:uuid,
  destination:z.string().max(120).optional(),level:z.object({position:z.number().int().nonnegative(),label:z.string().min(1).max(80)}),

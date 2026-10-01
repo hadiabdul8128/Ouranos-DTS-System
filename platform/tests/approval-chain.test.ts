@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {approvalLevelsOf,approvalUpdateNotice,approvalUpdateSummary,currentApprovalLevel,decideApprovalLevel,initialApprovalLevels} from '../../packages/contracts/approval-chain';
+import {approvalLevelsOf,approvalUpdateNotice,approvalWait,approvalUpdateSummary,currentApprovalLevel,decideApprovalLevel,initialApprovalLevels} from '../../packages/contracts/approval-chain';
 import {formatPlace,parsePlace} from '../../packages/domain/place';
 
 const ids={recipientId:crypto.randomUUID(),requestId:crypto.randomUUID(),tripId:crypto.randomUUID(),entityId:crypto.randomUUID()};
@@ -14,6 +14,16 @@ describe('approval chain',()=>{
   expect(afterS1[0]).toEqual({position:0,label:'S1 · Administration',role:'reviewer',status:'approved',decidedAt});
   expect(currentApprovalLevel(afterS1)?.label).toBe('Command approval');
   expect(currentApprovalLevel(decideApprovalLevel(afterS1,1,'approved',decidedAt))).toBeNull();
+ });
+ it('times the wait from the last decision, or from submission, against the 72-hour mark',()=>{
+  const levels=initialApprovalLevels([{role:'reviewer'},{role:'approver'}]);
+  const submitted={status:'in_review',data:{levels,submittedAt:'2026-09-28T08:00:00Z'}};
+  expect(approvalWait(submitted,new Date('2026-10-01T07:00:00Z'))).toEqual({since:'2026-09-28T08:00:00Z',days:2,late:false});
+  expect(approvalWait(submitted,new Date('2026-10-01T08:00:00Z'))).toMatchObject({days:3,late:true});
+  const withCommand={status:'in_review',data:{levels:decideApprovalLevel(levels,0,'approved','2026-09-30T10:00:00Z'),submittedAt:'2026-09-28T08:00:00Z'}};
+  expect(approvalWait(withCommand,new Date('2026-10-01T10:00:00Z'))).toMatchObject({since:'2026-09-30T10:00:00Z',late:false});
+  expect(approvalWait({status:'in_review',data:{levels}},new Date())).toBeNull();
+  expect(approvalWait({status:'approved',data:{levels},updatedAt:'2026-09-01T00:00:00Z'},new Date())).toBeNull();
  });
  it('keeps a configured label and reads requests saved before levels existed',()=>{
   expect(initialApprovalLevels([{role:'reviewer',label:'Battalion S1'}])[0]!.label).toBe('Battalion S1');
