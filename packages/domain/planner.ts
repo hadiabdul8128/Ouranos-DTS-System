@@ -109,7 +109,7 @@ export function voucherDue(returnDate:string){let date=returnDate,left=5;while(l
 export function upcomingEntries(items:PlannerItem[],checklists:Checklist[],trips:TripRow[],today:string,{vouchers=true}:{vouchers?:boolean}={}):UpcomingEntry[]{
  const entries:UpcomingEntry[]=[];
  for(const item of items)if(!item.done)entries.push({key:`item:${item.id}`,date:item.date,...(item.time?{time:item.time}:{}),title:item.title,kind:item.kind,...(item.notes?{detail:item.notes}:{}),itemId:item.id});
- for(const list of checklists)for(const step of list.steps)if(step.due&&!step.done)entries.push({key:`step:${list.id}:${step.id}`,date:step.due,title:step.title,kind:'checklist',detail:list.title,href:`/dashboard/guide?checklist=${list.id}`,checklist:{id:list.id,stepId:step.id}});
+ for(const list of checklists)for(const step of list.steps)if(step.due&&!step.done)entries.push({key:`step:${list.id}:${step.id}`,date:step.due,title:step.title,kind:'checklist',detail:list.title,href:'/dashboard/checklists',checklist:{id:list.id,stepId:step.id}});
  for(const trip of trips){
   if(trip.departure>=today)entries.push({key:`trip:${trip.id}:out`,date:trip.departure,title:`Travel to ${trip.destination}`,kind:'trip',href:`/dashboard/travel/planning?tripId=${trip.id}`});
   if(trip.returnDate>=today)entries.push({key:`trip:${trip.id}:back`,date:trip.returnDate,title:`Return from ${trip.destination}`,kind:'trip',href:`/dashboard/travel/planning?tripId=${trip.id}`});

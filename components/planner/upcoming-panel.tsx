@@ -8,9 +8,10 @@ import {usePlatform} from '@/components/platform/provider';
 import type {LocalRecord} from '@/packages/offline/database';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
-import {addDays,plannerKinds,travelDays,upcomingEntries,type PlannerKind,type UpcomingEntry} from '@/packages/domain/planner';
+import {addDays,plannerKinds,travelDays,upcomingEntries,type Checklist,type PlannerKind,type UpcomingEntry} from '@/packages/domain/planner';
 import {localToday} from '@/packages/domain/flight-search';
 import {usePlanner} from './store';
+import {useAssignedChecklists} from '@/components/team/assigned-checklists';
 import './planner.css';
 
 const kindNames:Record<UpcomingEntry['kind'],string>={appointment:'Appointment',deadline:'Deadline',deployment:'Deployment',other:'Reminder',trip:'Travel',voucher:'Voucher',checklist:'Checklist'};
@@ -24,7 +25,9 @@ export function useUpcoming(){
  const p=usePlatform(),{state,update}=usePlanner(),[today]=useState(localToday);
  const rows=useLiveQuery<LocalRecord[]>(()=>p.repository?.db.entities.where('kind').equals('trip').toArray()||Promise.resolve([]),[p.repository]);
  const trips=(rows||[]).map(r=>({id:r.id,destination:text(r.local.data.destination),departure:text(r.local.data.departure),returnDate:text(r.local.data.returnDate)})).filter(t=>t.destination&&t.departure&&t.returnDate);
- const entries=upcomingEntries(state.items,[],trips,today,{vouchers:false}).filter(e=>e.date<=addDays(today,365));
+ // Checklists from leaders appear once, on their due date, until every step is done.
+ const assigned:Checklist[]=(useAssignedChecklists().checklists??[]).filter(c=>c.dueOn).map(c=>({id:c.id,title:'From your leader',source:'instructions',instructions:'',createdAt:c.createdAt,steps:[{id:c.id,title:c.title,due:c.dueOn!,done:c.doneStepIds.length>=c.steps.length}]}));
+ const entries=upcomingEntries(state.items,assigned,trips,today,{vouchers:false}).filter(e=>e.date<=addDays(today,365));
  return {entries,trips,today,update,soon:entries.filter(e=>daysBetween(today,e.date)<7).length};
 }
 const toDate=(value:string)=>new Date(`${value}T12:00:00`);
@@ -63,7 +66,7 @@ export function UpcomingPanel(){
   groups.map(g=><div key={g.name} className="upcoming-group"><h3 className={g.name==='Overdue'?'is-overdue':''}>{g.name}</h3><ul>{g.entries.map(entry=>{const d=new Date(`${entry.date}T12:00:00Z`);return <li key={entry.key} className={`upcoming-row kind-${entry.kind}`}>
    <span className="upcoming-date" aria-hidden="true"><b>{d.toLocaleDateString('en-US',{month:'short',timeZone:'UTC'})}</b>{d.getUTCDate()}</span>
    <div className="upcoming-body"><span className="upcoming-kind">{kindNames[entry.kind]}{entry.time?` · ${entry.time}`:''}</span><strong>{entry.href?<Link href={entry.href}>{entry.title} <ArrowUpRight size={12}/></Link>:entry.title}</strong><small>{when(entry.date,today)}{entry.detail?` · ${entry.detail}`:''}</small></div>
-   <div className="upcoming-actions">{(entry.itemId||entry.checklist)&&<button type="button" aria-label={`Mark ${entry.title} done`} onClick={()=>complete(entry)}><Check size={14}/></button>}{entry.itemId&&<button type="button" aria-label={`Remove ${entry.title}`} onClick={()=>remove(entry.itemId!)}><Trash2 size={13}/></button>}</div>
+   <div className="upcoming-actions">{entry.itemId&&<button type="button" aria-label={`Mark ${entry.title} done`} onClick={()=>complete(entry)}><Check size={14}/></button>}{entry.itemId&&<button type="button" aria-label={`Remove ${entry.title}`} onClick={()=>remove(entry.itemId!)}><Trash2 size={13}/></button>}</div>
   </li>})}</ul></div>)}
   <p className="upcoming-note">Saved on this device.</p>
  </section>;
