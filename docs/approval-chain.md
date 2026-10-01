@@ -7,11 +7,11 @@ Travel authorizations go up one or two levels:
 | 1 | S1 · Administration | `reviewer` |
 | 2 | Command approval (command deck / CEO) | `approver` |
 
-An administrator sets the chain in **Settings → Approvers**: the S1 reviewer's user ID is required, and the command approver's is optional. Leaving command empty makes S1 the only level. Each person must already have the matching role in **Team access**, and a traveler can never approve their own request.
+Each service member's S1 and command are the leaders who added them under **My people** (see [leaders and their people](team.md)); nobody picks a reviewer. Workspace routing set up earlier by an admin is still used for people no leader has added.
 
 ## Before approvers are set
 
-Submitting never fails just because approvers are missing. The submission is frozen, the authorization moves to review, and the traveler receives the full *Authorization submitted* confirmation marked as waiting for approvers. Planning shows *Submitted · waiting for approvers*. Once an admin sets approvers, the next time the traveler opens that plan it is sent to S1 automatically (a repeated `authorization.submit` on the waiting authorization); it is never sent twice.
+Submitting never fails just because approvers are missing. The submission is frozen, the authorization moves to review, and the traveler receives the full *Authorization submitted* confirmation marked as waiting for approvers. Planning shows *Submitted · waiting for approvers*. Once a leader adds them, the next time the traveler opens that plan it is sent to S1 automatically (a repeated `authorization.submit` on the waiting authorization); it is never sent twice.
 
 ## What the traveler sees
 
