@@ -164,7 +164,7 @@ async function routingFor(db:PoolClient,org:string,userId:string):Promise<{id:st
  return workflow?.data?.steps?.length?workflow:null;
 }
 async function createApprovalRequest(db:PoolClient,org:string,entity:Record<string,any>,trip:Record<string,any>,rev:Record<string,any>,workflow:Record<string,any>,userId:string){
- const req=(await db.query('insert into ouranos.approval_requests(organization_id,trip_id,revision_id,workflow_id,workflow_version,data,created_by) values($1,$2,$3,$4,$5,$6,$7) returning *',[org,entity.trip_id,rev.id,workflow.id,workflow.version,{kind:'authorization',entityId:entity.id,revisionId:rev.id,destination:trip.data.destination,levels:initialApprovalLevels(workflow.data.steps)},userId])).rows[0];
+ const req=(await db.query('insert into ouranos.approval_requests(organization_id,trip_id,revision_id,workflow_id,workflow_version,data,created_by) values($1,$2,$3,$4,$5,$6,$7) returning *',[org,entity.trip_id,rev.id,workflow.id,workflow.version,{kind:'authorization',entityId:entity.id,revisionId:rev.id,destination:trip.data.destination,levels:initialApprovalLevels(workflow.data.steps),submittedAt:new Date().toISOString()},userId])).rows[0];
  for(const [i,step] of workflow.data.steps.entries())await db.query('insert into ouranos.approval_steps(organization_id,request_id,position,assignee_id,required_role) values($1,$2,$3,$4,$5)',[org,req.id,i,step.assigneeId,step.role]);
  await notify(db,org,entity.trip_id,workflow.data.steps[0].assigneeId,'A travel submission needs review',req.id);await publishChange(db,'approval',req);
  return req;
