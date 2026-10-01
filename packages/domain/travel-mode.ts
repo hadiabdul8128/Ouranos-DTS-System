@@ -16,8 +16,13 @@ export function mileageMinor(miles:number,centsPerMile:number){
  return Math.round(miles*centsPerMile);
 }
 
+/** Driving more than 400 miles each way needs a Constructed Travel Worksheet (CTW) cost comparison in DTS. */
+export const CTW_ONE_WAY_MILES=400;
+export const needsCostComparison=(roundTripMiles:number)=>Number.isFinite(roundTripMiles)&&roundTripMiles/2>CTW_ONE_WAY_MILES;
+
 /** "Driving my own car · 420 miles at $0.70/mile", or just the mode. */
 export function travelModeSummary(mode:TravelMode|undefined,mileage?:{miles:number;centsPerMile:number}){
  if(!mode)return 'Not given';
- return mode==='pov'&&mileage?`${travelModeNames.pov} · ${mileage.miles} miles at $${(mileage.centsPerMile/100).toFixed(2)}/mile`:travelModeNames[mode];
+ if(mode!=='pov'||!mileage)return travelModeNames[mode];
+ return `${travelModeNames.pov} · ${mileage.miles} miles at $${(mileage.centsPerMile/100).toFixed(2)}/mile${needsCostComparison(mileage.miles)?' · over 400 miles each way, CTW needed':''}`;
 }

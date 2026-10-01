@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {mileageMinor,travelModeSummary} from '../../packages/domain/travel-mode';
+import {mileageMinor,needsCostComparison,travelModeSummary} from '../../packages/domain/travel-mode';
 import {planningModuleSchema} from '../../packages/contracts/planning-module';
 
 const item={id:'00000000-0000-4000-8000-000000000001',category:'ground_transport',description:'Mileage',authorizedAmountMinor:29400};
@@ -13,6 +13,10 @@ describe('travel mode',()=>{
   expect(travelModeSummary('pov',{miles:420,centsPerMile:70})).toBe('Driving my own car · 420 miles at $0.70/mile');
   expect(travelModeSummary('government')).toBe('Government vehicle');
   expect(travelModeSummary(undefined)).toBe('Not given');
+ });
+ it('asks for a CTW only past 400 miles each way',()=>{
+  expect(needsCostComparison(800)).toBe(false);expect(needsCostComparison(802)).toBe(true);expect(needsCostComparison(Number(''))).toBe(false);
+  expect(travelModeSummary('pov',{miles:900,centsPerMile:70})).toBe('Driving my own car · 900 miles at $0.70/mile · over 400 miles each way, CTW needed');
  });
  it('keeps plans without a travel mode valid and accepts one with mileage',()=>{
   const base={traveler:'A',origin:'Austin, TX',currency:'USD' as const,approvedExpenseItems:[item]};
