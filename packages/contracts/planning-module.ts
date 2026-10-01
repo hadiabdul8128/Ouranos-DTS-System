@@ -16,6 +16,7 @@ export const plannedExpenseSchema = z.object({
 }).strict().refine(v=>Boolean(v.startDate)===Boolean(v.endDate)&&(!v.startDate||v.startDate<=v.endDate!), 'Stay dates must be an ordered pair');
 export const planningModuleSchema = z.object({
   traveler:z.string().trim().min(1).max(200), origin:z.string().trim().min(1).max(120),
+  travelMode:z.enum(['air','pov','rental','government','other']).optional(), mileage:z.object({miles:z.number().positive().max(20000),centsPerMile:z.number().positive().max(500)}).strict().optional(),
   currency:z.literal('USD'), approvedExpenseItems:z.array(plannedExpenseSchema).min(1).max(100),
   allowance:z.object({enabled:z.boolean(),governmentMess:z.boolean().default(false),mealsProvided:z.record(dateOnly,z.object({breakfast:z.boolean().optional(),lunch:z.boolean().optional(),dinner:z.boolean().optional()}).strict()).default({})}).strict().optional(),
 }).strict().refine(v=>new Set(v.approvedExpenseItems.map(i=>i.id)).size===v.approvedExpenseItems.length, 'Budget item IDs must be unique');
