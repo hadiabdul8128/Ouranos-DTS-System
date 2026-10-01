@@ -8,7 +8,9 @@ const OTHER='__other';
 /** A dropdown of DTS expense types and common descriptions for the expense type, with Other for anything else. */
 export function DescriptionField({category,value,onChange,maxLength=300}:{category:string;value:string;onChange:(value:string)=>void;maxLength?:number}){
  const dts=dtsOptions(category),common=commonOptions(category);
- const [typing,setTyping]=useState(()=>Boolean(value)&&!isListedDescription(category,value));
+ // Text filled in from elsewhere (like mileage) that isn't a choice shows as typed text under Other.
+ const [chose,setTyping]=useState(()=>Boolean(value)&&!isListedDescription(category,value));
+ const typing=chose||(Boolean(value)&&!isListedDescription(category,value));
  const choice=typing?OTHER:isListedDescription(category,value)?value:'';
  return <div className="description-field">
   <select aria-label="Description" value={choice} onChange={e=>{if(e.target.value===OTHER){setTyping(true);onChange('')}else{setTyping(false);onChange(e.target.value)}}}>
