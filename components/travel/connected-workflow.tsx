@@ -24,6 +24,8 @@ import {FlightSuggestions,type SelectedFlight} from './flight-suggestions';
 import {ApprovalTracker,WaitingForApprovers} from './approval-tracker';
 import {PlaceField} from './place-field';
 import {TripEditor} from './trip-editor';
+import {TravelModeField} from './travel-mode-field';
+import type {TravelMode} from '@/packages/domain/travel-mode';
 import type {FlightOption} from '@/packages/domain/flight-search';
 const originKey='ouranos.travel.origin';
 import type {HotelProperty} from '@/packages/domain/hotel-discovery';
@@ -129,6 +131,8 @@ function PlanningForm({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
  const [traveler,setTraveler]=useState(()=>parsed.success?parsed.data.traveler:''),[origin,setOrigin]=useState(()=>{if(parsed.success)return parsed.data.origin;try{return localStorage.getItem(originKey)||''}catch{return ''}});
  const [items,setItems]=useState<BudgetDraft[]>(()=>parsed.success?parsed.data.approvedExpenseItems.map(budgetDraft):[budgetDraft()]);
  const [flight,setFlight]=useState<SelectedFlight|null>(null),flightItem=useRef<string|null>(null);
+ const [travelMode,setTravelMode]=useState<TravelMode|undefined>(()=>parsed.success?(parsed.data.travelMode??(parsed.data.approvedExpenseItems.some(i=>i.category==='airfare')?'air':undefined)):undefined);
+ const [mileage,setMileage]=useState(()=>({miles:parsed.success&&parsed.data.mileage?String(parsed.data.mileage.miles):'',rate:parsed.success&&parsed.data.mileage?(parsed.data.mileage.centsPerMile/100).toFixed(2):''})),mileageItem=useRef<string|null>(null);
  const [allowance]=useState(()=>parsed.success&&parsed.data.allowance?parsed.data.allowance:{enabled:false,governmentMess:false,mealsProvided:{}});
  const [rates,setRates]=useState<ExchangeRates|null>(null),[rateError,setRateError]=useState(''),[rateReload,setRateReload]=useState(0);
  useEffect(()=>{let active=true;const abort=new AbortController();void fetch('/api/exchange-rates',{signal:abort.signal}).then(async response=>{if(!response.ok)throw new Error('Exchange rates unavailable.');return validateExchangeRates(await response.json())}).then(value=>{if(active){setRates(value);setRateError('');setItems(current=>current.map(item=>item.currency!=='USD'&&!item.usdAmount?{...item,...editPlanningAmount(item,item.amount,value)}:item))}}).catch(()=>{if(active)setRateError('Exchange rates are unavailable. USD still works; retry to convert currencies.')});return()=>{active=false;abort.abort()}},[rateReload]);
@@ -150,7 +154,33 @@ function PlanningForm({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
  }
 
 
-/** Fill the row this picker filled before, else an empty airfare row, else add one. Other airfare stays untouched. */
+/** Not flying: an untouched airfare row becomes the cost that fits how the traveler is getting there. */
+ function chooseTravelMode(mode:TravelMode){
+  setTravelMode(mode);setDirty(true);if(mode==='air')return;
+  const category:Category|null=mode==='pov'?'ground_transport':mode==='rental'?'rental_car':null;
+  setItems(current=>current.map(item=>item.category==='airfare'&&!item.amount.trim()&&!item.merchant.trim()?(category?{...item,category}:{...item,category:'other'}):item));
+ }
+ function addMileage(minor:number){
+  const miles=mileage.miles.trim(),description=`Mileage, own car · ${miles} miles round trip`;
+  setItems(current=>{
+   const index=current.findIndex(item=>item.id===mileageItem.current)>=0?current.findIndex(item=>item.id===mileageItem.current):current.findIndex(item=>item.category==='ground_transport'&&!item.amount.trim());
+   const base=index>=0?current[index]!:budgetDraft();
+   const row:BudgetDraft={...base,category:'ground_transport',currency:'USD',usdAmount:'',conversionNote:'',amount:(minor/100).toFixed(2),description,payment:base.payment||'personal'};
+   mileageItem.current=row.id;
+   return index>=0?current.map((item,i)=>i===index?row:item):current.length>=100?current:[...current,row];
+  });
+  setDirty(true);feedback.setError('');feedback.setNotice('Mileage added to planned costs. Adjust it if needed.');
+ }
+ function addRental(){
+  setItems(current=>{
+   const next=[...current],has=(c:Category)=>next.some(item=>item.category===c);
+   if(!has('rental_car'))next.push({...budgetDraft(),category:'rental_car',description:'Rental car'});
+   if(!has('fuel'))next.push({...budgetDraft(),category:'fuel',description:'Rental car fuel'});
+   return next.slice(0,100);
+  });
+  setDirty(true);feedback.setError('');feedback.setNotice('Rental car and fuel lines added. Enter their amounts below.');
+ }
+ /** Fill the row this picker filled before, else an empty airfare row, else add one. Other airfare stays untouched. */
  function selectFlight(value:SelectedFlight|null){
   setFlight(value);if(!value)return;const option:FlightOption=value.option;
   setItems(current=>{
@@ -167,7 +197,8 @@ function PlanningForm({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
   const current=await p.repository!.db.entities.get(`authorization:${id}`);if(!editable(current))throw new Error('This plan has already been submitted. Refresh to see its review status.');
   if((current?.local.version||0)!==baselineVersion.current)throw new Error('This plan changed in another session. Your edits are still here; reload to review the newer version before saving.');
   const normalized=items.map(item=>item.currency!=='USD'&&!item.usdAmount?{...item,...editPlanningAmount(item,item.amount,rates)}:item);
-  const form=planningModuleSchema.parse({traveler,origin,currency:'USD',allowance,approvedExpenseItems:normalized.map(item=>({id:item.id,category:item.category,description:item.description.trim()||categoryLabels[item.category],authorizedAmountMinor:parseAmountMinor(item.currency==='USD'?item.amount:item.usdAmount),...(item.currency!=='USD'?{originalEstimate:{currency:item.currency,amountMinor:parseReceiptAmount(item.amount,item.currency),conversionNote:item.conversionNote}}:{}),...(item.merchant?{merchant:item.merchant}:{}),...(item.payment?{expectedPaymentMethod:item.payment}:{}),...(item.date?{date:item.date}:{}),...(item.startDate||item.endDate?{startDate:item.startDate,endDate:item.endDate}:{} )}))});
+  const miles=Number(mileage.miles),centsPerMile=Math.round(Number(mileage.rate)*100);
+  const form=planningModuleSchema.parse({traveler,origin,...(travelMode?{travelMode}:{}),...(travelMode==='pov'&&miles>0&&centsPerMile>0?{mileage:{miles,centsPerMile}}:{}),currency:'USD',allowance,approvedExpenseItems:normalized.map(item=>({id:item.id,category:item.category,description:item.description.trim()||categoryLabels[item.category],authorizedAmountMinor:parseAmountMinor(item.currency==='USD'?item.amount:item.usdAmount),...(item.currency!=='USD'?{originalEstimate:{currency:item.currency,amountMinor:parseReceiptAmount(item.amount,item.currency),conversionNote:item.conversionNote}}:{}),...(item.merchant?{merchant:item.merchant}:{}),...(item.payment?{expectedPaymentMethod:item.payment}:{}),...(item.date?{date:item.date}:{}),...(item.startDate||item.endDate?{startDate:item.startDate,endDate:item.endDate}:{} )}))});
   await p.repository!.stage('authorization.save',id,{tripId:trip.id,formSchemaVersion:PLANNING_SCHEMA_VERSION,formData:form});baselineVersion.current=(await p.repository!.db.entities.get(`authorization:${id}`))!.local.version;setDirty(false);return stageMessage(p,id,'authorization');
  }
  async function submit(){
@@ -182,7 +213,8 @@ function PlanningForm({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
  {p.approvalMode==='required'&&status!=='approved'&&(approval?<ApprovalTracker request={approval}/>:status==='in_review'&&row?.server&&<WaitingForApprovers/>)}
  <PlanningHotelFinder trip={{id:trip.id,destination:text(trip.data.destination),departure:text(trip.data.departure),returnDate:text(trip.data.returnDate),lodgingBudgetMinor:items.filter(item=>item.category==='lodging').reduce<number|null>((sum,item)=>{if(sum===null)return null;try{return sum+parseAmountMinor(item.currency==='USD'?item.amount:item.usdAmount)}catch{return null}},0)||null,budgetLabel:status==='approved'?'Approved lodging budget':'Planned lodging budget'}} onSelectHotel={locked||!!feedback.busy?undefined:selectHotel}/>
  <form onSubmit={e=>{e.preventDefault();void feedback.run('save',save)}}><fieldset disabled={locked||!!feedback.busy} className="cw-fieldset"><div className="cw-card cw-grid"><Field label="Traveler name"><Input value={traveler} onChange={e=>{setTraveler(e.target.value);setDirty(true)}} autoComplete="name" maxLength={200} required/></Field><PlaceField id="origin" label="Starting location" variant="plan" value={origin} onChange={value=>{setOrigin(value);setDirty(true);try{localStorage.setItem(originKey,value)}catch{}}}/><div className="cw-span-full cw-purpose"><span>Purpose</span><p>{text(trip.data.purpose)}</p></div></div>
- <FlightSuggestions from={origin} to={text(trip.data.destination)} departure={text(trip.data.departure)} returnDate={text(trip.data.returnDate)} selected={flight} onSelect={selectFlight} disabled={locked||!!feedback.busy}/>
+ <TravelModeField mode={travelMode} onMode={chooseTravelMode} miles={mileage.miles} rate={mileage.rate} onMileage={patch=>{setMileage(m=>({...m,...patch}));setDirty(true)}} onAddMileage={addMileage} onAddRental={addRental} disabled={locked||!!feedback.busy}/>
+ {travelMode==='air'&&<FlightSuggestions from={origin} to={text(trip.data.destination)} departure={text(trip.data.departure)} returnDate={text(trip.data.returnDate)} selected={flight} onSelect={selectFlight} disabled={locked||!!feedback.busy}/>}
  <div id="cw-planned-expenses" tabIndex={-1} className="cw-section-heading"><div><h2>Planned expenses</h2></div><span className="cw-budget-total">{total===null?'Check amounts':money(total)} <small>USD</small></span></div>
  {!rates&&!rateError&&<p className="cw-muted" role="status">Loading exchange rates…</p>}{rateError&&<p className="cw-muted" role="status">{rateError} <button type="button" className="back-link" disabled={locked} onClick={()=>{setRateError('');setRateReload(n=>n+1)}}>Retry rates</button></p>}
  {outsideTrip&&!locked&&<p className="cw-muted" role="status">Some expense dates are outside your trip dates. Update them before submitting.</p>}<div className="cw-budget-list">{items.map((item,index)=><article className="cw-card cw-budget-item" key={item.id}><div className="cw-item-heading"><span>Expense {String(index+1).padStart(2,'0')}</span>{!locked&&items.length>1&&<button className="cw-icon-button" type="button" aria-label={`Remove planned expense ${index+1}`} onClick={()=>{setItems(current=>current.filter(x=>x.id!==item.id));setDirty(true)}}><Trash2 size={16}/></button>}</div><div className="cw-grid"><Field label="Category"><select value={item.category} onChange={e=>updateItem(index,{category:e.target.value as Category})}><Categories/></select></Field><Field label={`Planned amount · ${item.currency}`}><Input value={item.amount} onChange={e=>updateItem(index,editPlanningAmount(item,e.target.value,rates))} placeholder="0.00" inputMode="decimal" required/></Field><Field label="Currency"><select value={item.currency} onChange={e=>changeCurrency(index,e.target.value as ReceiptCurrency)} disabled={!!item.amount.trim()&&!rates}>{receiptCurrencies.map(currency=><option key={currency} value={currency}>{currency}</option>)}</select></Field>{item.currency!=='USD'&&<p className="cw-muted cw-span-full" role="status" title={item.conversionNote}>{item.usdAmount?`≈ ${money(parseReceiptAmount(item.usdAmount,'USD'))} USD · exchange-rate estimate`:rates?'Enter an amount to calculate the USD estimate.':'Loading exchange rates…'}</p>}<Field label="Description · optional" className="cw-span-full"><Input value={item.description} onChange={e=>updateItem(index,{description:e.target.value})} placeholder="For example, return flight to home station" maxLength={300}/></Field><details className="cw-disclosure cw-span-full"><summary>Details</summary><div className="cw-grid"><Field label="Merchant · optional"><Input value={item.merchant} onChange={e=>updateItem(index,{merchant:e.target.value})} maxLength={200}/></Field><Field label="Expected payment"><select value={item.payment} onChange={e=>updateItem(index,{payment:e.target.value as BudgetDraft['payment']})}><option value="">No preference</option><option value="gtcc">GTCC</option><option value="personal">Personal</option></select></Field>{item.category==='lodging'?<><Field label="Check-in · optional"><Input type="date" min={text(trip.data.departure)} max={text(trip.data.returnDate)} value={item.startDate} onChange={e=>updateItem(index,{startDate:e.target.value})}/></Field><Field label="Check-out · optional"><Input type="date" min={item.startDate||text(trip.data.departure)} max={text(trip.data.returnDate)} value={item.endDate} onChange={e=>updateItem(index,{endDate:e.target.value})}/></Field></>:<Field label="Expense date · optional"><Input type="date" min={text(trip.data.departure)} max={text(trip.data.returnDate)} value={item.date} onChange={e=>updateItem(index,{date:e.target.value})}/></Field>}</div></details></div></article>)}</div>
