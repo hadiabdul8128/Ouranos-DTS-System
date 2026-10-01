@@ -24,5 +24,5 @@ export function ApprovalTracker({request}:{request:Pick<Entity,'status'|'data'>}
 
 /** A submission made before approvers were set. */
 export function WaitingForApprovers(){
- return <section className="approval-status is-active" role="status"><strong>Submitted · waiting for approvers</strong><span>It goes to S1 as soon as approvers are set in Settings.</span></section>;
+ return <section className="approval-status is-active" role="status"><strong>Submitted · waiting for approvers</strong><span>It goes to your S1 as soon as they add you to their team.</span></section>;
 }
