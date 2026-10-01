@@ -155,3 +155,4 @@ body { isolation:isolate; }
   .prompt-page .intent-stage { padding-bottom:48px; }
   .prompt-page .quiet-footer { padding:0 25px 23px; }
 }
+.description-field{display:flex;flex-direction:column;gap:8px;min-width:0}
