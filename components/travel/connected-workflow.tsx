@@ -26,7 +26,7 @@ import {PlaceField} from './place-field';
 import {TripEditor} from './trip-editor';
 import {TravelModeField} from './travel-mode-field';
 import {DescriptionField} from './description-field';
-import {isListedDescription} from '@/packages/domain/expense-descriptions';
+import {isListedDescription,MILEAGE_DESCRIPTION} from '@/packages/domain/expense-descriptions';
 import type {TravelMode} from '@/packages/domain/travel-mode';
 import type {FlightOption} from '@/packages/domain/flight-search';
 const originKey='ouranos.travel.origin';
@@ -163,7 +163,7 @@ function PlanningForm({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
   setItems(current=>current.map(item=>item.category==='airfare'&&!item.amount.trim()&&!item.merchant.trim()?(category?{...item,category}:{...item,category:'other'}):item));
  }
  function addMileage(minor:number){
-  const miles=mileage.miles.trim(),description=`Mileage, own car · ${miles} miles round trip`;
+  const miles=mileage.miles.trim(),description=`${MILEAGE_DESCRIPTION} · ${miles} miles round trip`;
   setItems(current=>{
    const index=current.findIndex(item=>item.id===mileageItem.current)>=0?current.findIndex(item=>item.id===mileageItem.current):current.findIndex(item=>item.category==='ground_transport'&&!item.amount.trim());
    const base=index>=0?current[index]!:budgetDraft();

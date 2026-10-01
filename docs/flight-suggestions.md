@@ -25,7 +25,7 @@ Until its authorization is submitted, a trip's destination, dates and purpose ca
 Planning asks **How are you getting there?**: Flying, Driving my own car, Rental car, Government vehicle, or Other (train, bus, ride). The answer is saved with the plan (`travelMode`) and shown on the inbox confirmation and the review page.
 
 - **Flying** shows flight suggestions. Older plans with an airfare line open with Flying selected.
-- **Driving my own car** asks for round-trip miles and the rate per mile (check the current rate with your travel office) and adds one editable "Mileage, own car" cost; the miles and rate are saved with the plan (`mileage`).
+- **Driving my own car** asks for round-trip miles and the rate per mile (check the current rate with your travel office) and adds one editable "Private Auto - To/From TDY" cost (the DTS expense type name); the miles and rate are saved with the plan (`mileage`).
 - **Rental car** adds rental car and fuel lines if the plan has none.
 - **Government vehicle** and **Other** add nothing.
 
