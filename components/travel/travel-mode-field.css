@@ -1,0 +1,15 @@
+.travel-mode{margin:0 0 28px}
+.travel-mode-label{font-size:12px;color:#edf0e8;margin:0 0 10px}
+.travel-mode-options{display:flex;flex-wrap:wrap;gap:8px}
+.travel-mode-options button{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:0 14px;border:1px solid #343c33;border-radius:8px;background:#141815;font-size:13px;color:#c9cfc4}
+.travel-mode-options button svg{color:#a7afa3}
+.travel-mode-options button:hover:not(:disabled){border-color:#4a5448;color:#edf0e8}
+.travel-mode-options button[aria-checked=true]{border-color:#a5b38a;background:#1f271c;color:#edf0e8}.travel-mode-options button[aria-checked=true] svg{color:#d4e0bb}
+.travel-mode-options button:focus-visible{outline:2px solid #a5b38a;outline-offset:2px}
+.travel-mode-options button:disabled{opacity:.6}
+.travel-mode-hint{font-size:12px;color:#a7afa3;line-height:1.6;margin:10px 0 0}
+.travel-mode-mileage{display:grid;grid-template-columns:150px 130px 1fr auto;gap:12px;align-items:end;margin-top:14px}
+.travel-mode-mileage label{display:flex;flex-direction:column;gap:7px;font-size:12px;color:#a7afa3}
+.travel-mode-estimate{display:flex;flex-direction:column;gap:4px;padding-bottom:8px}.travel-mode-estimate span{font-size:11px;color:#a7afa3}.travel-mode-estimate strong{font-size:18px;font-weight:400;color:#edf0e8}
+.travel-mode-add{margin-top:12px}
+@media(max-width:640px){.travel-mode-mileage{grid-template-columns:1fr 1fr}.travel-mode-estimate{grid-column:1/-1}.travel-mode-mileage>button{grid-column:1/-1}}
