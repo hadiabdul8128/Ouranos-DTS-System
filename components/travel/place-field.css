@@ -2,3 +2,4 @@
 .place-field .place-hint{display:block;font-size:11px;color:#a7afa3;line-height:1.6;margin-top:8px}
 .cw-field.place-field .travel-select select{appearance:none;padding:0 40px 0 12px;height:46px;border-radius:7px;border-color:var(--cw-line,#343c33)}
 @media(max-width:600px){.place-inputs,.place-inputs.is-overseas{grid-template-columns:1fr}}
+.installation-field .place-hint{display:block;font-size:11px;color:#a7afa3;line-height:1.6;margin-top:8px}

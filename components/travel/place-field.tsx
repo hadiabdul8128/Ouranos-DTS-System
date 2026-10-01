@@ -7,7 +7,7 @@ import './place-field.css';
 
 type Props={id:string;label:string;value:string;onChange:(value:string)=>void;variant?:'travel'|'plan';hint?:string};
 /** City plus state (or country), so searches get a real, unambiguous place. */
-export function PlaceField({id,label,value,onChange,variant='travel',hint='Use the nearest city with an airport, not the installation name.'}:Props){
+export function PlaceField({id,label,value,onChange,variant='travel',hint='The city nearest to where you’ll work.'}:Props){
  const [parts,setParts]=useState(()=>parsePlace(value));
  function update(patch:Partial<typeof parts>){const next={...parts,...patch};setParts(next);onChange(formatPlace(next.city,next.region,next.country))}
  const overseas=parts.region===OVERSEAS;
