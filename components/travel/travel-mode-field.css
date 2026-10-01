@@ -13,3 +13,4 @@
 .travel-mode-estimate{display:flex;flex-direction:column;gap:4px;padding-bottom:8px}.travel-mode-estimate span{font-size:11px;color:#a7afa3}.travel-mode-estimate strong{font-size:18px;font-weight:400;color:#edf0e8}
 .travel-mode-add{margin-top:12px}
 @media(max-width:640px){.travel-mode-mileage{grid-template-columns:1fr 1fr}.travel-mode-estimate{grid-column:1/-1}.travel-mode-mileage>button{grid-column:1/-1}}
+.travel-mode-ctw{margin:12px 0 0;padding:10px 12px;border:1px solid #6b5a38;border-radius:8px;background:#221d12;font-size:12px;line-height:1.6;color:#e0bf7a}
