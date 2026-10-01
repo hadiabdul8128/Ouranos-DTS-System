@@ -16,6 +16,7 @@ import {loadWorkingPlan} from './working';
 import {registerTransitionRoutes} from './transition';
 import {registerCompanionRoutes} from './companion';
 import {registerGuideRoutes} from './guide';
+import {registerTeamRoutes} from './team';
 import {CONTRACT_VERSION,uuid,entityKindSchema,organizationInput,membershipInput,syncPushSchema,commandSchema} from '../../packages/contracts/index';
 import {DomainError,requireCondition as check} from '../../packages/domain/errors';
 
@@ -89,5 +90,6 @@ export async function buildApp(config:PlatformConfig,options:{pool?:Pool;logger?
  registerTransitionRoutes(app,pool);
  registerCompanionRoutes(app,pool);
  registerGuideRoutes(app,pool);
+ registerTeamRoutes(app,pool);
  app.addHook('onClose',async()=>{if(!options.pool)await pool.end()});return app;
 }
