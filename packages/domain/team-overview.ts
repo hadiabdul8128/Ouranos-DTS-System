@@ -1,5 +1,5 @@
 import type {Entity,EntityKind} from '../contracts';
-import {APPROVAL_LEVEL_NAMES,approvalLevelsOf,currentApprovalLevel} from '../contracts/approval-chain';
+import {APPROVAL_LEVEL_NAMES,approvalLevelsOf,approvalWait,currentApprovalLevel} from '../contracts/approval-chain';
 import type {TeamLevel,TeamOverdue,TeamPerson,TeamTrip} from '../contracts/team';
 import {historyTotals,tripHistory,type TripPayment} from './trip-history';
 import {addDays} from './planner';
@@ -11,7 +11,7 @@ const day=(value:string)=>new Date(`${value}T12:00:00Z`).toLocaleDateString('en-
 const levelOf=(label:string):TeamLevel|null=>label===APPROVAL_LEVEL_NAMES[0]?'s1':label===APPROVAL_LEVEL_NAMES[1]?'command':null;
 
 /** One entry per person the leader added, with their trips, overdue items, money and checklists. */
-export function buildTeamPeople(people:TeamPersonRow[],records:TeamRecordRow[],leaderId:string,today:string):TeamPerson[]{
+export function buildTeamPeople(people:TeamPersonRow[],records:TeamRecordRow[],leaderId:string,today:string,now=new Date(`${today}T12:00:00Z`)):TeamPerson[]{
  const byMember=new Map<string,TeamPersonRow[]>();
  for(const row of people){byMember.set(row.member_id,[...(byMember.get(row.member_id)??[]),row])}
  return [...byMember.entries()].map(([memberId,rows])=>{
@@ -22,11 +22,14 @@ export function buildTeamPeople(people:TeamPersonRow[],records:TeamRecordRow[],l
   for(const r of mine)if(r.kind==='payment'&&r.trip_id)payments[r.trip_id]={amountMinor:Number(r.data.amountMinor),date:String(r.data.date).slice(0,10)};
   const history=tripHistory(entities,payments,today);
   const approvals=mine.filter(r=>r.kind==='approval');
+  const late:TeamOverdue[]=[];
   const trips:TeamTrip[]=history.map(trip=>{
    const plan=entities.filter(e=>e.kind==='authorization'&&e.tripId===trip.id).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt))[0];
    const request=plan?approvals.filter(a=>a.data.entityId===plan.id).sort((a,b)=>new Date(b.updated_at).getTime()-new Date(a.updated_at).getTime())[0]:undefined;
    const current=request?currentApprovalLevel(approvalLevelsOf({status:request.status,data:request.data})):null;
    const currentLevel=current?levelOf(current.label):null;
+   const wait=request?approvalWait({status:request.status,data:request.data,updatedAt:new Date(request.updated_at).toISOString()},now):null;
+   if(wait?.late)late.push({kind:'approval_late',label:`Approval waiting ${wait.days} days · ${trip.destination}`,tripId:trip.id});
    return {id:trip.id,destination:trip.destination,departure:trip.departure,returnDate:trip.returnDate,purpose:trip.purpose,phase:trip.phase,planStatus:trip.planStatus,voucherStatus:trip.voucherStatus,payStatus:trip.payStatus,plannedMinor:trip.plannedMinor,claimedMinor:trip.claimedMinor,paidMinor:trip.payment?.amountMinor??null,
     approval:request?{status:request.status,current:request.status==='in_review'?current?.label??null:null,waitingOnYou:request.status==='in_review'&&currentLevel!==null&&levels.includes(currentLevel)}:null};
   });
@@ -34,6 +37,7 @@ export function buildTeamPeople(people:TeamPersonRow[],records:TeamRecordRow[],l
   const overdue:TeamOverdue[]=[
    ...history.filter(t=>t.payStatus==='not_filed').map(t=>({kind:'voucher_not_filed' as const,label:`Voucher not filed · ${t.destination}`,tripId:t.id})),
    ...history.filter(t=>t.phase!=='past'&&(!t.planStatus||['draft','changes_requested'].includes(t.planStatus))&&t.departure<=addDays(today,7)).map(t=>({kind:'plan_draft' as const,label:`Plan not sent · ${t.destination} leaves ${day(t.departure)}`,tripId:t.id})),
+   ...late,
    ...checklists.filter(c=>c.dueOn&&c.dueOn<today&&c.done<c.total).map(c=>({kind:'checklist_late' as const,label:`Checklist late · ${c.title}`,checklistId:c.id})),
   ];
   const t=historyTotals(history);

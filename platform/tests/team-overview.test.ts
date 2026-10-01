@@ -15,4 +15,12 @@ describe('team overview',()=>{
   expect(people[0]!.trips.find(t=>t.id==='t2')!.approval).toEqual({status:'in_review',current:'Command approval',waitingOnYou:true});
   expect(people[0]!.totals.plannedMinor).toBe(20000);
  });
+ it('flags a request that has waited at one level for more than 72 hours',()=>{
+  const people=buildTeamPeople([{member_id:member,email:'m@unit.mil',level:'s1',leader_id:leader,role:'traveler'}],[
+   row('trip','t3',null,'draft',{destination:'Boise, ID',departure:'2026-11-02',returnDate:'2026-11-04',purpose:'Training'}),
+   row('authorization','a3','t3','in_review',{formData:{approvedExpenseItems:[]}}),
+   row('approval','r3','t3','in_review',{entityId:'a3',submittedAt:'2026-09-27T09:00:00Z',levels:[{position:0,label:'S1 · Administration',role:'reviewer',status:'pending'}]}),
+  ],leader,today);
+  expect(people[0]!.overdue).toEqual([{kind:'approval_late',label:'Approval waiting 4 days · Boise, ID',tripId:'t3'}]);
+ });
 });

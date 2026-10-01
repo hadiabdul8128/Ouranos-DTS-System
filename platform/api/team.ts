@@ -19,7 +19,7 @@ export function registerTeamRoutes(app:FastifyInstance,pool:Pool){
    check(LEADER_ROLES.includes((await roleOf(db,q.organizationId))??''),'PERMISSION_DENIED','Only S1, command and admins have a team view',403);
    const people=(await db.query<TeamPersonRow>('select * from ouranos.team_people($1)',[q.organizationId])).rows;
    const records=(await db.query<TeamRecordRow>('select * from ouranos.team_records($1)',[q.organizationId])).rows;
-   return {people:buildTeamPeople(people,records,req.actor.id,q.today??utcToday())};
+   return {people:buildTeamPeople(people,records,req.actor.id,q.today??utcToday(),new Date())};
   });
  });
  // A leader adds someone from the workspace at their own level.

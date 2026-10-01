@@ -17,6 +17,6 @@ export const teamChecklistInput=z.object({organizationId,title:z.string().trim()
 export const checklistProgressInput=z.object({organizationId,doneStepIds:z.array(z.string().min(1).max(40)).max(40)}).strict();
 
 export type TeamTrip={id:string;destination:string;departure:string;returnDate:string;purpose:string;phase:'past'|'current'|'upcoming';planStatus:string|null;voucherStatus:string|null;payStatus:'paid'|'awaiting'|'not_filed'|'not_due';plannedMinor:number|null;claimedMinor:number|null;paidMinor:number|null;approval:{status:string;current:string|null;waitingOnYou:boolean}|null};
-export type TeamOverdue={kind:'voucher_not_filed'|'plan_draft'|'checklist_late';label:string;tripId?:string;checklistId?:string};
+export type TeamOverdue={kind:'voucher_not_filed'|'plan_draft'|'checklist_late'|'approval_late';label:string;tripId?:string;checklistId?:string};
 export type TeamPerson={memberId:string;email:string;role:string|null;levels:TeamLevel[];trips:TeamTrip[];totals:{trips:number;plannedMinor:number;claimedMinor:number;paidMinor:number;awaitingMinor:number};overdue:TeamOverdue[];waitingOnYou:number;checklists:Array<{id:string;title:string;done:number;total:number;dueOn:string|null}>};
 export type AssignedChecklist={id:string;title:string;steps:Array<z.infer<typeof checklistStepSchema>>;dueOn:string|null;doneStepIds:string[];createdAt:string};
