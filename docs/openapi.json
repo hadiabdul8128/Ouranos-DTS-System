@@ -76,6 +76,606 @@
         "description": "Read-only AI assistant. At most 10 messages; the last must be from the user. Rate limited to 10 requests per minute per user."
       }
     },
+    "/v1/team": {
+      "get": {
+        "operationId": "team",
+        "summary": "Overview of the people the caller leads",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organizationId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "today",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "description": "S1, command and admins. Trips, where each request is in the chain, overdue items, money totals and checklist progress for people the caller added. Records are not added to the caller’s sync."
+      }
+    },
+    "/v1/team/members": {
+      "post": {
+        "operationId": "addTeamMember",
+        "summary": "Add someone from the workspace to your team",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamMemberResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamMemberInput"
+              }
+            }
+          }
+        },
+        "description": "S1 reviewers add at s1 and command approvers at command; admins at either. Their authorizations then route to you."
+      },
+      "delete": {
+        "operationId": "removeTeamMember",
+        "summary": "Remove someone from your team",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemovedResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamMemberRemoval"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/team/mine": {
+      "get": {
+        "operationId": "myLeaders",
+        "summary": "The caller’s own S1 and command",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organizationId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/payments": {
+      "get": {
+        "operationId": "payments",
+        "summary": "Payments the caller recorded for their trips",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organizationId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "put": {
+        "operationId": "recordPayment",
+        "summary": "Record or change a payment for your trip",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentInput"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "removePayment",
+        "summary": "Remove a recorded payment",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemovedResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentRemoval"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/team/checklists": {
+      "post": {
+        "operationId": "sendChecklist",
+        "summary": "Send a checklist to people on your team",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistSentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamChecklistInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/checklists": {
+      "get": {
+        "operationId": "assignedChecklists",
+        "summary": "Checklists sent to the caller",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignedChecklistsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organizationId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/checklists/{id}/progress": {
+      "put": {
+        "operationId": "checklistProgress",
+        "summary": "Save which steps are done",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistProgressResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChecklistProgressInput"
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/guide/checklist": {
       "post": {
         "operationId": "guideChecklist",
@@ -1754,6 +2354,374 @@
         },
         "required": [
           "answer"
+        ],
+        "additionalProperties": false
+      },
+      "TeamMemberInput": {
+        "type": "object",
+        "properties": {
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 320
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "s1",
+              "command"
+            ]
+          }
+        },
+        "required": [
+          "organizationId",
+          "email",
+          "level"
+        ],
+        "additionalProperties": false
+      },
+      "TeamMemberRemoval": {
+        "type": "object",
+        "properties": {
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "memberId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "s1",
+              "command"
+            ]
+          }
+        },
+        "required": [
+          "organizationId",
+          "memberId",
+          "level"
+        ],
+        "additionalProperties": false
+      },
+      "PaymentInput": {
+        "type": "object",
+        "properties": {
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tripId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amountMinor": {
+            "type": "integer",
+            "exclusiveMinimum": true,
+            "minimum": 0,
+            "maximum": 100000000000
+          },
+          "date": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        },
+        "required": [
+          "organizationId",
+          "tripId",
+          "amountMinor",
+          "date"
+        ],
+        "additionalProperties": false
+      },
+      "PaymentRemoval": {
+        "type": "object",
+        "properties": {
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tripId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "organizationId",
+          "tripId"
+        ],
+        "additionalProperties": false
+      },
+      "TeamChecklistInput": {
+        "type": "object",
+        "properties": {
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 40
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                "detail": {
+                  "type": "string",
+                  "maxLength": 1000
+                }
+              },
+              "required": [
+                "id",
+                "title"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 40
+          },
+          "dueOn": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "memberIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "minItems": 1,
+            "maxItems": 200
+          }
+        },
+        "required": [
+          "organizationId",
+          "title",
+          "steps",
+          "memberIds"
+        ],
+        "additionalProperties": false
+      },
+      "ChecklistProgressInput": {
+        "type": "object",
+        "properties": {
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "doneStepIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40
+            },
+            "maxItems": 40
+          }
+        },
+        "required": [
+          "organizationId",
+          "doneStepIds"
+        ],
+        "additionalProperties": false
+      },
+      "TeamResponse": {
+        "type": "object",
+        "properties": {
+          "people": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          }
+        },
+        "required": [
+          "people"
+        ],
+        "additionalProperties": false
+      },
+      "TeamMemberResponse": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "s1",
+              "command"
+            ]
+          }
+        },
+        "required": [
+          "memberId",
+          "level"
+        ],
+        "additionalProperties": false
+      },
+      "RemovedResponse": {
+        "type": "object",
+        "properties": {
+          "removed": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "removed"
+        ],
+        "additionalProperties": false
+      },
+      "LeadersResponse": {
+        "type": "object",
+        "properties": {
+          "leaders": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "level": {
+                  "type": "string",
+                  "enum": [
+                    "s1",
+                    "command"
+                  ]
+                },
+                "email": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "level",
+                "email"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "leaders"
+        ],
+        "additionalProperties": false
+      },
+      "PaymentsResponse": {
+        "type": "object",
+        "properties": {
+          "payments": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "amountMinor": {
+                  "type": "integer"
+                },
+                "date": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "amountMinor",
+                "date"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "payments"
+        ],
+        "additionalProperties": false
+      },
+      "PaymentResponse": {
+        "type": "object",
+        "properties": {
+          "payment": {
+            "type": "object",
+            "properties": {
+              "amountMinor": {
+                "type": "integer"
+              },
+              "date": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "amountMinor",
+              "date"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "payment"
+        ],
+        "additionalProperties": false
+      },
+      "ChecklistSentResponse": {
+        "type": "object",
+        "properties": {
+          "checklistId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "checklistId"
+        ],
+        "additionalProperties": false
+      },
+      "AssignedChecklistsResponse": {
+        "type": "object",
+        "properties": {
+          "checklists": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          }
+        },
+        "required": [
+          "checklists"
+        ],
+        "additionalProperties": false
+      },
+      "ChecklistProgressResponse": {
+        "type": "object",
+        "properties": {
+          "doneStepIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "doneStepIds"
         ],
         "additionalProperties": false
       },

@@ -1,5 +1,6 @@
 import {companionInput} from '../../packages/contracts/companion';
 import {guideAskInput,guideBuildInput,guideChecklistSchema} from '../../packages/contracts/guide';
+import {checklistProgressInput,paymentInput,paymentRemoval,teamChecklistInput,teamMemberInput,teamMemberRemoval} from '../../packages/contracts/team';
 import {readFile, mkdir, writeFile} from 'node:fs/promises';
 import {z} from 'zod';
 import {zodToJsonSchema} from 'zod-to-json-schema';
@@ -27,6 +28,11 @@ const approvalDecision = z.object({id:uuid, organization_id:uuid, request_id:uui
 
 const models = {
   CompanionInput:companionInput, CompanionResponse:z.object({answer:z.string()}),
+  TeamMemberInput:teamMemberInput, TeamMemberRemoval:teamMemberRemoval, PaymentInput:paymentInput, PaymentRemoval:paymentRemoval, TeamChecklistInput:teamChecklistInput, ChecklistProgressInput:checklistProgressInput,
+  TeamResponse:z.object({people:z.array(z.record(z.unknown()))}), TeamMemberResponse:z.object({memberId:z.string().uuid(),level:z.enum(['s1','command'])}), RemovedResponse:z.object({removed:z.literal(true)}),
+  LeadersResponse:z.object({leaders:z.array(z.object({level:z.enum(['s1','command']),email:z.string()}))}), PaymentsResponse:z.object({payments:z.record(z.object({amountMinor:z.number().int(),date:z.string()}))}),
+  PaymentResponse:z.object({payment:z.object({amountMinor:z.number().int(),date:z.string()})}), ChecklistSentResponse:z.object({checklistId:z.string().uuid()}),
+  AssignedChecklistsResponse:z.object({checklists:z.array(z.record(z.unknown()))}), ChecklistProgressResponse:z.object({doneStepIds:z.array(z.string())}),
   GuideChecklistInput:guideBuildInput, GuideChecklistResponse:z.object({checklist:guideChecklistSchema}), GuideAskInput:guideAskInput, GuideAskResponse:z.object({answer:z.string()}),
   TransitionProfile:transitionProfileSchema,TransitionRecommendation:transitionRecommendationSchema,TransitionSave:transitionSaveSchema,TransitionPlan:transitionPlanSchema,
   TransitionResponse:z.object({plan:transitionPlanSchema}),TransitionOptionalResponse:z.object({plan:transitionPlanSchema.nullable()}),
@@ -76,6 +82,13 @@ function operation(operationId:string, summary:string, result:SchemaName, extra:
 const commandError = {description:'Command rejected. Domain failures include commandId and ok:false; request/database failures use the error envelope.',content:json({oneOf:[ref('CommandFailure'),ref('ErrorResponse')]})};
 const paths:Record<string,Record<string,SpecObject>> = {
   '/v1/companion/chat':{post:operation('companionChat','Answer using the caller’s own recent travel status','CompanionResponse',{requestBody:request('CompanionInput'),description:'Read-only AI assistant. At most 10 messages; the last must be from the user. Rate limited to 10 requests per minute per user.'})},
+  '/v1/team':{get:operation('team','Overview of the people the caller leads','TeamResponse',{parameters:[organization,{name:'today',in:'query',required:false,schema:{type:'string',format:'date'}}],description:'S1, command and admins. Trips, where each request is in the chain, overdue items, money totals and checklist progress for people the caller added. Records are not added to the caller’s sync.'})},
+  '/v1/team/members':{post:operation('addTeamMember','Add someone from the workspace to your team','TeamMemberResponse',{requestBody:request('TeamMemberInput'),description:'S1 reviewers add at s1 and command approvers at command; admins at either. Their authorizations then route to you.'}),delete:operation('removeTeamMember','Remove someone from your team','RemovedResponse',{requestBody:request('TeamMemberRemoval')})},
+  '/v1/team/mine':{get:operation('myLeaders','The caller’s own S1 and command','LeadersResponse',{parameters:[organization]})},
+  '/v1/payments':{get:operation('payments','Payments the caller recorded for their trips','PaymentsResponse',{parameters:[organization]}),put:operation('recordPayment','Record or change a payment for your trip','PaymentResponse',{requestBody:request('PaymentInput')}),delete:operation('removePayment','Remove a recorded payment','RemovedResponse',{requestBody:request('PaymentRemoval')})},
+  '/v1/team/checklists':{post:operation('sendChecklist','Send a checklist to people on your team','ChecklistSentResponse',{requestBody:request('TeamChecklistInput')})},
+  '/v1/checklists':{get:operation('assignedChecklists','Checklists sent to the caller','AssignedChecklistsResponse',{parameters:[organization]})},
+  '/v1/checklists/{id}/progress':{put:operation('checklistProgress','Save which steps are done','ChecklistProgressResponse',{parameters:[{name:'id',in:'path',required:true,schema:{type:'string',format:'uuid'}}],requestBody:request('ChecklistProgressInput')})},
   '/v1/guide/checklist':{post:operation('guideChecklist','Turn instructions into a checklist','GuideChecklistResponse',{requestBody:request('GuideChecklistInput'),description:'AI-generated checklist from the caller’s instructions. Nothing is stored or sent elsewhere. Returns 503 when AI is not connected; clients build a local checklist instead. Rate limited to 10 requests per minute per user.'})},
   '/v1/guide/ask':{post:operation('guideAsk','Answer a question about a checklist','GuideAskResponse',{requestBody:request('GuideAskInput'),description:'Read-only AI answer. At most 10 messages; the last must be from the user. Rate limited to 10 requests per minute per user.'})},
   '/health':{get:operation('health','Process health','Health',{security:[]})},
@@ -119,7 +132,7 @@ const document = {
 };
 
 // Prevent route additions/renames from silently disappearing from the handoff.
-const apiSource = (await Promise.all(['app.ts','transition.ts','companion.ts','guide.ts'].map(file=>readFile(new URL(`../api/${file}`,import.meta.url),'utf8')))).join('\n');
+const apiSource = (await Promise.all(['app.ts','transition.ts','companion.ts','guide.ts','team.ts'].map(file=>readFile(new URL(`../api/${file}`,import.meta.url),'utf8')))).join('\n');
 const implemented = [...apiSource.matchAll(/app\.(get|post|put|patch|delete)\('([^']+)'/g)].map(([,method,path])=>`${method} ${path.replace(/:([A-Za-z]+)/g,'{$1}')}`).sort();
 const documented = Object.entries(paths).flatMap(([path,methods])=>Object.keys(methods).map(method=>`${method} ${path}`)).sort();
 if(JSON.stringify(implemented)!==JSON.stringify(documented))throw new Error('API route inventory differs from OpenAPI. Update generate-contracts.ts before generating.');
