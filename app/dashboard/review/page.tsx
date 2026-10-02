@@ -150,6 +150,7 @@ function Submission({detail, kind}: {detail: RevisionDetail; kind: string}) {
         <Field name="From">{plan?.origin || 'Not provided in this form'}</Field>
         <Field name="Getting there">{travelModeSummary(plan?.travelMode, plan?.mileage)}</Field>
         <Field name="To">{string(trip.destination)}</Field>
+        {typeof trip.ordersNumber === 'string' && trip.ordersNumber && <Field name="Orders number">{trip.ordersNumber}</Field>}
         {typeof trip.installation === 'string' && trip.installation && <Field name="Installation">{string(trip.installation)}</Field>}
         <Field name="Departure">{date(trip.departure)}</Field>
         <Field name="Return">{date(trip.returnDate)}</Field>
