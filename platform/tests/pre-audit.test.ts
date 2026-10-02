@@ -28,3 +28,18 @@ describe('pre-audit flags',()=>{
   expect(planningModuleSchema.safeParse({...plan,preAudit:{flightFare:'maybe'}}).success).toBe(false);
  });
 });
+
+describe('lodging and per diem warnings',()=>{
+ it('spots Airbnb-type rentals in the merchant or description',async()=>{
+  const {hasNonconventionalLodging,isNonconventionalLodging}=await import('../../packages/domain/pre-audit');
+  expect(isNonconventionalLodging('Airbnb')).toBe(true);expect(isNonconventionalLodging('VRBO · Lake house')).toBe(true);expect(isNonconventionalLodging('Hilton Garden Inn')).toBe(false);
+  expect(hasNonconventionalLodging([{category:'lodging',description:'Hotel',merchant:'Air BnB'}])).toBe(true);
+  expect(hasNonconventionalLodging([{category:'other',description:'Airbnb cleaning'}])).toBe(false);
+ });
+ it('points out the DFAC rule for Annual Tour',async()=>{
+  const {perDiemSituations}=await import('../../packages/domain/pre-audit');
+  expect(perDiemSituations('Annual Tour (AT)')[0]).toMatchObject({id:'dfac',highlight:true});
+  expect(perDiemSituations('Annual Tour (AT)')[0]!.detail).toMatch(/no per diem/);
+  expect(perDiemSituations('Training').some(s=>s.highlight)).toBe(false);
+ });
+});
