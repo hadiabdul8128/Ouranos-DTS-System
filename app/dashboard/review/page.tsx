@@ -155,6 +155,7 @@ function Submission({detail, kind}: {detail: RevisionDetail; kind: string}) {
         <Field name="Currency">{plan?.currency || voucher?.currency || 'Not provided'}</Field>
       </dl>
       <p className="connected-review-meta">Purpose</p><p>{string(trip.purpose)}</p>
+      {plan?.aeaJustification && <><p className="connected-review-meta">Hotel over per diem · AEA justification</p><p className="review-aea">{plan.aeaJustification}</p></>}
     </section>
     <AllowanceDetails value={(kind==='authorization'?snapshot.perDiem:record(approvedRevision.snapshot).perDiem) as Allowance|null||null}/>
     {voucher&&<TravelPackagePanel voucherId={string(record(snapshot.entity).id)}/>}
