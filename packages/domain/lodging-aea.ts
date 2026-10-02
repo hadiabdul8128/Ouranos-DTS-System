@@ -8,7 +8,9 @@ const usd=(minor:number)=>new Intl.NumberFormat('en-US',{style:'currency',curren
 
 export type LodgingOverage={
  nights:number;allowedNightlyMinor:number;actualNightlyMinor:number;allowedTotalMinor:number;actualTotalMinor:number;
- differenceMinor:number;percent:number;overMax:boolean;locality:string;
+ differenceMinor:number;percent:number;overMax:boolean;locality:string;destination:string;
+ /** How the destination matched a GSA locality: its own city, a covering county, or the state standard rate. */
+ match:'city'|'county'|'standard';
 };
 type Trip={destination:string;departure:string;returnDate:string};
 type Lodging=Pick<PlannedExpense,'category'|'description'|'authorizedAmountMinor'|'startDate'|'endDate'>;
@@ -28,13 +30,13 @@ export function lodgingOverage(trip:Trip,items:Lodging[]):LodgingOverage|null{
  if(!nights||actualTotalMinor<=allowedTotalMinor)return null;
  const allowedNightlyMinor=Math.round(allowedTotalMinor/nights),actualNightlyMinor=Math.round(actualTotalMinor/nights);
  const percent=Math.round(actualNightlyMinor/allowedNightlyMinor*100);
- return {nights,allowedNightlyMinor,actualNightlyMinor,allowedTotalMinor,actualTotalMinor,differenceMinor:actualTotalMinor-allowedTotalMinor,percent,overMax:percent>AEA_MAX_PERCENT,locality:perDiem.locality.name};
+ return {nights,allowedNightlyMinor,actualNightlyMinor,allowedTotalMinor,actualTotalMinor,differenceMinor:actualTotalMinor-allowedTotalMinor,percent,overMax:percent>AEA_MAX_PERCENT,locality:perDiem.locality.name,destination:trip.destination,match:perDiem.locality.match};
 }
 
 /** A justification laid out with the items AFMAN 65-114 para 5.9 asks for; the traveler fills in the bracketed parts. */
 export function aeaJustificationDraft(o:LodgingOverage){
  return [
-  `Requesting Actual Expense Allowance (AEA) for lodging in ${o.locality}.`,
+  `Requesting Actual Expense Allowance (AEA) for lodging in ${o.destination}.`,
   `Allowed nightly lodging rate: ${usd(o.allowedNightlyMinor)}`,
   `Actual nightly lodging rate: ${usd(o.actualNightlyMinor)}`,
   `Difference for the trip: ${usd(o.differenceMinor)} (${usd(o.actualTotalMinor)} actual minus ${usd(o.allowedTotalMinor)} allowed, ${o.nights} night${o.nights===1?'':'s'})`,

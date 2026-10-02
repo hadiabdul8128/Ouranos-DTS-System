@@ -7,7 +7,10 @@ const hotel=(authorizedAmountMinor:number,extra={})=>({category:'lodging' as con
 describe('lodging over per diem',()=>{
  it('compares room cost with the per diem cap for the same nights, leaving taxes out',()=>{
   const o=lodgingOverage(trip,[hotel(120000),{category:'lodging',description:'Lodging Tax',authorizedAmountMinor:20000}]);
-  expect(o).toMatchObject({nights:3,allowedNightlyMinor:18800,actualNightlyMinor:40000,differenceMinor:63600,percent:213,overMax:false,locality:'Seattle, WA'});
+  expect(o).toMatchObject({nights:3,allowedNightlyMinor:18800,actualNightlyMinor:40000,differenceMinor:63600,percent:213,overMax:false,locality:'Seattle, WA',match:'city'});
+  const yakima=lodgingOverage({...trip,destination:'Yakima, WA'},[hotel(60000)])!;
+  expect(yakima).toMatchObject({match:'standard',allowedNightlyMinor:11300});
+  expect(aeaJustificationDraft(yakima)).toContain('lodging in Yakima, WA.');
  });
  it('flags anything past 300% and uses the stay dates when given',()=>{
   expect(lodgingOverage(trip,[hotel(80000,{startDate:'2026-12-05',endDate:'2026-12-06'})])).toMatchObject({nights:1,percent:426,overMax:true});
