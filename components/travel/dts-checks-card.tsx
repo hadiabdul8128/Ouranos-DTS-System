@@ -2,20 +2,20 @@
 import {Plus} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {Textarea} from '@/components/ui/textarea';
-import {hasFlight,hasLodging,hasLodgingTax,hasRental,hasTmcFee,LODGING_TAX,TMC_FEE,type PreAudit} from '@/packages/domain/pre-audit';
+import {hasFlight,hasLodging,hasLodgingTax,hasNonconventionalLodging,hasRental,hasTmcFee,LODGING_TAX,perDiemSituations,TMC_FEE,type PreAudit} from '@/packages/domain/pre-audit';
 import './dts-checks-card.css';
 
-type Line={category:string;description:string};
-type Props={items:Line[];answers:PreAudit;onAnswers:(answers:PreAudit)=>void;onAddLine:(category:'airfare'|'lodging',description:string)=>void;taxSeparate:boolean;locked:boolean};
+type Line={category:string;description:string;merchant?:string};
+type Props={items:Line[];purpose:string;atInstallation:boolean;answers:PreAudit;onAnswers:(answers:PreAudit)=>void;onAddLine:(category:'airfare'|'lodging',description:string)=>void;taxSeparate:boolean;locked:boolean};
 
 function Choice<T extends string>({name,value,options,onChange,disabled}:{name:string;value:T|undefined;options:Array<[T,string]>;onChange:(value:T)=>void;disabled:boolean}){
  return <div className="dts-check-choice" role="radiogroup" aria-label={name}>{options.map(([option,label])=><button key={option} type="button" role="radio" aria-checked={value===option} disabled={disabled} onClick={()=>onChange(option)}>{label}</button>)}</div>;
 }
 
 /** The things DTS flags on Other Auths and Pre-Audits, or wants as separate lines, asked about while planning. */
-export function DtsChecksCard({items,answers,onAnswers,onAddLine,taxSeparate,locked}:Props){
+export function DtsChecksCard({items,purpose,atInstallation,answers,onAnswers,onAddLine,taxSeparate,locked}:Props){
  const flight=hasFlight(items),rental=hasRental(items),needsFee=flight&&!hasTmcFee(items),needsTax=taxSeparate&&hasLodging(items)&&!hasLodgingTax(items);
- if(!flight&&!rental&&!needsTax)return null;
+ const lodging=hasLodging(items),rentalHome=hasNonconventionalLodging(items),situations=perDiemSituations(purpose);
  const set=(patch:PreAudit)=>onAnswers({...answers,...patch});
  return <section className="cw-card dts-checks" aria-labelledby="dts-checks-title">
   <h2 id="dts-checks-title">Before you submit in DTS</h2>
@@ -42,5 +42,18 @@ export function DtsChecksCard({items,answers,onAnswers,onAddLine,taxSeparate,loc
    <p>In the U.S., claim the room rate and the hotel taxes separately. Taxes don’t count against the lodging rate.</p>
    {!locked&&<Button type="button" variant="outline" onClick={()=>onAddLine('lodging',LODGING_TAX)}><Plus size={14}/> Add a lodging tax line</Button>}
   </div>}
+  {rentalHome&&<div className="dts-check is-warning">
+   <h3>Airbnb, VRBO and similar rentals usually aren’t paid</h3>
+   <p>They’re normally not allowed for safety reasons. Unless your approver says yes in advance, you may be paid less or nothing. Talk to your approver before you book.</p>
+  </div>}
+  {lodging&&atInstallation&&<div className="dts-check">
+   <h3>Staying off base?</h3>
+   <p>You can, but without a non-availability letter you’re only paid up to the on-base (ILP) rate. Full per diem applies only when on-base lodging isn’t available.</p>
+  </div>}
+  <details className="dts-check dts-perdiem" open={situations.some(s=>s.highlight)}>
+   <summary>When your per diem changes</summary>
+   <p>DTS sets meals and lodging rates. Change them on the Per Diem page if any of these apply:</p>
+   <ul>{situations.map(s=><li key={s.id} className={s.highlight?'is-highlight':''}><strong>{s.title}</strong><span>{s.detail}</span></li>)}</ul>
+  </details>
  </section>;
 }
