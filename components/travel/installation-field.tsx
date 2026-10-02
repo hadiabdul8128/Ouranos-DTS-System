@@ -6,6 +6,6 @@ export function InstallationField({id,value,onChange}:{id:string;value:string;on
  return <div className="travel-field installation-field">
   <label htmlFor={id}>Installation or base · optional</label>
   <Input id={id} value={value} onChange={e=>onChange(e.target.value)} maxLength={120} placeholder="e.g. Joint Base Lewis-McChord" autoComplete="off"/>
-  <small className="place-hint">DTS asks for both: the installation here, and the nearest city above.</small>
+  <small className="place-hint">Use the name in block 12 of your orders. DTS wants the installation, with the nearest city above.</small>
  </div>;
 }
