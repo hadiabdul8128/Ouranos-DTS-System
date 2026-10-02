@@ -4,3 +4,4 @@
 @media(max-width:600px){.place-inputs,.place-inputs.is-overseas{grid-template-columns:1fr}}
 .installation-field .place-hint{display:block;font-size:11px;color:#a7afa3;line-height:1.6;margin-top:8px}
 .dates-hint{display:block;font-size:11px;color:#a7afa3;line-height:1.6;margin:-14px 0 22px}
+.travel-date-fields>div{min-width:0}.travel-date-fields input{min-width:0;max-width:100%}
