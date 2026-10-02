@@ -3,7 +3,7 @@ import {useState} from 'react';
 import {ChevronDown} from 'lucide-react';
 import {Input} from '@/components/ui/input';
 
-export const TRIP_PURPOSES=['Mission (TDY)','Training','Conference','Site visit','Meeting'];
+export const TRIP_PURPOSES=['Mission (TDY)','Annual Tour (AT)','Training','Conference','Site visit','Meeting'];
 const OTHER='other';
 
 /** Common trip purposes, with Other for a typed one. */
