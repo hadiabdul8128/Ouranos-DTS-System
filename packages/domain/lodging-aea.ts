@@ -33,6 +33,12 @@ export function lodgingOverage(trip:Trip,items:Lodging[]):LodgingOverage|null{
  return {nights,allowedNightlyMinor,actualNightlyMinor,allowedTotalMinor,actualTotalMinor,differenceMinor:actualTotalMinor-allowedTotalMinor,percent,overMax:percent>AEA_MAX_PERCENT,locality:perDiem.locality.name,destination:trip.destination,match:perDiem.locality.match};
 }
 
+/** Whether the trip is in a GSA (CONUS) per diem locality, where hotel taxes are claimed as their own line. */
+export function inGsaLocality(trip:Trip){
+ if(!trip.destination||!trip.departure||trip.departure>trip.returnDate)return false;
+ return Boolean(computePerDiem({startDate:trip.departure,endDate:trip.returnDate,destination:trip.destination}).locality);
+}
+
 /** A justification laid out with the items AFMAN 65-114 para 5.9 asks for; the traveler fills in the bracketed parts. */
 export function aeaJustificationDraft(o:LodgingOverage){
  return [
