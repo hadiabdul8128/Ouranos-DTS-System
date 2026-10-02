@@ -6,7 +6,7 @@ type Expense={category:string;merchant:string;foreignCurrency:boolean};
 
 export function voucherDocuments({travelMode,expenses,missingReceipts}:{travelMode?:string;expenses:Expense[];missingReceipts:string[]}):VoucherDocument[]{
  const docs:VoucherDocument[]=[
-  {id:'orders',title:'Orders and every modification',detail:'Your AF Form 938 (or your service’s orders) plus all mods. Attach them in DTS under the Travel Orders expense type.',optional:false},
+  {id:'orders',title:'Orders and every modification',detail:'Your AF Form 938 (or your service’s orders) plus all mods. If your dates or location changed from your orders, get a modification first. Attach them in DTS under the Travel Orders expense type.',optional:false},
   {id:'receipts',title:'Receipts for airfare, lodging, rental car and anything $75 or more',detail:'Itemized, showing the vendor, date, amount and that it was paid.',optional:false,
    auto:!expenses.length?{done:false,note:'Add your expenses first.'}:missingReceipts.length?{done:false,note:`Still missing: ${[...new Set(missingReceipts)].join(', ')}`}:{done:true,note:'Every expense that needs one has a receipt.'}},
  ];
