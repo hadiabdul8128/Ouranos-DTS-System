@@ -1,0 +1,9 @@
+.lodging-aea{border-color:#6b5a38;border-left:3px solid #e0bf7a}
+.lodging-aea h2{color:#e0bf7a}
+.lodging-aea-numbers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:16px 0;border:1px solid #343c33;border-radius:10px}
+.lodging-aea-numbers div{padding:12px 14px}.lodging-aea-numbers div+div{border-left:1px solid #343c33}
+.lodging-aea-numbers dt{font-size:11px;color:#a7afa3}.lodging-aea-numbers dd{margin:6px 0 0;font-size:18px;color:#edf0e8}
+.lodging-aea-limit{margin:0 0 14px;padding:10px 12px;border-radius:8px;background:#231615;color:#f0a09a;font-size:12px;line-height:1.6}
+.lodging-aea textarea{margin-top:8px;font-size:13px;line-height:1.6;background:#0f120f;border-color:#343c33;color:#edf0e8}
+.lodging-aea-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+@media(max-width:640px){.lodging-aea-numbers{grid-template-columns:1fr 1fr}.lodging-aea-numbers div:nth-child(3){border-left:0}.lodging-aea-numbers div:nth-child(n+3){border-top:1px solid #343c33}}
