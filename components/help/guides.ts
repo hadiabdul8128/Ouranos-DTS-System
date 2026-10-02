@@ -5,10 +5,11 @@ export type HelpGuide={id:string;title:string;summary:string;steps:HelpStep[]};
 export const helpGuides:HelpGuide[]=[
  {id:'plan',title:'Plan a trip',summary:'Tell us where and when, add what it will cost, then send it for review.',steps:[
   {title:'Start a new trip',text:'Open Travel and press New trip.',image:'travel-start',height:400,alt:'Travel page with the New trip button and links to checklists, trip history and hotels'},
-  {title:'Say where and when',text:'Type the city and state you are going to, pick your dates and the purpose. Use the nearest city, not only the installation name.',image:'trip-where',height:848,alt:'Trip form with destination Seattle, WA, dates and purpose'},
+  {title:'Say where and when',text:'Type the nearest city and state, then the installation from block 12 of your orders. Use the dates on your orders and add the orders number if you have it.',image:'trip-where',height:1225,alt:'Trip form with Tacoma, WA, Joint Base Lewis-McChord, dates, orders number and Annual Tour'},
   {title:'Open your plan',text:'Your trip is saved. The plan page is where you add the details.',image:'plan-top',height:480,alt:'Plan page header for a Seattle trip'},
   {title:'Pick how you are getting there',text:'Choose flying, your own car, a rental, a government vehicle or other. If you fly, pick a suggested flight to fill in a cost estimate.',image:'plan-mode',height:631,alt:'Travel mode buttons and the suggested flights dropdown'},
-  {title:'Add your costs',text:'Add each cost you expect: category, amount and an optional description.',image:'plan-costs',height:560,alt:'Planned expense with amount, currency and description'},
+  {title:'Add your costs',text:'Add each cost you expect: category, amount and an optional description. DTS expense names are listed first.',image:'plan-costs',height:560,alt:'Planned expense with amount, currency and description'},
+  {title:'Answer the DTS questions',text:'The Before you submit in DTS card asks what DTS would flag, like a flight that isn’t a GSA fare. See Avoid DTS flags.',image:'preaudit-flight',height:740,alt:'Before you submit in DTS card asking whether the flight is a GSA contract fare'},
   {title:'Send it',text:'Press Submit for review. Save draft keeps it for later.',image:'plan-submit',height:110,alt:'Save draft and Submit for review buttons'},
  ]},
  {id:'approval',title:'Get it approved',summary:'Your request goes to your own S1, then your command. You don’t pick anyone.',steps:[
@@ -21,6 +22,13 @@ export const helpGuides:HelpGuide[]=[
   {title:'Open the approved trip',text:'Pick the trip marked Add expenses. Your approved plan and budget are at the top.',image:'voucher-top',height:640,alt:'Expenses page showing the approved plan and budget'},
   {title:'Add each expense',text:'Press Add expense, pick the approved item, then enter the merchant, amount, date and how you paid.',image:'voucher-expense',height:1010,alt:'New expense form filled in for a Delta flight paid with GTCC'},
   {title:'Attach receipts',text:'Take a photo or upload a receipt. Keep receipts for airfare, lodging, rental cars and anything $75 or more.',image:'voucher-receipts',height:340,alt:'Take a photo and Upload receipt buttons'},
+  {title:'Check what to attach in DTS',text:'The checklist lists the documents DTS wants for your trip and names any receipt still missing. Tick each one as you attach it in DTS.',image:'voucher-docs',height:1185,alt:'What to attach in DTS checklist with orders ticked and a missing Delta receipt'},
+ ]},
+ {id:'flags',title:'Avoid DTS flags',summary:'DTS stops you on the Other Auths and Pre-Audits page for some choices. Ouranos asks about them while you plan, so your reasons are ready to paste.',steps:[
+  {title:'Say why, if it isn’t a GSA fare',text:'Pick Yes or No for your flight. If No, write the reason. You can’t submit until it’s filled in, and your approver sees it.',image:'preaudit-flight',height:740,alt:'GSA fare question answered No with a reason'},
+  {title:'Add the separate lines',text:'Claim the TMC booking fee and hotel taxes on their own lines. One tap adds each; you fill in the amount.',image:'preaudit-lines',height:560,alt:'Buttons to add a TMC fee line and a lodging tax line'},
+  {title:'Hotel over the rate?',text:'If your hotel costs more than the GSA lodging rate, Ouranos shows by how much. Up to 300% can be approved.',image:'aea-numbers',height:645,alt:'Hotel over per diem card: $188 allowed, $400 per night, $636 over, 213%'},
+  {title:'Write the AEA justification',text:'Start from a draft, fill in the parts in [brackets], then copy it into DTS.',image:'aea-draft',height:735,alt:'Drafted AEA justification with the allowed and actual rates'},
  ]},
  {id:'hotels',title:'Find a hotel',summary:'See FedRooms hotels near your destination, then book in DTS.',steps:[
   {title:'Pick a trip',text:'Open Find hotels for a trip from Travel, then choose the trip.',image:'hotels-pick',height:560,alt:'List of trips to search hotels for'},
