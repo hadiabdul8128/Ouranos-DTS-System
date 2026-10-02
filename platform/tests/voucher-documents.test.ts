@@ -10,6 +10,7 @@ describe('voucher documents',()=>{
  it('checks receipts itself and names what is missing',()=>{
   const [,receipts]=voucherDocuments({expenses:[{category:'airfare',merchant:'Delta',foreignCurrency:false}],missingReceipts:['Delta']});
   expect(receipts!.auto).toEqual({done:false,note:'Still missing: Delta'});
+  expect(voucherDocuments({expenses:[],missingReceipts:[]})[1]!.auto).toEqual({done:false,note:'Add your expenses first.'});
  });
  it('counts ticked, not-applicable and auto-checked items as ready',()=>{
   const docs=voucherDocuments({expenses:[{category:'lodging',merchant:'Hilton',foreignCurrency:false}],missingReceipts:[]});

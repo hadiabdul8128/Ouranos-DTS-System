@@ -8,7 +8,7 @@ export function voucherDocuments({travelMode,expenses,missingReceipts}:{travelMo
  const docs:VoucherDocument[]=[
   {id:'orders',title:'Orders and every modification',detail:'Your AF Form 938 (or your service’s orders) plus all mods. Attach them in DTS under the Travel Orders expense type.',optional:false},
   {id:'receipts',title:'Receipts for airfare, lodging, rental car and anything $75 or more',detail:'Itemized, showing the vendor, date, amount and that it was paid.',optional:false,
-   auto:missingReceipts.length?{done:false,note:`Still missing: ${[...new Set(missingReceipts)].join(', ')}`}:{done:true,note:expenses.length?'Every expense that needs one has a receipt.':'Add your expenses first.'}},
+   auto:!expenses.length?{done:false,note:'Add your expenses first.'}:missingReceipts.length?{done:false,note:`Still missing: ${[...new Set(missingReceipts)].join(', ')}`}:{done:true,note:'Every expense that needs one has a receipt.'}},
  ];
  if(travelMode==='pov')docs.push({id:'ctw',title:'Constructed Travel Worksheet (CTW)',detail:'Required for mileage claims when you drove instead of flying.',optional:false});
  if(expenses.some(e=>e.category==='lodging'))docs.push({id:'non_availability',title:'Lodging non-availability statement',detail:'Only if you booked lodging outside DTS. Covers DoD lodging, privatized Army lodging and DoD Preferred commercial lodging.',optional:true});
