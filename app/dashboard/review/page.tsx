@@ -9,6 +9,7 @@ import {Textarea} from '@/components/ui/textarea';
 import type {Entity, Role} from '@/packages/contracts';
 import {approvalLevelName, approvalWait} from '@/packages/contracts/approval-chain';
 import {travelModeSummary} from '@/packages/domain/travel-mode';
+import {preAuditFlags} from '@/packages/domain/pre-audit';
 import {planningModuleSchema, PLANNING_SCHEMA_VERSION, type PlanningModuleInput} from '@/packages/contracts/planning-module';
 import {voucherModuleSchema, VOUCHER_MODULE_SCHEMA_VERSION, type VoucherModuleInput} from '@/packages/contracts/voucher-module';
 import {AllowanceDetails} from '@/components/travel/allowance';
@@ -155,6 +156,7 @@ function Submission({detail, kind}: {detail: RevisionDetail; kind: string}) {
         <Field name="Currency">{plan?.currency || voucher?.currency || 'Not provided'}</Field>
       </dl>
       <p className="connected-review-meta">Purpose</p><p>{string(trip.purpose)}</p>
+      {preAuditFlags(plan?.preAudit).map(flag => <div key={flag.title}><p className="connected-review-meta">Pre-audit · {flag.title}</p><p className="review-aea">{flag.reason}</p></div>)}
       {plan?.aeaJustification && <><p className="connected-review-meta">Hotel over per diem · AEA justification</p><p className="review-aea">{plan.aeaJustification}</p></>}
     </section>
     <AllowanceDetails value={(kind==='authorization'?snapshot.perDiem:record(approvedRevision.snapshot).perDiem) as Allowance|null||null}/>
