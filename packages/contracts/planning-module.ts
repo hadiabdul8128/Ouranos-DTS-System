@@ -17,6 +17,7 @@ export const plannedExpenseSchema = z.object({
 export const planningModuleSchema = z.object({
   traveler:z.string().trim().min(1).max(200), origin:z.string().trim().min(1).max(120),
   travelMode:z.enum(['air','pov','rental','government','other']).optional(), mileage:z.object({miles:z.number().positive().max(20000),centsPerMile:z.number().positive().max(500)}).strict().optional(),
+  aeaJustification:z.string().trim().min(1).max(4000).optional(),
   currency:z.literal('USD'), approvedExpenseItems:z.array(plannedExpenseSchema).min(1).max(100),
   allowance:z.object({enabled:z.boolean(),governmentMess:z.boolean().default(false),mealsProvided:z.record(dateOnly,z.object({breakfast:z.boolean().optional(),lunch:z.boolean().optional(),dinner:z.boolean().optional()}).strict()).default({})}).strict().optional(),
 }).strict().refine(v=>new Set(v.approvedExpenseItems.map(i=>i.id)).size===v.approvedExpenseItems.length, 'Budget item IDs must be unique');
