@@ -1,6 +1,6 @@
 /** Expense type names as they appear in DTS (HQ RIO DTS Quick Guide), so the plan matches what travelers pick in DTS. */
 export const dtsExpenseTypes:Record<string,string[]>={
- airfare:['Airline Ticket (Self-Procure)'],
+ airfare:['Airline Ticket (Self-Procure)','TMC Fee (IBA)'],
  lodging:['Lodging Tax','Lodging Resort Fees'],
  rental_car:['Rental Car - at TDY Area'],
  fuel:['Rental Car - Fuel/Charging'],
