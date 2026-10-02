@@ -7,3 +7,4 @@
 .lodging-aea textarea{margin-top:8px;font-size:13px;line-height:1.6;background:#0f120f;border-color:#343c33;color:#edf0e8}
 .lodging-aea-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
 @media(max-width:640px){.lodging-aea-numbers{grid-template-columns:1fr 1fr}.lodging-aea-numbers div:nth-child(3){border-left:0}.lodging-aea-numbers div:nth-child(n+3){border-top:1px solid #343c33}}
+.lodging-aea-source{font-size:12px;line-height:1.6;color:#a7afa3;margin:6px 0 0}.lodging-aea-source a{color:#c9d3b4;text-decoration:underline;text-underline-offset:3px}

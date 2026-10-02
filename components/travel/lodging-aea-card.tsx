@@ -6,6 +6,7 @@ import {Textarea} from '@/components/ui/textarea';
 import {AEA_MAX_PERCENT,aeaJustificationDraft,type LodgingOverage} from '@/packages/domain/lodging-aea';
 import './lodging-aea-card.css';
 
+export const GSA_RATE_LOOKUP='https://www.gsa.gov/travel/plan-a-trip/per-diem-rates';
 const usd=(minor:number)=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(minor/100);
 
 /** Shown when planned lodging is over the per diem cap: the numbers, and the AEA justification DTS asks for. */
@@ -28,6 +29,7 @@ export function LodgingAeaCard({overage,value,onChange,locked}:{overage:LodgingO
    {!locked&&<Button type="button" variant="outline" onClick={()=>onChange(aeaJustificationDraft(overage))}>{value.trim()?'Start over from a draft':'Start from a draft'}</Button>}
    {value.trim()&&<Button type="button" variant="ghost" onClick={()=>void copy()}><Copy size={14}/> {copied?'Copied':'Copy for DTS'}</Button>}
   </div>
-  <p className="cw-muted">Fill in the parts in [brackets]. Rates are GSA per diem estimates for {overage.locality}; DTS has the final numbers.</p>
+  <p className="cw-muted">Fill in the parts in [brackets].</p>
+  <p className="lodging-aea-source">{overage.match==='standard'?<>Using the {overage.locality.replace('Standard Rate, ','')} standard rate ({usd(overage.allowedNightlyMinor)}/night) because your city isn’t a listed GSA locality. Bases can have their own rate, so check yours.</>:overage.match==='county'?<>Using the {overage.locality} rate, which covers your city’s county.</>:<>Using the GSA rate for {overage.locality}.</>} <a href={GSA_RATE_LOOKUP} target="_blank" rel="noopener noreferrer">Check the official rate</a>. DTS has the final numbers.</p>
  </section>;
 }
