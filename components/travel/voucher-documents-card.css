@@ -1,0 +1,14 @@
+.voucher-docs-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
+.voucher-docs-head span{font-size:12px;color:#e0bf7a}.voucher-docs-head span.is-complete{color:#a5b38a}
+.voucher-docs ul{list-style:none;margin:14px 0 0;padding:0}
+.voucher-docs li{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-top:1px solid #232a22}
+.voucher-docs li strong{display:block;font-size:14px;font-weight:500;color:#edf0e8}
+.voucher-docs li p{font-size:12px;line-height:1.6;color:#a7afa3;margin:4px 0 0}
+.voucher-docs li.is-na strong{color:#7f887c;text-decoration:line-through}
+.voucher-docs-mark{flex-shrink:0;width:24px;height:24px;min-height:24px!important;margin-top:1px;border-radius:6px;border:1px solid #4a5448;display:grid;place-items:center;background:#0f120f;color:#141815;padding:0}
+.voucher-docs li.is-done .voucher-docs-mark{background:#a5b38a;border-color:#a5b38a}
+button.voucher-docs-mark:focus-visible,.voucher-docs-na:focus-visible{outline:2px solid #a5b38a;outline-offset:3px}
+.voucher-docs-ok{color:#a5b38a!important}.voucher-docs-todo{color:#e0bf7a!important}
+.voucher-docs-na{min-height:32px!important;margin-top:6px;padding:0;font-size:12px;color:#a7afa3;text-decoration:underline;text-underline-offset:3px;background:none}
+.voucher-docs-na:hover{color:#edf0e8}
+.voucher-docs-note{font-size:11px;color:#7f887c;margin:10px 0 0}
