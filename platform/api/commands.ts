@@ -19,11 +19,11 @@ import type {PlatformConfig} from '../shared/config';
 
 export const canonical=(v:unknown):string=>JSON.stringify(v,(_key,value)=>value&&typeof value==='object'&&!Array.isArray(value)?Object.fromEntries(Object.entries(value).sort(([a],[b])=>a.localeCompare(b))):value);
 export const hash=(v:unknown)=>createHash('sha256').update(canonical(v)).digest('hex');
-async function requireOwner(db:PoolClient,org:string,trip:string){const r=await db.query('select ouranos.can_edit_trip($1,$2) as allowed',[org,trip]);check(r.rows[0].allowed,'PERMISSION_DENIED','Only the traveler may edit or submit this trip',403)}
+export async function requireOwner(db:PoolClient,org:string,trip:string){const r=await db.query('select ouranos.can_edit_trip($1,$2) as allowed',[org,trip]);check(r.rows[0].allowed,'PERMISSION_DENIED','Only the traveler may edit or submit this trip',403)}
 async function verifyVersion(row:Record<string,any>|undefined,expected:number){if((row?.version||0)!==expected)throw new DomainError('VERSION_CONFLICT','This record changed. Review the current server version before retrying.',409,{serverVersion:row?.version||0})}
 async function enqueue(db:PoolClient,type:string,org:string,entityId:string,key:string){await db.query('select ouranos.enqueue_job($1)',[JSON.stringify({type,organizationId:org,entityId,jobKey:key})])}
 async function audit(db:PoolClient,c:Command,userId:string,e:Entity){await db.query('insert into ouranos.audit_events(organization_id,trip_id,actor_id,command_id,action,entity_id,details) values($1,$2,$3,$4,$5,$6,$7)',[c.organizationId,e.tripId||(e.kind==='trip'?e.id:null),userId,c.commandId,c.type,e.id,JSON.stringify({version:e.version})])}
-async function notify(db:PoolClient,org:string,trip:string,userId:string,title:string,requestId:string|null,details:Record<string,unknown>={}){
+export async function notify(db:PoolClient,org:string,trip:string,userId:string,title:string,requestId:string|null,details:Record<string,unknown>={}){
  const id=randomUUID();const data={...details,title:title||details.title,...(requestId?{requestId}:{}),recipientId:userId};
  await db.query("insert into ouranos.notifications(id,organization_id,trip_id,user_id,data) values($1,$2,$3,$4,$5)",[id,org,trip,userId,data]);
  await publishChange(db,'notification',{id,organization_id:org,trip_id:trip,data,status:'unread',version:1,updated_at:new Date()});
