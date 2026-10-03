@@ -10,6 +10,7 @@ import type {Entity, Role} from '@/packages/contracts';
 import {approvalLevelName, approvalWait} from '@/packages/contracts/approval-chain';
 import {travelModeSummary} from '@/packages/domain/travel-mode';
 import {preAuditFlags} from '@/packages/domain/pre-audit';
+import {amendmentChanges} from '@/packages/domain/amendment';
 import {planningModuleSchema, PLANNING_SCHEMA_VERSION, type PlanningModuleInput} from '@/packages/contracts/planning-module';
 import {voucherModuleSchema, VOUCHER_MODULE_SCHEMA_VERSION, type VoucherModuleInput} from '@/packages/contracts/voucher-module';
 import {AllowanceDetails} from '@/components/travel/allowance';
@@ -142,7 +143,14 @@ function Submission({detail, kind}: {detail: RevisionDetail; kind: string}) {
     const expenseData = data(expense);
     return expenseData.paymentMethod === method && expenseData.currency === 'USD' && typeof expenseData.amountMinor === 'number' && Number.isSafeInteger(expenseData.amountMinor) ? sum + expenseData.amountMinor : sum;
   }, 0);
+  const amendment = kind === 'authorization' ? plan?.amendment : undefined;
+  const changes = amendment && plan ? amendmentChanges(amendment.previous, {destination: string(trip.destination, ''), ...(typeof trip.installation === 'string' && trip.installation ? {installation: trip.installation} : {}), departure: string(trip.departure, ''), returnDate: string(trip.returnDate, ''), purpose: string(trip.purpose, ''), items: plan.approvedExpenseItems.map(item => ({id: item.id, category: item.category, description: item.description, authorizedAmountMinor: item.authorizedAmountMinor}))}) : [];
   return <>
+    {amendment && <section className="connected-review-section review-amendment" aria-labelledby="review-amendment-title">
+      <h3 id="review-amendment-title">Change {amendment.number} to an approved plan</h3>
+      <p className="review-aea">{amendment.reason}</p>
+      {changes.length ? <table className="review-changes"><thead><tr><th scope="col">What</th><th scope="col">Approved</th><th scope="col">Now</th></tr></thead><tbody>{changes.map(change => <tr key={change.label}><th scope="row">{change.label}</th><td>{change.from}</td><td>{change.to}</td></tr>)}</tbody></table> : <p className="platform-muted">No differences from the approved plan.</p>}
+    </section>}
     <section className="connected-review-section">
       <h3>Travel details</h3>
       <dl className="connected-review-summary">
