@@ -17,6 +17,7 @@ import {registerTransitionRoutes} from './transition';
 import {registerCompanionRoutes} from './companion';
 import {registerGuideRoutes} from './guide';
 import {registerTeamRoutes} from './team';
+import {registerDemoRoutes} from './demo';
 import {CONTRACT_VERSION,uuid,entityKindSchema,organizationInput,membershipInput,syncPushSchema,commandSchema} from '../../packages/contracts/index';
 import {DomainError,requireCondition as check} from '../../packages/domain/errors';
 
@@ -45,7 +46,7 @@ export async function buildApp(config:PlatformConfig,options:{pool?:Pool;logger?
  app.get('/health',async()=>({status:'ok',contractVersion:CONTRACT_VERSION}));
  app.get('/ready',async()=>{await pool.query('select 1');return {status:'ready'}});
  app.get('/openapi.json',async(_,reply)=>reply.type('application/json').send(await readFile(new URL('../../docs/openapi.json',import.meta.url),'utf8')));
- app.get('/v1/session',async req=>withActor(pool,req.actor.id,undefined,async db=>({user:req.actor,contractVersion:CONTRACT_VERSION,approvalMode:config.APPROVAL_MODE,memberships:(await db.query('select m.organization_id as "organizationId",o.name,m.role from ouranos.memberships m join ouranos.organizations o on o.id=m.organization_id where m.user_id=$1 and m.active',[req.actor.id])).rows})));
+ app.get('/v1/session',async req=>withActor(pool,req.actor.id,undefined,async db=>({user:req.actor,contractVersion:CONTRACT_VERSION,approvalMode:config.APPROVAL_MODE,demoApprovalOrganizations:config.DEMO_APPROVAL_ORGANIZATIONS,memberships:(await db.query('select m.organization_id as "organizationId",o.name,m.role from ouranos.memberships m join ouranos.organizations o on o.id=m.organization_id where m.user_id=$1 and m.active',[req.actor.id])).rows})));
  app.post('/v1/organizations',async(req,reply)=>{const body=organizationInput.parse(req.body);const id=randomUUID();await withActor(pool,req.actor.id,undefined,async db=>db.query('select ouranos.create_organization($1,$2)',[id,body.name]));return reply.code(201).send({id,name:body.name})});
  app.put('/v1/organizations/:id/members',async req=>{
   const org=uuid.parse((req.params as any).id),b=membershipInput.parse(req.body);
@@ -91,5 +92,6 @@ export async function buildApp(config:PlatformConfig,options:{pool?:Pool;logger?
  registerCompanionRoutes(app,pool);
  registerGuideRoutes(app,pool);
  registerTeamRoutes(app,pool);
+ registerDemoRoutes(app,pool,config);
  app.addHook('onClose',async()=>{if(!options.pool)await pool.end()});return app;
 }
