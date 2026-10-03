@@ -21,6 +21,7 @@ import type {PlatformConfig} from '../shared/config';
 export const canonical=(v:unknown):string=>JSON.stringify(v,(_key,value)=>value&&typeof value==='object'&&!Array.isArray(value)?Object.fromEntries(Object.entries(value).sort(([a],[b])=>a.localeCompare(b))):value);
 export const hash=(v:unknown)=>createHash('sha256').update(canonical(v)).digest('hex');
 export async function requireOwner(db:PoolClient,org:string,trip:string){const r=await db.query('select ouranos.can_edit_trip($1,$2) as allowed',[org,trip]);check(r.rows[0].allowed,'PERMISSION_DENIED','Only the traveler may edit or submit this trip',403)}
+async function requireActiveTrip(db:PoolClient,org:string,id:string){const trip=await loadEntity(db,'trip',id,org);check(trip.status!=='cancelled','INVALID_STATE_TRANSITION','Restore this deleted draft before editing or submitting it.',409)}
 async function verifyVersion(row:Record<string,any>|undefined,expected:number){if((row?.version||0)!==expected)throw new DomainError('VERSION_CONFLICT','This record changed. Review the current server version before retrying.',409,{serverVersion:row?.version||0})}
 async function enqueue(db:PoolClient,type:string,org:string,entityId:string,key:string){await db.query('select ouranos.enqueue_job($1)',[JSON.stringify({type,organizationId:org,entityId,jobKey:key})])}
 async function audit(db:PoolClient,c:Command,userId:string,e:Entity){await db.query('insert into ouranos.audit_events(organization_id,trip_id,actor_id,command_id,action,entity_id,details) values($1,$2,$3,$4,$5,$6,$7)',[c.organizationId,e.tripId||(e.kind==='trip'?e.id:null),userId,c.commandId,c.type,e.id,JSON.stringify({version:e.version})])}
@@ -48,16 +49,24 @@ export async function executeCommand(pool:Pool,storage:SupabaseClient,userId:str
 
 async function apply(db:PoolClient,storage:SupabaseClient,c:Command,userId:string,role:string,development:boolean,approvalMode:PlatformConfig['APPROVAL_MODE']):Promise<Entity>{
  const org=c.organizationId,id=c.entityId;
+ if(c.type==='trip.delete'||c.type==='trip.restore'){
+  await requireOwner(db,org,id);const trip=await loadEntity(db,'trip',id,org,true);await verifyVersion(trip,c.expectedVersion);
+  const history=await db.query('select 1 from ouranos.submission_revisions where organization_id=$1 and trip_id=$2 limit 1',[org,id]);
+  const submitted=await db.query("select 1 from ouranos.authorizations where organization_id=$1 and trip_id=$2 and status<>'draft' union all select 1 from ouranos.vouchers where organization_id=$1 and trip_id=$2 limit 1",[org,id]);
+  check(!history.rowCount&&!submitted.rowCount,'INVALID_STATE_TRANSITION','Only unfinished, never-submitted plans can be deleted or restored.',409);
+  check(trip.status===(c.type==='trip.delete'?'draft':'cancelled'),'INVALID_STATE_TRANSITION',c.type==='trip.delete'?'Only draft trips can be deleted.':'Only deleted drafts can be restored.',409);
+  return updateStatus(db,'trip',id,org,c.type==='trip.delete'?'cancelled':'draft');
+ }
  if(c.type==='trip.save'){
   const current=(await db.query('select * from ouranos.trips where organization_id=$1 and id=$2 for update',[org,id])).rows[0];
   await verifyVersion(current,c.expectedVersion);
-  if(current){await requireOwner(db,org,id);const submitted=await db.query("select 1 from ouranos.authorizations where trip_id=$1 and organization_id=$2 and status in ('in_review','approved')",[id,org]);check(!submitted.rowCount,'INVALID_STATE_TRANSITION','This trip has a submitted authorization. Use an amendment workflow to change it.',409)}
+  if(current){check(current.status!=='cancelled','INVALID_STATE_TRANSITION','Restore this deleted draft before editing it.',409);await requireOwner(db,org,id);const submitted=await db.query("select 1 from ouranos.authorizations where trip_id=$1 and organization_id=$2 and status in ('in_review','approved')",[id,org]);check(!submitted.rowCount,'INVALID_STATE_TRANSITION','This trip has a submitted authorization. Use an amendment workflow to change it.',409)}
   const r=current?await db.query('update ouranos.trips set data=$3,version=version+1,updated_at=now() where organization_id=$1 and id=$2 returning *',[org,id,c.payload]):await db.query('insert into ouranos.trips(id,organization_id,traveler_id,created_by,data) values($1,$2,$3,$3,$4) returning *',[id,org,userId,c.payload]);
   return publishChange(db,'trip',r.rows[0]);
  }
  if(c.type==='authorization.save'||c.type==='expense.save'||c.type==='voucher.save'){
   const kind=c.type.split('.')[0] as 'authorization'|'expense'|'voucher';const payload=c.payload;
-  await requireOwner(db,org,payload.tripId);
+  await requireOwner(db,org,payload.tripId);await requireActiveTrip(db,org,payload.tripId);
   const current=(await db.query(`select * from ouranos.${TABLES[kind]} where organization_id=$1 and id=$2 for update`,[org,id])).rows[0];await verifyVersion(current,c.expectedVersion);
   if(current){check(current.trip_id===payload.tripId,'VALIDATION_FAILED','Cannot move records between trips');check(['draft','changes_requested',...(kind==='voucher'?['needs_action']:[])].includes(current.status),'INVALID_STATE_TRANSITION','Create a new amendment or revision instead of changing submitted content',409)}
   if(c.type==='expense.save'){
@@ -76,7 +85,7 @@ async function apply(db:PoolClient,storage:SupabaseClient,c:Command,userId:strin
   return publishChange(db,kind,r.rows[0]);
  }
  if(c.type==='document.register'){
-  check(c.expectedVersion===0,'VERSION_CONFLICT','Document registration requires version zero',409);await requireOwner(db,org,c.payload.tripId);
+  check(c.expectedVersion===0,'VERSION_CONFLICT','Document registration requires version zero',409);await requireOwner(db,org,c.payload.tripId);await requireActiveTrip(db,org,c.payload.tripId);
   const r=await db.query('insert into ouranos.documents(id,organization_id,trip_id,data,storage_key,created_by) values($1,$2,$3,$4,$5,$6) returning *',[id,org,c.payload.tripId,c.payload,`${org}/${c.payload.tripId}/${id}/original`,userId]);
   return publishChange(db,'document',r.rows[0]);
  }
@@ -114,7 +123,7 @@ async function apply(db:PoolClient,storage:SupabaseClient,c:Command,userId:strin
 
 async function submitAuthorization(db:PoolClient,c:Extract<Command,{type:'authorization.submit'}>,userId:string,development:boolean,approvalMode:PlatformConfig['APPROVAL_MODE']){
  const org=c.organizationId;
- const entity=await loadEntity(db,'authorization',c.entityId,org,true);await verifyVersion(entity,c.expectedVersion);await requireOwner(db,org,entity.trip_id);if(entity.status==='in_review'&&approvalMode==='required')return routeWaitingSubmission(db,org,entity,userId);
+ const entity=await loadEntity(db,'authorization',c.entityId,org,true);await verifyVersion(entity,c.expectedVersion);await requireOwner(db,org,entity.trip_id);await requireActiveTrip(db,org,entity.trip_id);if(entity.status==='in_review'&&approvalMode==='required')return routeWaitingSubmission(db,org,entity,userId);
  check(['draft','changes_requested'].includes(entity.status),'INVALID_STATE_TRANSITION','This revision has already been submitted',409);
  const issues=validatePlanning(entity.data.formSchemaVersion,entity.data.formData,development);check(!issues.length,'VALIDATION_FAILED',issues.join('; '));
  check(approvalMode!=='preview','INVALID_STATE_TRANSITION','Formal submission is disabled in preview mode',409);
@@ -156,7 +165,7 @@ async function submitAuthorization(db:PoolClient,c:Extract<Command,{type:'author
 async function amendAuthorization(db:PoolClient,c:Extract<Command,{type:'authorization.amend'}>,approvalMode:PlatformConfig['APPROVAL_MODE']){
  const org=c.organizationId;
  check(approvalMode!=='preview','INVALID_STATE_TRANSITION','Changes are not used in preview mode',409);
- const entity=await loadEntity(db,'authorization',c.entityId,org,true);await verifyVersion(entity,c.expectedVersion);await requireOwner(db,org,entity.trip_id);
+ const entity=await loadEntity(db,'authorization',c.entityId,org,true);await verifyVersion(entity,c.expectedVersion);await requireOwner(db,org,entity.trip_id);await requireActiveTrip(db,org,entity.trip_id);
  check(entity.status==='approved','INVALID_STATE_TRANSITION','Only an approved plan can be changed',409);
  check(entity.data.formSchemaVersion===PLANNING_SCHEMA_VERSION,'VALIDATION_FAILED','This plan uses an older form and can’t be changed here');
  const submittedVoucher=(await db.query("select 1 from ouranos.vouchers where organization_id=$1 and trip_id=$2 and status not in ('draft','changes_requested','needs_action') limit 1",[org,entity.trip_id])).rowCount;
