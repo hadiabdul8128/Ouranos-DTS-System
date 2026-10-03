@@ -1,0 +1,16 @@
+.change-trip{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:0 0 20px;padding:14px 16px;border:1px solid #343c33;border-radius:10px;background:#141815}
+.change-trip>div{display:flex;flex-direction:column;gap:3px}.change-trip strong{font-size:14px;font-weight:500;color:#edf0e8}.change-trip span{font-size:12px;line-height:1.5;color:#a7afa3}
+.change-trip button{gap:8px}
+.change-trip.is-open{flex-direction:column;align-items:stretch}
+.change-trip.is-open label{display:flex;flex-direction:column;gap:3px}
+.change-trip textarea{font-size:13px;line-height:1.6;background:#0f120f;border-color:#343c33;color:#edf0e8}
+.change-trip p{margin:0;font-size:12px;color:#f0a09a}
+.change-trip-actions{display:flex;justify-content:flex-end;gap:10px}
+.amendment-banner{margin:0 0 22px;padding:18px 20px;border:1px solid #6b5a38;border-left:3px solid #e0bf7a;border-radius:10px;background:#17150f}
+.amendment-banner h2{font-size:16px;font-weight:500;color:#e0bf7a;margin:0}
+.amendment-reason{margin:8px 0 2px;font-size:14px;color:#edf0e8;line-height:1.6;overflow-wrap:anywhere}
+.amendment-changes{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
+.amendment-changes th,.amendment-changes td{text-align:left;padding:8px 8px 8px 0;border-bottom:1px solid #2a2a20;font-weight:400}
+.amendment-changes thead th{font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:#8a8470}
+.amendment-changes tbody th{color:#edf0e8}.amendment-changes td{color:#a7afa3}.amendment-changes td:last-child{color:#edf0e8}
+.amendment-none{font-size:12px;color:#a7afa3;margin:8px 0 0}
