@@ -8,6 +8,7 @@ import {Button} from '@/components/ui/button';
 import {Textarea} from '@/components/ui/textarea';
 import type {Entity, Role} from '@/packages/contracts';
 import {approvalLevelName, approvalWait} from '@/packages/contracts/approval-chain';
+import {authorizationBudget} from '@/packages/domain/authorization-budget';
 import {travelModeSummary} from '@/packages/domain/travel-mode';
 import {preAuditFlags} from '@/packages/domain/pre-audit';
 import {amendmentChanges} from '@/packages/domain/amendment';
@@ -34,7 +35,8 @@ function ReviewSummary({detail, kind}: {detail: RevisionDetail; kind: string}) {
   const snapshot = detail.revision.snapshot, trip = data(snapshot.trip);
   const plan = kind === 'authorization' ? planningForm(snapshot.entity) : planningForm(record(record(snapshot.authorizationRevision).snapshot).entity);
   const voucher = kind === 'voucher' ? voucherForm(snapshot.entity) : null;
-  const planned = plan ? plan.approvedExpenseItems.reduce((sum, item) => sum + item.authorizedAmountMinor, 0) : 0;
+  const budgetSnapshot=kind==='authorization'?snapshot:record(record(snapshot.authorizationRevision).snapshot);
+  const planned=plan?authorizationBudget({destination:string(trip.destination,''),departure:string(trip.departure,''),returnDate:string(trip.returnDate,'')},plan,budgetSnapshot.perDiem as Allowance|null).totalMinor:0;
   const flags = kind === 'authorization' && plan ? [plan.amendment && `Change ${plan.amendment.number} to an approved plan`, plan.aeaJustification && 'Hotel over the lodging rate', plan.preAudit?.flightFare === 'other' && 'Flight isn’t a GSA fare', plan.preAudit?.rentalClass === 'larger' && 'Rental car larger than compact'].filter(Boolean) as string[] : [];
   return <section className="review-summary" aria-label="Summary">
     <p className="review-summary-who">{plan?.traveler || 'Traveler'}</p>
@@ -79,8 +81,9 @@ function voucherForm(entity: unknown): VoucherModuleInput | null {
   return parsed.success ? parsed.data : null;
 }
 
-function PlannedBudget({plan, approved}: {plan: PlanningModuleInput; approved: boolean}) {
-  const total = plan.approvedExpenseItems.reduce((sum, item) => sum + item.authorizedAmountMinor, 0);
+function PlannedBudget({plan, approved,perDiem}: {plan: PlanningModuleInput; approved: boolean;perDiem:Allowance|null}) {
+  const budget=authorizationBudget({destination:'',departure:'',returnDate:''},plan,perDiem);
+  const total=budget.totalMinor;
   return <section className="connected-review-section" aria-labelledby="review-budget-title">
     <div className="connected-review-item-header"><h3 id="review-budget-title">{approved ? 'Approved budget' : 'Planned budget'}</h3><strong className="connected-review-total">{usd(total)} <small>USD</small></strong></div>
     <div className="connected-review-items">{plan.approvedExpenseItems.map(item => <article className="connected-review-item" key={item.id}>
@@ -92,6 +95,7 @@ function PlannedBudget({plan, approved}: {plan: PlanningModuleInput; approved: b
         {item.nights !== undefined && <Field name="Nights">{item.nights}</Field>}
       </dl>
     </article>)}</div>
+    <p className="platform-muted">Planned expenses: {usd(budget.expensesMinor)} · Meals and incidentals estimate: {budget.mealsIncluded?`${usd(budget.mealsMinor)} included`:'not included'}</p>
   </section>;
 }
 
@@ -188,7 +192,7 @@ function Submission({detail, kind}: {detail: RevisionDetail; kind: string}) {
     </section>
     <AllowanceDetails value={(kind==='authorization'?snapshot.perDiem:record(approvedRevision.snapshot).perDiem) as Allowance|null||null}/>
     {voucher&&<TravelPackagePanel voucherId={string(record(snapshot.entity).id)}/>}
-    {plan && <PlannedBudget plan={plan} approved={kind === 'voucher'}/>}
+    {plan && <PlannedBudget plan={plan} approved={kind === 'voucher'} perDiem={(kind==='authorization'?snapshot.perDiem:record(approvedRevision.snapshot).perDiem) as Allowance|null||null}/>}
     {voucher && <>
       <section className="connected-review-section">
         <h3>Voucher totals</h3>

@@ -6,6 +6,7 @@ import type {Entity} from '../../packages/contracts';
 import {ApprovalTracker,WaitingForApprovers} from '../travel/approval-tracker';
 import {planningModuleSchema} from '../../packages/contracts/planning-module';
 import {travelModeSummary} from '../../packages/domain/travel-mode';
+import {authorizationBudget} from '../../packages/domain/authorization-budget';
 import {formatReceiptAmount} from '../../packages/contracts/expense-currency';
 const usd=(minor:number)=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(minor/100);
 const date=(value:string)=>new Date(`${value}T12:00:00Z`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
@@ -13,14 +14,16 @@ const category=(value:string)=>({rental_car:'Rental car',ground_transport:'Groun
 export function AuthorizationMessage({notice,request}:{notice:AuthorizationNotice;request?:Entity}){
  const {trip,formData}=notice.submission;
  const form=planningModuleSchema.safeParse(formData);
+ const budget=form.success?(notice.submission.budget??authorizationBudget(trip,form.data)):null;
  return <>
   <div className="inbox-confirmation"><span className="inbox-check"><Check size={19} aria-hidden="true"/></span><div><strong>{notice.awaitingApprovers&&!request?'Submitted':'Sent for review'}</strong><p>Your authorization was submitted successfully. {notice.awaitingApprovers&&!request?'It will go to your S1 as soon as they add you to their team':'It went to S1 for review'}; submission does not mean approval.</p></div></div>
   {request?<ApprovalTracker request={request}/>:notice.awaitingApprovers&&<WaitingForApprovers/>}
   <section aria-labelledby="submitted-trip"><div className="inbox-section-heading"><h2 id="submitted-trip">{trip.destination}</h2><span>{date(trip.departure)} — {date(trip.returnDate)}</span></div>
    <dl className="inbox-trip-details">{form.success&&<><div><dt>Traveler</dt><dd>{form.data.traveler}</dd></div><div><dt>Starting location</dt><dd>{form.data.origin}</dd></div><div><dt>Getting there</dt><dd>{travelModeSummary(form.data.travelMode,form.data.mileage)}</dd></div></>}<div><dt>Destination</dt><dd>{trip.destination}</dd></div><div><dt>Time zone</dt><dd>{trip.timezone}</dd></div><div className="inbox-wide"><dt>Purpose</dt><dd>{trip.purpose}</dd></div></dl>
   </section>
-  {form.success&&<section aria-labelledby="submitted-budget"><div className="inbox-section-heading"><h2 id="submitted-budget">Submitted expenses</h2><strong>{usd(form.data.approvedExpenseItems.reduce((sum,item)=>sum+item.authorizedAmountMinor,0))} USD</strong></div>
+  {form.success&&<section aria-labelledby="submitted-budget"><div className="inbox-section-heading"><h2 id="submitted-budget">Submitted authorization total</h2><strong>{usd(budget!.totalMinor)} USD</strong></div>
    <div className="inbox-expenses">{form.data.approvedExpenseItems.map(item=><article key={item.id}><header><div><span>{category(item.category)}</span><h3>{item.description}</h3></div><strong>{usd(item.authorizedAmountMinor)}</strong></header><dl><div><dt>Merchant</dt><dd>{item.merchant||'Not specified'}</dd></div><div><dt>Expected payment</dt><dd>{item.expectedPaymentMethod==='gtcc'?'Government travel card':item.expectedPaymentMethod==='personal'?'Personal':'Not specified'}</dd></div>{item.date&&<div><dt>Expense date</dt><dd>{date(item.date)}</dd></div>}{item.startDate&&<div><dt>Stay dates</dt><dd>{date(item.startDate)} — {date(item.endDate!)}</dd></div>}{item.nights!==undefined&&<div><dt>Nights</dt><dd>{item.nights}</dd></div>}{item.originalEstimate&&<><div><dt>Original currency amount</dt><dd>{formatReceiptAmount(item.originalEstimate.amountMinor,item.originalEstimate.currency)}</dd></div><div className="inbox-wide"><dt>Conversion estimate</dt><dd>{item.originalEstimate.conversionNote}</dd></div></>}</dl></article>)}</div>
+   <p className="inbox-snapshot-note">Planned expenses: {usd(budget!.expensesMinor)}. Meals and incidentals estimate: {budget!.mealsIncluded?`${usd(budget!.mealsMinor)} included`:"not included"}. Actual costs are confirmed after travel.</p>
   </section>}
   <p className="inbox-snapshot-note">This message keeps a copy of the form you submitted. The status above shows where it is now.</p>
   <Link className="inbox-open-plan" href={`/dashboard/travel/planning?tripId=${notice.tripId}`}>View authorization <ArrowUpRight size={16} aria-hidden="true"/></Link>
