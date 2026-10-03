@@ -30,7 +30,7 @@ function VoucherVerificationDetailsContent(){
  const form=data(snapshot.entity).formData;
  return <main className="quiet-page cw-page"><header className="quiet-header"><Link href="/dashboard" className="quiet-brand">Ouranos</Link></header><section className="cw-shell">
   <Link className="back-link" href={tripId?`/dashboard/travel/vouchers?tripId=${tripId}`:'/dashboard/travel'}><ArrowLeft size={14}/> Back to voucher</Link>
-  <div className="cw-heading"><div><p className="cw-eyebrow">Voucher · verification details</p><h1>{report?.status==='verified'?'Verified by Ouranos.':'Verification details.'}</h1><p className="cw-muted">{report?.status==='verified'?'Ready for DTS review. Official DoD approval and payment remain outside Ouranos.':'The traveler can correct the items below and run verification again.'}</p></div></div>
+  <div className="cw-heading"><div><p className="cw-eyebrow">Voucher · verification details</p><h1>{report?.status==='verified'?'Verified by Ouranos.':'Verification details.'}</h1><p className="cw-muted">{report?.status==='verified'?'Your expenses are ready for payment.':'The traveler can correct the items below and run verification again.'}</p></div></div>
   {error&&<p className="cw-card cw-error" role="alert">{error}</p>}
   {!report&&!error&&<p className="cw-muted" role="status">Loading verification details…</p>}
   {report&&<>

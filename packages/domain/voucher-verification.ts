@@ -57,7 +57,7 @@ export function buildVoucherVerification(input:{
   const check=raw as {code?:unknown;expenseId?:unknown;resolved?:unknown};
   if(typeof check.code!=='string')continue;
   checks.push({code:check.code,status:check.resolved?'resolved':'passed',...(typeof check.expenseId==='string'?{expenseId:check.expenseId}:{})});
-  if(check.resolved)warnings.push(`${check.code.replaceAll('_',' ')} was resolved by the traveler; review its explanation in DTS.`);
+  if(check.resolved)warnings.push(`${check.code.replaceAll('_',' ')} was resolved by the traveler; review its explanation.`);
  }
  const usedIds=new Set<string>();
  for(const expense of expenses){
@@ -88,7 +88,7 @@ export function buildVoucherVerification(input:{
    }
   }
   if(original.success){
-   warnings.push(`Expense ${linked[0].id} uses a traveler-supplied USD amount (${original.data.usdBasis.replaceAll('_',' ')}). Original: ${original.data.currency}; conversion evidence remains subject to DTS review.`);
+   warnings.push(`Expense ${linked[0].id} uses a traveler-supplied USD amount (${original.data.usdBasis.replaceAll('_',' ')}). Original: ${original.data.currency}; conversion evidence remains subject to review.`);
    // Do not compare units when OCR currency is missing/uncertain or corrected.
    if(extraction.currency!==expectedCurrency||(extraction.currencyConfidence||0)<.85){warnings.push(`Receipt ${id} original currency/total needs traveler confirmation.`);continue}
   }else if(extraction.currency&&extraction.currency!==expectedCurrency)continue;
