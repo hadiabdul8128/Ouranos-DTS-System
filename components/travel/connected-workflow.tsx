@@ -33,6 +33,8 @@ import {isNonconventionalLodging,preAuditProblem,relevantPreAudit,type PreAudit}
 import {DtsChecksCard} from './dts-checks-card';
 import {DemoApprove} from './demo-approve';
 import {AmendmentBanner,ChangeTrip} from './amendment';
+import {TripTimeline} from './trip-timeline';
+import {DtsSheet} from './dts-sheet';
 import {voucherDocuments} from '@/packages/domain/voucher-documents';
 import {VoucherDocumentsCard} from './voucher-documents-card';
 import type {TravelMode} from '@/packages/domain/travel-mode';
@@ -44,7 +46,7 @@ import {assessReceipt} from '@/voucher/src/receiptValidity.js';
 import type {LocalRecord} from '@/packages/offline/database';
 
 type Platform=ReturnType<typeof usePlatform>;
-type Module='planning'|'vouchers';
+type Module='planning'|'vouchers'|'dts';
 type Category=typeof travelCategories[number];
 const categoryLabels:Record<Category,string>={airfare:'Airfare',lodging:'Lodging',rental_car:'Rental car',fuel:'Fuel',meals:'Meals & incidentals',parking:'Parking',ground_transport:'Ground transport',baggage:'Baggage',other:'Other'};
 const money=(minor:number)=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(minor/100);
@@ -128,9 +130,9 @@ function WorkflowLoader({module,tripId}:{module:Module;tripId:string}){
  if(!rows||!hydrated)return <section className="cw-shell"><p className="cw-muted" role="status">Loading your saved travel…</p></section>;
  const trip=rows.find(r=>r.kind==='trip'&&r.id===tripId)?.local;
  if(!trip)return <section className="cw-shell"><Link href="/dashboard" className="back-link"><ArrowLeft size={14}/> Back</Link><h1>{module==='planning'?'Plan your travel.':'Prepare your voucher.'}</h1><p className="cw-muted">{tripId?'This trip is not available in this workspace.':'Choose a saved trip to continue.'}</p><div className="cw-trip-list">{rows.filter(r=>r.kind==='trip').map(r=><Link key={r.id} href={`/dashboard/travel/${module}?tripId=${r.id}`}><div><strong>{text(r.local.data.destination)}</strong><span>{displayDate(r.local.data.departure)} — {displayDate(r.local.data.returnDate)}</span></div><ArrowRight size={18}/></Link>)}</div><Button asChild><Link href="/dashboard/travel/new">New trip <Plus size={16}/></Link></Button>{p.sync.message&&<p className="cw-muted">{p.sync.message}</p>}</section>;
- return <section className="cw-shell"><Link href="/dashboard/travel" className="back-link"><ArrowLeft size={14}/> Your trips</Link><nav className="cw-steps" aria-label="Travel process"><Link aria-current={module==='planning'?'step':undefined} href={`/dashboard/travel/planning?tripId=${trip.id}`}><span>01</span> Plan</Link><span className="cw-step-rule"/><Link aria-current={module==='vouchers'?'step':undefined} href={`/dashboard/travel/vouchers?tripId=${trip.id}`}><span>02</span> Expenses</Link></nav>
- <div className="cw-heading"><div><p className="cw-eyebrow">{[text(trip.data.installation),text(trip.data.destination)].filter(Boolean).join(' · ')}</p><h1>{module==='planning'?'Plan.':'Expenses.'}</h1>{module==='planning'?<TripEditor trip={trip} editable={!rows.some(r=>r.kind==='authorization'&&r.local.tripId===trip.id&&['in_review','approved'].includes(r.server?.status||r.local.status))}/>:<p className="cw-muted">{displayDate(trip.data.departure)} — {displayDate(trip.data.returnDate)}</p>}</div></div>
- {module==='planning'?<PlanningForm trip={trip} rows={rows}/>:<VoucherGate trip={trip} rows={rows}/>}</section>;
+ return <section className="cw-shell"><Link href="/dashboard/travel" className="back-link"><ArrowLeft size={14}/> Your trips</Link><TripTimeline trip={trip} rows={rows} page={module}/>
+ <div className="cw-heading"><div><p className="cw-eyebrow">{[text(trip.data.installation),text(trip.data.destination)].filter(Boolean).join(' · ')}</p><h1>{module==='planning'?'Plan.':module==='dts'?'Enter this in DTS.':'Expenses.'}</h1>{module==='planning'?<TripEditor trip={trip} editable={!rows.some(r=>r.kind==='authorization'&&r.local.tripId===trip.id&&['in_review','approved'].includes(r.server?.status||r.local.status))}/>:<p className="cw-muted">{displayDate(trip.data.departure)} — {displayDate(trip.data.returnDate)}</p>}</div></div>
+ {module==='planning'?<PlanningForm trip={trip} rows={rows}/>:module==='dts'?<DtsSheet trip={trip} rows={rows}/>:<VoucherGate trip={trip} rows={rows}/>}</section>;
 }
 
 type BudgetDraft={id:string;category:Category;description:string;amount:string;currency:ReceiptCurrency;usdAmount:string;conversionNote:string;merchant:string;payment:''|'gtcc'|'personal';date:string;startDate:string;endDate:string};
