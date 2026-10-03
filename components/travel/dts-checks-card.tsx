@@ -13,17 +13,17 @@ function Choice<T extends string>({name,value,options,onChange,disabled}:{name:s
  return <div className="dts-check-choice" role="radiogroup" aria-label={name}>{options.map(([option,label])=><button key={option} type="button" role="radio" aria-checked={value===option} disabled={disabled} onClick={()=>onChange(option)}>{label}</button>)}</div>;
 }
 
-/** The things DTS flags on Other Auths and Pre-Audits, or wants as separate lines, asked about while planning. */
+/** Choices that need a reason, or a separate line, asked about while planning so approvers have what they need. */
 export function DtsChecksCard({items,purpose,atInstallation,answers,onAnswers,onAddLine,taxSeparate,locked}:Props){
  const flight=hasFlight(items),rental=hasRental(items),needsFee=flight&&!hasTmcFee(items),needsTax=taxSeparate&&hasLodging(items)&&!hasLodgingTax(items);
  const lodging=hasLodging(items),rentalHome=hasNonconventionalLodging(items),situations=perDiemSituations(purpose);
  const set=(patch:PreAudit)=>onAnswers({...answers,...patch});
  return <section className="cw-card dts-checks" aria-labelledby="dts-checks-title">
-  <h2 id="dts-checks-title">Before you submit in DTS</h2>
-  <p className="cw-muted">DTS stops you with a pre-audit flag for some choices until you give a reason. Answer these now and paste the reasons into Other Auths and Pre-Audits.</p>
+  <h2 id="dts-checks-title">Before you send your plan</h2>
+  <p className="cw-muted">Some choices need a reason before your approver can approve them. Answer these now and your approver sees your reasons with the plan.</p>
   {flight&&<div className="dts-check">
    <h3><Explain>{`Is your flight a GSA contract (City Pair) fare?`}</Explain></h3>
-   <p><Explain>{`DTS marks these “GSA Contract Rate”. Use one when it’s offered.`}</Explain></p>
+   <p><Explain>{`These are marked “GSA Contract Rate”. Use one when it’s offered.`}</Explain></p>
    <Choice name="GSA contract fare" value={answers.flightFare} options={[['gsa','Yes'],['other','No, a different fare']]} onChange={flightFare=>set({flightFare})} disabled={locked}/>
    {answers.flightFare==='other'&&<label className="dts-check-reason">Why not the GSA fare?<Textarea value={answers.flightReason??''} onChange={e=>set({flightReason:e.target.value})} maxLength={2000} rows={3} disabled={locked} placeholder="e.g. The GSA flight arrives after the report time on the orders."/></label>}
   </div>}
@@ -53,7 +53,7 @@ export function DtsChecksCard({items,purpose,atInstallation,answers,onAnswers,on
   </div>}
   <details className="dts-check dts-perdiem" open={situations.some(s=>s.highlight)}>
    <summary>When your per diem changes</summary>
-   <p>DTS sets meals and lodging rates. Change them on the Per Diem page if any of these apply:</p>
+   <p>Your meals and lodging rates change if any of these apply. Mention it in your plan.</p>
    <ul>{situations.map(s=><li key={s.id} className={s.highlight?'is-highlight':''}><strong><Explain>{s.title}</Explain></strong><span><Explain>{s.detail}</Explain></span></li>)}</ul>
   </details>
  </section>;

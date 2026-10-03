@@ -1,6 +1,6 @@
 import type {PlanningModuleInput} from '../contracts/planning-module';
 
-/** Choices that make DTS stop the traveler on Other Auths and Pre-Audits until they give a reason. */
+/** Choices that need a reason before an approver can approve the plan. */
 export type PreAudit=NonNullable<PlanningModuleInput['preAudit']>;
 type Line={category:string;description:string};
 
@@ -38,14 +38,14 @@ const NONCONVENTIONAL=/\b(air ?bnb|vrbo|vacasa|home ?away|vacation rental)\b/i;
 export const isNonconventionalLodging=(text:string)=>NONCONVENTIONAL.test(text);
 export const hasNonconventionalLodging=(items:Array<Line&{merchant?:string}>)=>items.some(item=>item.category==='lodging'&&isNonconventionalLodging(`${item.description} ${item.merchant??''}`));
 
-/** When DTS per diem differs from the normal rate, and what to change in DTS (HQ RIO DTS Quick Guide, Step 7 and tip 3). */
+/** When per diem differs from the normal rate (HQ RIO DTS Quick Guide, Step 7 and tip 3). */
 export const ANNUAL_TOUR='Annual Tour (AT)';
 export function perDiemSituations(purpose:string){
  const annualTour=/annual tour|\bAT\b/i.test(purpose);
  return [
-  {id:'dfac',title:'Staying on base where there’s a dining facility',detail:annualTour?'On Annual Tour with base lodging and a DFAC, no per diem is paid. DTS should set this; check the Per Diem page.':'The Government meal rate applies instead of full meals and incidentals. Check the Per Diem page in DTS.',highlight:annualTour},
-  {id:'leave',title:'Taking leave during the trip',detail:'Leave days get no per diem. Military members mark full days of annual leave on the Per Diem page (Duty Conditions).',highlight:false},
-  {id:'field',title:'Field rations and free housing (for example, a tent)',detail:'Mark it in Duty Conditions on the Per Diem page so per diem is reduced.',highlight:false},
-  {id:'commercial',title:'Authorized to stay off base at a military installation',detail:'Mark it in Duty Conditions so DTS uses the commercial lodging rate.',highlight:false},
+  {id:'dfac',title:'Staying on base where there’s a dining facility',detail:annualTour?'On Annual Tour with base lodging and a DFAC, no per diem is paid.':'The Government meal rate applies instead of full meals and incidentals.',highlight:annualTour},
+  {id:'leave',title:'Taking leave during the trip',detail:'Leave days get no per diem. Military members take annual leave in full days.',highlight:false},
+  {id:'field',title:'Field rations and free housing (for example, a tent)',detail:'Per diem is reduced when meals and housing are provided.',highlight:false},
+  {id:'commercial',title:'Authorized to stay off base at a military installation',detail:'The commercial lodging rate applies instead of the on-base rate.',highlight:false},
  ];
 }
