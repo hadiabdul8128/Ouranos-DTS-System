@@ -145,6 +145,65 @@
         "description": "S1, command and admins. Trips, where each request is in the chain, overdue items, money totals and checklist progress for people the caller added. Records are not added to the caller’s sync."
       }
     },
+    "/v1/demo/approve": {
+      "post": {
+        "operationId": "demoApprove",
+        "summary": "Approve your own submitted authorization at every level, for a demo",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoApproveResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DemoApproveInput"
+              }
+            }
+          }
+        },
+        "description": "Only in workspaces listed in DEMO_APPROVAL_ORGANIZATIONS. Each level is recorded as \"Approved for demo\" and audited as approval.demo_approved."
+      }
+    },
     "/v1/team/members": {
       "post": {
         "operationId": "addTeamMember",
@@ -2354,6 +2413,37 @@
         },
         "required": [
           "answer"
+        ],
+        "additionalProperties": false
+      },
+      "DemoApproveInput": {
+        "type": "object",
+        "properties": {
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "authorizationId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "organizationId",
+          "authorizationId"
+        ],
+        "additionalProperties": false
+      },
+      "DemoApproveResponse": {
+        "type": "object",
+        "properties": {
+          "entity": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "entity"
         ],
         "additionalProperties": false
       },
@@ -7039,6 +7129,13 @@
               "preview",
               "automatic"
             ]
+          },
+          "demoApprovalOrganizations": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
           },
           "user": {
             "type": "object",

@@ -1,5 +1,6 @@
 import {companionInput} from '../../packages/contracts/companion';
 import {guideAskInput,guideBuildInput,guideChecklistSchema} from '../../packages/contracts/guide';
+import {demoApproveInput} from '../../packages/contracts/demo';
 import {checklistProgressInput,paymentInput,paymentRemoval,teamChecklistInput,teamMemberInput,teamMemberRemoval} from '../../packages/contracts/team';
 import {readFile, mkdir, writeFile} from 'node:fs/promises';
 import {z} from 'zod';
@@ -28,6 +29,7 @@ const approvalDecision = z.object({id:uuid, organization_id:uuid, request_id:uui
 
 const models = {
   CompanionInput:companionInput, CompanionResponse:z.object({answer:z.string()}),
+  DemoApproveInput:demoApproveInput, DemoApproveResponse:z.object({entity:z.record(z.unknown())}),
   TeamMemberInput:teamMemberInput, TeamMemberRemoval:teamMemberRemoval, PaymentInput:paymentInput, PaymentRemoval:paymentRemoval, TeamChecklistInput:teamChecklistInput, ChecklistProgressInput:checklistProgressInput,
   TeamResponse:z.object({people:z.array(z.record(z.unknown()))}), TeamMemberResponse:z.object({memberId:z.string().uuid(),level:z.enum(['s1','command'])}), RemovedResponse:z.object({removed:z.literal(true)}),
   LeadersResponse:z.object({leaders:z.array(z.object({level:z.enum(['s1','command']),email:z.string()}))}), PaymentsResponse:z.object({payments:z.record(z.object({amountMinor:z.number().int(),date:z.string()}))}),
@@ -43,7 +45,7 @@ const models = {
   Command:commandSchema, SyncPushInput:syncPushSchema,
   ApiError:apiError, ErrorResponse:z.object({error:apiError}), Entity:entity,
   CommandSuccess:commandSuccess, CommandFailure:commandFailure, CommandResult:commandResult,
-  Session:z.object({approvalMode:z.enum(['required','preview','automatic']).optional(),user:z.object({id:uuid,email:z.string().optional()}), memberships:z.array(z.object({organizationId:uuid,name:z.string(),role:roleSchema})), contractVersion:z.string()}),
+  Session:z.object({approvalMode:z.enum(['required','preview','automatic']).optional(),demoApprovalOrganizations:z.array(uuid).optional(),user:z.object({id:uuid,email:z.string().optional()}), memberships:z.array(z.object({organizationId:uuid,name:z.string(),role:roleSchema})), contractVersion:z.string()}),
   EntityResponse:z.object({entity}), EntityList:z.object({entities:z.array(entity)}),
   Bootstrap:z.object({entities:z.array(entity),cursor}),
   SyncPushResult:z.object({results:z.array(commandResult)}),
@@ -83,6 +85,7 @@ const commandError = {description:'Command rejected. Domain failures include com
 const paths:Record<string,Record<string,SpecObject>> = {
   '/v1/companion/chat':{post:operation('companionChat','Answer using the caller’s own recent travel status','CompanionResponse',{requestBody:request('CompanionInput'),description:'Read-only AI assistant. At most 10 messages; the last must be from the user. Rate limited to 10 requests per minute per user.'})},
   '/v1/team':{get:operation('team','Overview of the people the caller leads','TeamResponse',{parameters:[organization,{name:'today',in:'query',required:false,schema:{type:'string',format:'date'}}],description:'S1, command and admins. Trips, where each request is in the chain, overdue items, money totals and checklist progress for people the caller added. Records are not added to the caller’s sync.'})},
+  '/v1/demo/approve':{post:operation('demoApprove','Approve your own submitted authorization at every level, for a demo','DemoApproveResponse',{requestBody:request('DemoApproveInput'),description:'Only in workspaces listed in DEMO_APPROVAL_ORGANIZATIONS. Each level is recorded as "Approved for demo" and audited as approval.demo_approved.'})},
   '/v1/team/members':{post:operation('addTeamMember','Add someone from the workspace to your team','TeamMemberResponse',{requestBody:request('TeamMemberInput'),description:'S1 reviewers add at s1 and command approvers at command; admins at either. Their authorizations then route to you.'}),delete:operation('removeTeamMember','Remove someone from your team','RemovedResponse',{requestBody:request('TeamMemberRemoval')})},
   '/v1/team/mine':{get:operation('myLeaders','The caller’s own S1 and command','LeadersResponse',{parameters:[organization]})},
   '/v1/payments':{get:operation('payments','Payments the caller recorded for their trips','PaymentsResponse',{parameters:[organization]}),put:operation('recordPayment','Record or change a payment for your trip','PaymentResponse',{requestBody:request('PaymentInput')}),delete:operation('removePayment','Remove a recorded payment','RemovedResponse',{requestBody:request('PaymentRemoval')})},
@@ -132,7 +135,7 @@ const document = {
 };
 
 // Prevent route additions/renames from silently disappearing from the handoff.
-const apiSource = (await Promise.all(['app.ts','transition.ts','companion.ts','guide.ts','team.ts'].map(file=>readFile(new URL(`../api/${file}`,import.meta.url),'utf8')))).join('\n');
+const apiSource = (await Promise.all(['app.ts','transition.ts','companion.ts','guide.ts','team.ts','demo.ts'].map(file=>readFile(new URL(`../api/${file}`,import.meta.url),'utf8')))).join('\n');
 const implemented = [...apiSource.matchAll(/app\.(get|post|put|patch|delete)\('([^']+)'/g)].map(([,method,path])=>`${method} ${path.replace(/:([A-Za-z]+)/g,'{$1}')}`).sort();
 const documented = Object.entries(paths).flatMap(([path,methods])=>Object.keys(methods).map(method=>`${method} ${path}`)).sort();
 if(JSON.stringify(implemented)!==JSON.stringify(documented))throw new Error('API route inventory differs from OpenAPI. Update generate-contracts.ts before generating.');
