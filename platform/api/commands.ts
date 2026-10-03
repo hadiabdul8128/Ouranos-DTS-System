@@ -14,6 +14,7 @@ import {PLANNING_SCHEMA_VERSION,planningModuleSchema} from '../../packages/contr
 import {VOUCHER_MODULE_SCHEMA_VERSION,voucherVerificationCandidateSchema} from '../../packages/contracts/voucher-module';
 import {reconcileStoredExpenses,planAllowance,resolvedStatements} from '../../packages/domain/voucher-adapter';
 import {buildVoucherVerification,receiptExtractionFromFields,type ReceiptExtraction} from '../../packages/domain/voucher-verification';
+import {authorizationBudget} from '../../packages/domain/authorization-budget';
 import {loadApprovedAuthorization} from './approved';
 import type {PlatformConfig} from '../shared/config';
 
@@ -124,8 +125,9 @@ async function submitAuthorization(db:PoolClient,c:Extract<Command,{type:'author
   for(const item of form.approvedExpenseItems)for(const date of [item.date,item.startDate,item.endDate].filter(Boolean))check(date!>=trip.data.departure&&date!<=trip.data.returnDate,'VALIDATION_FAILED','Budget item dates must fall within the trip');
   for(const date of Object.keys(form.allowance?.mealsProvided||{}))check(date>=trip.data.departure&&date<=trip.data.returnDate,'VALIDATION_FAILED','Meal dates must fall within the trip');
   snapshot.perDiem=planAllowance(toEntity('trip',trip),form);
+  snapshot.budget=authorizationBudget(trip.data,form,snapshot.perDiem);
   if(approvalMode==='automatic'){
-   const authorizedTotalMinor=form.approvedExpenseItems.reduce((sum,item)=>sum+item.authorizedAmountMinor,0);
+   const authorizedTotalMinor=snapshot.budget.totalMinor;
    check(Number.isSafeInteger(authorizedTotalMinor)&&authorizedTotalMinor>0,'VALIDATION_FAILED','Planned expense total is invalid');
    snapshot.verification={mode:'automatic',result:'verified',ruleVersion:'authorization-v1',checkedAt:new Date().toISOString(),authorizedTotalMinor,checks:[
     {id:'current_form',result:'passed'},
@@ -145,7 +147,7 @@ async function submitAuthorization(db:PoolClient,c:Extract<Command,{type:'author
  const rev=(await db.query('insert into ouranos.submission_revisions(organization_id,trip_id,authorization_id,entity_version,snapshot,sha256,submitted_by) values($1,$2,$3,$4,$5,$6,$7) returning *',[org,entity.trip_id,entity.id,entity.version,snapshot,hash(snapshot),userId])).rows[0];
  // Without approvers the submission is still frozen and confirmed; it is sent to S1 once approvers are set.
  const req=workflow?await createApprovalRequest(db,org,entity,trip,rev,workflow,userId):null;
- const notice=authorizationSubmissionNotice({authorization:toEntity('authorization',entity),trip:toEntity('trip',trip),recipientId:userId,...(req?{requestId:req.id}:{}),revisionId:rev.id,submittedAt:new Date(rev.created_at).toISOString()});
+ const notice=authorizationSubmissionNotice({authorization:toEntity('authorization',entity),trip:toEntity('trip',trip),recipientId:userId,...(req?{requestId:req.id}:{}),revisionId:rev.id,submittedAt:new Date(rev.created_at).toISOString(),...(snapshot.budget?{budget:snapshot.budget}:{})});
  await notify(db,org,entity.trip_id,userId,notice.title,req?.id??null,notice);
  return updateStatus(db,'authorization',entity.id,org,'in_review');
 }

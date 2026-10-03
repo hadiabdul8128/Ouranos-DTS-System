@@ -390,6 +390,11 @@ describe('connected planning and Voucher Copilot',()=>{
   expectSuccess(await send('approver','approval.decide',approval.id,reviewed.version,{decision:'approved',comment:''}));
   const approved=await request('traveler','GET',`/v1/authorizations/${companionId}/approved?organizationId=${organizationId}`);
   expect(approved.body.revision.snapshot.perDiem.supported).toBe(true);
+  const mealsMinor=Math.round(approved.body.revision.snapshot.perDiem.totals.mie*100);
+  expect(approved.body.revision.snapshot.budget).toEqual({expensesMinor:10000,mealsMinor,totalMinor:10000+mealsMinor,mealsIncluded:true});
+  const confirmations=(await request('traveler','GET',`/v1/entities/notification?organizationId=${organizationId}`)).body.entities;
+  const confirmation=confirmations.find((e:Entity)=>e.data.type==='authorization_submitted'&&e.data.authorizationId===companionId);
+  expect(confirmation.data.submission.budget).toEqual(approved.body.revision.snapshot.budget);
   const expense=expectSuccess(await send('traveler','expense.save',crypto.randomUUID(),0,{tripId,merchant:'Companion fuel',incurredOn:'2026-10-12',amountMinor:10000,currency:'USD',category:'fuel',authorizationItemId:fuelItem,paymentMethod:'gtcc',documentIds:[],description:'Fuel'}));
   const form:VoucherModuleInput={...voucherForm(expense),authorizationId:companionId};
   const voucher=expectSuccess(await send('traveler','voucher.save',crypto.randomUUID(),0,{tripId,authorizationId:companionId,expenseIds:[expense.id],formSchemaVersion:VOUCHER_MODULE_SCHEMA_VERSION,formData:form}));
