@@ -1,3 +1,4 @@
 import {WorkspaceGate} from '@/components/platform/provider';
 import {Companion} from '@/components/companion';
-export default function DashboardLayout({children}:{children:React.ReactNode}){return <WorkspaceGate>{children}<Companion/></WorkspaceGate>}
+import {TextSizeSync} from '@/components/platform/text-size';
+export default function DashboardLayout({children}:{children:React.ReactNode}){return <WorkspaceGate><TextSizeSync/>{children}<Companion/></WorkspaceGate>}
