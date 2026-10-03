@@ -4,6 +4,7 @@ import {Button} from '@/components/ui/button';
 import {Textarea} from '@/components/ui/textarea';
 import {hasFlight,hasLodging,hasLodgingTax,hasNonconventionalLodging,hasRental,hasTmcFee,LODGING_TAX,perDiemSituations,TMC_FEE,type PreAudit} from '@/packages/domain/pre-audit';
 import './dts-checks-card.css';
+import {Explain} from './explain';
 
 type Line={category:string;description:string;merchant?:string};
 type Props={items:Line[];purpose:string;atInstallation:boolean;answers:PreAudit;onAnswers:(answers:PreAudit)=>void;onAddLine:(category:'airfare'|'lodging',description:string)=>void;taxSeparate:boolean;locked:boolean};
@@ -21,14 +22,14 @@ export function DtsChecksCard({items,purpose,atInstallation,answers,onAnswers,on
   <h2 id="dts-checks-title">Before you submit in DTS</h2>
   <p className="cw-muted">DTS stops you with a pre-audit flag for some choices until you give a reason. Answer these now and paste the reasons into Other Auths and Pre-Audits.</p>
   {flight&&<div className="dts-check">
-   <h3>Is your flight a GSA contract (City Pair) fare?</h3>
-   <p>DTS marks these “GSA Contract Rate”. Use one when it’s offered.</p>
+   <h3><Explain>{`Is your flight a GSA contract (City Pair) fare?`}</Explain></h3>
+   <p><Explain>{`DTS marks these “GSA Contract Rate”. Use one when it’s offered.`}</Explain></p>
    <Choice name="GSA contract fare" value={answers.flightFare} options={[['gsa','Yes'],['other','No, a different fare']]} onChange={flightFare=>set({flightFare})} disabled={locked}/>
    {answers.flightFare==='other'&&<label className="dts-check-reason">Why not the GSA fare?<Textarea value={answers.flightReason??''} onChange={e=>set({flightReason:e.target.value})} maxLength={2000} rows={3} disabled={locked} placeholder="e.g. The GSA flight arrives after the report time on the orders."/></label>}
   </div>}
   {needsFee&&<div className="dts-check">
-   <h3>Claim the TMC booking fee on its own line</h3>
-   <p>The travel office (TMC) fee is claimed separately from the airfare.</p>
+   <h3><Explain>{`Claim the TMC booking fee on its own line`}</Explain></h3>
+   <p><Explain>{`The travel office (TMC) fee is claimed separately from the airfare.`}</Explain></p>
    {!locked&&<Button type="button" variant="outline" onClick={()=>onAddLine('airfare',TMC_FEE)}><Plus size={14}/> Add a TMC fee line</Button>}
   </div>}
   {rental&&<div className="dts-check">
@@ -48,12 +49,12 @@ export function DtsChecksCard({items,purpose,atInstallation,answers,onAnswers,on
   </div>}
   {lodging&&atInstallation&&<div className="dts-check">
    <h3>Staying off base?</h3>
-   <p>You can, but without a non-availability letter you’re only paid up to the on-base (ILP) rate. Full per diem applies only when on-base lodging isn’t available.</p>
+   <p><Explain>{`You can, but without a non-availability letter you’re only paid up to the on-base (ILP) rate. Full per diem applies only when on-base lodging isn’t available.`}</Explain></p>
   </div>}
   <details className="dts-check dts-perdiem" open={situations.some(s=>s.highlight)}>
    <summary>When your per diem changes</summary>
    <p>DTS sets meals and lodging rates. Change them on the Per Diem page if any of these apply:</p>
-   <ul>{situations.map(s=><li key={s.id} className={s.highlight?'is-highlight':''}><strong>{s.title}</strong><span>{s.detail}</span></li>)}</ul>
+   <ul>{situations.map(s=><li key={s.id} className={s.highlight?'is-highlight':''}><strong><Explain>{s.title}</Explain></strong><span><Explain>{s.detail}</Explain></span></li>)}</ul>
   </details>
  </section>;
 }

@@ -7,6 +7,7 @@ import {planningModuleSchema} from '@/packages/contracts/planning-module';
 import {authorizationSheet,voucherSheet,type SheetSection} from '@/packages/domain/dts-sheet';
 import type {LocalRecord} from '@/packages/offline/database';
 import './dts-sheet.css';
+import {Explain} from './explain';
 
 const text=(value:unknown)=>typeof value==='string'?value:'';
 const latest=(rows:LocalRecord[],kind:string,tripId:string)=>rows.filter(r=>r.kind===kind&&r.local.tripId===tripId).sort((a,b)=>b.local.updatedAt.localeCompare(a.local.updatedAt))[0];
@@ -34,9 +35,9 @@ function Sections({sections}:{sections:SheetSection[]}){
  return <ol className="dts-sheet-steps">{sections.map((section,index)=><li key={section.id}>
   <div className="dts-sheet-number" aria-hidden="true">{index+1}</div>
   <div className="dts-sheet-body">
-   <h2>{section.title}</h2><p className="dts-sheet-where">In DTS: {section.where}</p>
-   {section.fields.length>0&&<dl>{section.fields.map(field=><div key={`${field.label}:${field.value}`}><dt>{field.label}</dt><dd><span className={field.value.length>60?'is-long':''}>{field.value}</span>{field.copy&&<CopyButton value={field.value} label={field.label}/>}</dd></div>)}</dl>}
-   {section.notes.length>0&&<ul>{section.notes.map(note=><li key={note}>{note}</li>)}</ul>}
+   <h2><Explain>{section.title}</Explain></h2><p className="dts-sheet-where">In DTS: {section.where}</p>
+   {section.fields.length>0&&<dl>{section.fields.map(field=><div key={`${field.label}:${field.value}`}><dt><Explain>{field.label}</Explain></dt><dd><span className={field.value.length>60?'is-long':''}>{field.value}</span>{field.copy&&<CopyButton value={field.value} label={field.label}/>}</dd></div>)}</dl>}
+   {section.notes.length>0&&<ul>{section.notes.map(note=><li key={note}><Explain>{note}</Explain></li>)}</ul>}
   </div>
  </li>)}</ol>;
 }

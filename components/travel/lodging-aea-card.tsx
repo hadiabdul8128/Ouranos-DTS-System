@@ -5,6 +5,7 @@ import {Button} from '@/components/ui/button';
 import {Textarea} from '@/components/ui/textarea';
 import {AEA_MAX_PERCENT,aeaJustificationDraft,type LodgingOverage} from '@/packages/domain/lodging-aea';
 import './lodging-aea-card.css';
+import {Explain} from './explain';
 
 export const GSA_RATE_LOOKUP='https://www.gsa.gov/travel/plan-a-trip/per-diem-rates';
 const usd=(minor:number)=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(minor/100);
@@ -15,7 +16,7 @@ export function LodgingAeaCard({overage,value,onChange,locked}:{overage:LodgingO
  async function copy(){try{await navigator.clipboard.writeText(value);setCopied(true);setTimeout(()=>setCopied(false),2000)}catch{setCopied(false)}}
  return <section className="cw-card lodging-aea" aria-labelledby="lodging-aea-title">
   <h2 id="lodging-aea-title">Your hotel is over the per diem lodging rate</h2>
-  <p className="cw-muted">In DTS, ask for an Actual Expense Allowance (AEA): check “Actual Lodging Cost (over per diem)” on the Per Diem page, then paste this justification under Other Auths and Pre-Audits.</p>
+  <p className="cw-muted"><Explain>{`In DTS, ask for an Actual Expense Allowance (AEA): check “Actual Lodging Cost (over per diem)” on the Per Diem page, then paste this justification under Other Auths and Pre-Audits.`}</Explain></p>
   <dl className="lodging-aea-numbers">
    <div><dt>Allowed per night</dt><dd>{usd(overage.allowedNightlyMinor)}</dd></div>
    <div><dt>Your hotel per night</dt><dd>{usd(overage.actualNightlyMinor)}</dd></div>

@@ -3,6 +3,7 @@ import {useEffect,useState} from 'react';
 import {Check} from 'lucide-react';
 import {documentProgress,type DocumentMarks,type VoucherDocument} from '@/packages/domain/voucher-documents';
 import './voucher-documents-card.css';
+import {Explain} from './explain';
 
 const storageKey=(tripId:string)=>`ouranos.voucherDocuments.${tripId}`;
 function readMarks(tripId:string):DocumentMarks{try{const value=JSON.parse(localStorage.getItem(storageKey(tripId))||'{}');return value&&typeof value==='object'?value:{}}catch{return {}}}
@@ -21,7 +22,7 @@ export function VoucherDocumentsCard({tripId,documents}:{tripId:string;documents
   <ul>{documents.map(doc=>{const state=doc.auto?(doc.auto.done?'done':undefined):marks[doc.id];return <li key={doc.id} className={state?`is-${state}`:''}>
    {doc.auto?<span className="voucher-docs-mark is-auto" title="Checked by Ouranos" aria-hidden="true">{doc.auto.done&&<Check size={13}/>}</span>
     :<button type="button" className="voucher-docs-mark" aria-pressed={state==='done'} aria-label={`${doc.title}: ${state==='done'?'attached':'not attached yet'}`} onClick={()=>mark(doc.id,state==='done'?null:'done')}>{state==='done'&&<Check size={13}/>}</button>}
-   <div><strong>{doc.title}</strong><p>{doc.detail}</p>{doc.auto&&<p className={doc.auto.done?'voucher-docs-ok':'voucher-docs-todo'}>{doc.auto.note} <span className="voucher-docs-auto">Checked by Ouranos</span></p>}
+   <div><strong><Explain>{doc.title}</Explain></strong><p><Explain>{doc.detail}</Explain></p>{doc.auto&&<p className={doc.auto.done?'voucher-docs-ok':'voucher-docs-todo'}>{doc.auto.note} <span className="voucher-docs-auto">Checked by Ouranos</span></p>}
     {doc.optional&&!doc.auto&&<button type="button" className="voucher-docs-na" aria-pressed={state==='na'} onClick={()=>mark(doc.id,state==='na'?null:'na')}>{state==='na'?'Marked as not applying · undo':'Doesn’t apply to my trip'}</button>}</div>
   </li>})}</ul>
   <p className="voucher-docs-note">Ticks are saved on this device only.</p>

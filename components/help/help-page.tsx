@@ -6,6 +6,7 @@ import {ArrowLeft,ArrowUpRight,Settings} from 'lucide-react';
 import {InboxLink} from '@/components/inbox/inbox-link';
 import {dtsHome,helpGuides} from './guides';
 import './help-page.css';
+import {Explain} from '@/components/travel/explain';
 
 const guideFromHash=()=>helpGuides.find(g=>`#${g.id}`===window.location.hash)?.id;
 
@@ -25,7 +26,7 @@ export function HelpPage(){
    <article className="help-guide" aria-labelledby="help-guide-title">
     <h2 id="help-guide-title">{guide.title}</h2><p className="help-summary">{guide.summary}</p>
     <ol className="help-steps">{guide.steps.map((step,i)=><li key={step.image}>
-     <div className="help-step-text"><span aria-hidden="true">{i+1}</span><div><h3>{step.title}</h3><p>{step.text}</p></div></div>
+     <div className="help-step-text"><span aria-hidden="true">{i+1}</span><div><h3>{step.title}</h3><p><Explain>{step.text}</Explain></p></div></div>
      <figure><Image src={`/help/${step.image}.webp`} width={640} height={step.height} alt={step.alt} sizes="(max-width: 700px) 340px, 300px" priority={i===0}/></figure>
     </li>)}</ol>
    </article>
