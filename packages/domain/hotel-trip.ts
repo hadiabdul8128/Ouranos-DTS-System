@@ -5,7 +5,7 @@ import type {LocalRecord} from '../offline/database';
 export type HotelTripContext={id:string;destination:string;departure:string;returnDate:string;lodgingBudgetMinor:number|null;budgetLabel:'Approved lodging budget'|'Planned lodging budget'|null};
 
 export function hotelTripContext(rows:LocalRecord[],tripId:string):HotelTripContext|null{
- const trip=rows.find(row=>row.kind==='trip'&&row.id===tripId);
+ const trip=rows.find(row=>row.kind==='trip'&&row.local.status!=='cancelled'&&row.id===tripId);
  const parsedTrip=tripInput.safeParse(trip?.local.data);
  if(!trip||!parsedTrip.success)return null;
  const authorization=rows.filter(row=>row.kind==='authorization'&&row.local.tripId===tripId).sort((a,b)=>{

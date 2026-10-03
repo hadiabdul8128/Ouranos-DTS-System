@@ -18,7 +18,7 @@ const FILED=['in_review','approved','verified'];
 
 /** One entry per trip, newest first, with planned and claimed amounts in USD cents. */
 export function tripHistory(entities:Entity[],payments:Record<string,TripPayment>,today:string):TripHistoryEntry[]{
- return entities.filter(e=>e.kind==='trip'&&text(e.data.departure)&&text(e.data.returnDate)).map(trip=>{
+ return entities.filter(e=>e.kind==='trip'&&e.status!=='cancelled'&&text(e.data.departure)&&text(e.data.returnDate)).map(trip=>{
   const departure=text(trip.data.departure),returnDate=text(trip.data.returnDate);
   const plan=latest(entities.filter(e=>e.kind==='authorization'&&e.tripId===trip.id));
   const voucher=latest(entities.filter(e=>e.kind==='voucher'&&e.tripId===trip.id));
