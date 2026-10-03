@@ -18,6 +18,9 @@ export function registerDemoRoutes(app:FastifyInstance,pool:Pool,config:Platform
    await requireOwner(db,b.organizationId,auth.trip_id);
    check(auth.status==='in_review','INVALID_STATE_TRANSITION','Submit the plan for review first',409);
    const request=(await db.query("select * from ouranos.approval_requests where organization_id=$1 and data->>'entityId'=$2 and status='in_review' order by created_at desc limit 1 for update",[b.organizationId,auth.id])).rows[0];
+   const revision=(await db.query('select id,submitted_by from ouranos.submission_revisions where organization_id=$1 and authorization_id=$2 order by created_at desc limit 1',[b.organizationId,auth.id])).rows[0];
+   check(revision&&revision.submitted_by===req.actor.id,'INVALID_STATE_TRANSITION','Submit the plan before approving it for demo',409);
+   check(!request||request.revision_id===revision.id,'INVALID_STATE_TRANSITION','The review request does not match the submitted plan',409);
    const decidedAt=new Date().toISOString();
    if(request){
     const steps=(await db.query("select * from ouranos.approval_steps where request_id=$1 and status='pending' order by position for update",[request.id])).rows;
@@ -32,7 +35,7 @@ export function registerDemoRoutes(app:FastifyInstance,pool:Pool,config:Platform
     await notify(db,b.organizationId,auth.trip_id,req.actor.id,'',request.id,approvalUpdateNotice({recipientId:req.actor.id,requestId:request.id,tripId:auth.trip_id,entityKind:'authorization',entityId:auth.id,...(typeof request.data.destination==='string'?{destination:request.data.destination}:{}),level:{position:last.position,label:last.label},decision:'approved',comment:DEMO_APPROVAL_COMMENT,decidedAt}));
    }
    const approved=await updateStatus(db,'authorization',auth.id,b.organizationId,'approved');
-   await db.query('insert into ouranos.audit_events(organization_id,trip_id,actor_id,action,entity_id,details) values($1,$2,$3,$4,$5,$6)',[b.organizationId,auth.trip_id,req.actor.id,'approval.demo_approved',auth.id,JSON.stringify({requestId:request?.id??null})]);
+   await db.query('insert into ouranos.audit_events(organization_id,trip_id,actor_id,action,entity_id,details) values($1,$2,$3,$4,$5,$6)',[b.organizationId,auth.trip_id,req.actor.id,'approval.demo_approved',auth.id,JSON.stringify({requestId:request?.id??null,revisionId:revision.id})]);
    return {entity:approved};
   });
  });

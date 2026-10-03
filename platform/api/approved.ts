@@ -10,6 +10,16 @@ export async function loadApprovedAuthorization(db:PoolClient,organizationId:str
     where r.organization_id=$1 and r.authorization_id=$2 and (
       exists(select 1 from ouranos.approval_requests a where a.revision_id=r.id and a.status='approved')
       or (r.snapshot->'verification'->>'mode'='automatic' and r.snapshot->'verification'->>'result'='verified')
+      or exists(select 1 from ouranos.audit_events audit
+        where audit.organization_id=r.organization_id and audit.entity_id=r.authorization_id
+          and audit.trip_id=r.trip_id and audit.actor_id=r.submitted_by and audit.action='approval.demo_approved'
+          and (audit.details->>'revisionId'=r.id::text
+            or (not (audit.details ? 'revisionId') and r.id=(
+              select prior.id from ouranos.submission_revisions prior
+              where prior.organization_id=r.organization_id and prior.authorization_id=r.authorization_id
+                and prior.created_at<=audit.created_at order by prior.created_at desc limit 1
+            )))
+      )
     )
     order by r.created_at desc limit 1`,[organizationId,id])).rows[0];
   check(revision,'INVALID_STATE_TRANSITION','Approved authorization revision is missing',409);

@@ -14,3 +14,9 @@
 .meals-estimate-day button:focus-visible{outline:2px solid #a5b38a;outline-offset:2px}
 .meals-estimate-day small{text-align:right;color:#a7afa3;font-variant-numeric:tabular-nums}
 @media(max-width:480px){.meals-estimate-day{grid-template-columns:1fr auto}.meals-estimate-day>div{grid-column:1/-1;grid-row:2}}
+.authorization-total{margin:24px 0;padding:20px 0;border-block:1px solid #343c33}
+.authorization-total>div{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin:10px 0;font-size:13px;color:#a7afa3}
+.authorization-total strong{color:#edf0e8;font-weight:500;white-space:nowrap;font-variant-numeric:tabular-nums}
+.authorization-total .authorization-total-final{padding-top:16px;margin-top:16px;border-top:1px solid #343c33;color:#edf0e8;font-size:16px}
+.authorization-total-final strong{font-size:24px}
+.authorization-total p{font-size:12px;line-height:1.6;color:#a7afa3;margin:14px 0 0;max-width:65ch}

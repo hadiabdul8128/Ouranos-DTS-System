@@ -2,6 +2,7 @@ import {parseReceiptText} from '../../voucher/src/receiptParser.js';
 import {suggestAssignment} from '../../voucher/src/matching.js';
 import type {Entity} from '../contracts';
 import {planningModuleSchema, PLANNING_SCHEMA_VERSION, travelCategories} from '../contracts/planning-module';
+import {authorizationBudget} from './authorization-budget';
 import {normalizeAuthorization} from '../../voucher/src/authorization.js';
 import {reconcile} from '../../voucher/src/reconcile.js';
 import {computePerDiem} from '../../voucher/src/perDiem.js';
@@ -78,5 +79,7 @@ export function reconcileStoredExpenses(revision:ApprovedRevision,expenses:Entit
   for(const e of expenses){
    if(e.data.category==='lodging'&&perDiem?.supported&&(!e.data.serviceStartDate||!e.data.serviceEndDate))result.issues.push({id:`${e.id}:stay_dates`,code:'stay_dates',expenseId:e.id,message:'Add the stay dates.',action:'Edit expense'});
   }
+  const trip=revision.snapshot.trip.data;
+  result.totals.authorized=authorizationBudget({destination:String(trip.destination),departure:String(trip.departure),returnDate:String(trip.returnDate)},planningModuleSchema.parse(revision.snapshot.entity.data.formData),perDiem).totalMinor/100;
   result.ready=expenses.length>0&&result.issues.length===0;return result;
 }

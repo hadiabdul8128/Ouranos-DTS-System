@@ -64,6 +64,7 @@ describe('demo approval',()=>{
   const approved=await call('member','POST','/v1/demo/approve',{organizationId,authorizationId:plan.id});
   expect(approved.status,JSON.stringify(approved.body)).toBe(200);
   expect(approved.body.entity.status).toBe('approved');
+  expect((await call('member','GET',`/v1/authorizations/${plan.id}/approved?organizationId=${organizationId}`)).status).toBe(200);
   const request=(await call('member','GET',`/v1/entities/approval?organizationId=${organizationId}`)).body.entities.find((e:Entity)=>e.data.entityId===plan.id) as Entity;
   expect(request.status).toBe('approved');
   expect((request.data.levels as Array<{status:string;comment:string}>).every(level=>level.status==='approved'&&level.comment==='Approved for demo')).toBe(true);
@@ -73,5 +74,24 @@ describe('demo approval',()=>{
   const voucherExpense=await send('member','expense.save',crypto.randomUUID(),0,{tripId:trip.id,merchant:'Delta',incurredOn:'2026-11-05',amountMinor:41250,currency:'USD',category:'airfare',description:'',documentIds:[]});
   expect(voucherExpense.status).toBe(200);
   expect((await call('member','POST','/v1/demo/approve',{organizationId,authorizationId:plan.id})).status).toBe(409);
+ });
+ it('opens the immutable voucher revision for a demo traveler without assigned approvers',async()=>{
+  const {plan}=await submitted('stranger');
+  const before=(await pool.query('select id,sha256,snapshot from ouranos.submission_revisions where authorization_id=$1',[plan.id])).rows[0];
+  expect((await call('stranger','POST','/v1/demo/approve',{organizationId,authorizationId:plan.id})).status).toBe(200);
+  const loaded=await call('stranger','GET',`/v1/authorizations/${plan.id}/approved?organizationId=${organizationId}`);
+  expect(loaded.status,JSON.stringify(loaded.body)).toBe(200);
+  expect(loaded.body.revision).toEqual(before);
+  const audit=(await pool.query("select details from ouranos.audit_events where entity_id=$1 and action='approval.demo_approved'",[plan.id])).rows[0];
+  expect(audit.details).toEqual({requestId:null,revisionId:before.id});
+ });
+ it('recovers previously demo-approved plans using their original audit without approving unrelated plans',async()=>{
+  const {trip,plan}=await submitted('stranger');
+  const {plan:unrelated}=await submitted('stranger');
+  // Reproduce the old demo route's data, on this isolated test database only.
+  await pool.query("update ouranos.authorizations set status='approved' where id=any($1::uuid[])",[[plan.id,unrelated.id]]);
+  await pool.query("insert into ouranos.audit_events(organization_id,trip_id,actor_id,action,entity_id,details) values($1,$2,$3,'approval.demo_approved',$4,$5)",[organizationId,trip.id,users.stranger.id,plan.id,{requestId:null}]);
+  expect((await call('stranger','GET',`/v1/authorizations/${plan.id}/approved?organizationId=${organizationId}`)).status).toBe(200);
+  expect((await call('stranger','GET',`/v1/authorizations/${unrelated.id}/approved?organizationId=${organizationId}`)).status).toBe(409);
  });
 });

@@ -8,6 +8,13 @@ const org='00000000-0000-4000-8000-000000000001',user='00000000-0000-4000-8000-0
 const trip:Entity={id:tripId,organizationId:org,kind:'trip',version:1,status:'draft',updatedAt:'2026-10-01T10:00:00.000Z',data:{destination:'San Diego, CA',departure:'2026-10-12',returnDate:'2026-10-15',purpose:'Training',timezone:'America/New_York'}};
 const authorization:Entity={...trip,id:authId,kind:'authorization',tripId,data:{formSchemaVersion:'ouranos.planning.v1',formData:{traveler:'Traveler',origin:'Raleigh, NC',currency:'USD',approvedExpenseItems:[{id:requestId,category:'lodging',description:'Hotel',authorizedAmountMinor:57000,merchant:'Marriott',startDate:'2026-10-12',endDate:'2026-10-15',expectedPaymentMethod:'gtcc'}]}}};
 describe('authorization inbox confirmation',()=>{
+ it('shows the frozen combined total and an explicit included meals estimate',()=>{
+  const withMeals={...authorization,data:{...authorization.data,formData:{...authorization.data.formData as object,allowance:{enabled:true,governmentMess:false,mealsProvided:{}}}}};
+  const notice=authorizationSubmissionNotice({authorization:withMeals,trip,recipientId:user,requestId,revisionId,submittedAt:trip.updatedAt,budget:{expensesMinor:57000,mealsMinor:52000,totalMinor:109000,mealsIncluded:true}});
+  const html=renderToStaticMarkup(createElement(AuthorizationMessage,{notice}));
+  expect(html).toContain('$1,090.00');expect(html).toContain('$520.00 included');
+  expect(notice.submission.budget?.totalMinor).toBe(109000);
+ });
  it('includes the full submitted trip and form with the immutable revision reference',()=>{
   const notice=authorizationSubmissionNotice({authorization,trip,recipientId:user,requestId,revisionId,submittedAt:trip.updatedAt});
   expect(notice).toMatchObject({type:'authorization_submitted',authorizationId:authId,tripId,recipientId:user,requestId,revisionId,submission:{trip:trip.data,formData:authorization.data.formData}});
