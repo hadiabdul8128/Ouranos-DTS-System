@@ -5265,6 +5265,68 @@
               "type": {
                 "type": "string",
                 "enum": [
+                  "authorization.amend"
+                ]
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "reason"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "commandId",
+              "organizationId",
+              "entityId",
+              "deviceId",
+              "schemaVersion",
+              "expectedVersion",
+              "type",
+              "payload"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "commandId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "organizationId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "entityId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "deviceId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "schemaVersion": {
+                "type": "number",
+                "enum": [
+                  1
+                ]
+              },
+              "expectedVersion": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "type": {
+                "type": "string",
+                "enum": [
                   "voucher.submit"
                 ]
               },
@@ -6338,6 +6400,68 @@
                     "payload": {
                       "type": "object",
                       "properties": {},
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "commandId",
+                    "organizationId",
+                    "entityId",
+                    "deviceId",
+                    "schemaVersion",
+                    "expectedVersion",
+                    "type",
+                    "payload"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "commandId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "organizationId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "entityId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "deviceId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "schemaVersion": {
+                      "type": "number",
+                      "enum": [
+                        1
+                      ]
+                    },
+                    "expectedVersion": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "authorization.amend"
+                      ]
+                    },
+                    "payload": {
+                      "type": "object",
+                      "properties": {
+                        "reason": {
+                          "type": "string",
+                          "minLength": 8,
+                          "maxLength": 1000
+                        }
+                      },
+                      "required": [
+                        "reason"
+                      ],
                       "additionalProperties": false
                     }
                   },

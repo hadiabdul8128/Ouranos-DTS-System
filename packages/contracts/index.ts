@@ -24,6 +24,7 @@ export const commandSchema = z.discriminatedUnion('type',[
  command('document.confirm',z.object({}).strict()),
  command('document.reprocess',z.object({}).strict()),
  command('authorization.submit',z.object({}).strict()),
+ command('authorization.amend',z.object({reason:z.string().trim().min(8,'Say briefly why the trip is changing.').max(1000)}).strict()),
  command('voucher.submit',z.object({}).strict()),
  command('approval.decide',z.object({decision:z.enum(['approved','changes_requested','rejected']),comment:z.string().max(4000).default('')}).strict()),
  command('workflow.configure',workflowInput),
