@@ -45,7 +45,7 @@ export function FlightSuggestions({from,to,departure,returnDate,selected:chosen,
    <PopoverContent align="start" className="flight-menu"><ul role="listbox" aria-labelledby="flight-label">{results.options.map((option,index)=><li key={index} role="option" aria-selected={sameFlight(selected,option)}><button type="button" onClick={()=>{select(option);setOpen(false)}}><FlightSummary option={option} best={index===0} cheapest={option===cheapest}/>{sameFlight(selected,option)&&<Check size={15}/>}</button></li>)}
     <li role="option" aria-selected={!selected}><button type="button" className="flight-skip" onClick={()=>{select(null);setOpen(false)}}>No flight</button></li></ul>
    <a className="flight-source" href={results.searchUrl} target="_blank" rel="noreferrer">See all on Google Flights <ExternalLink size={11}/></a></PopoverContent></Popover>
-  <p className="flight-note">Suggestions only. Choosing one fills in an airfare estimate you can edit. Book through DTS or your travel office.</p></div>;
+  <p className="flight-note">Suggestions only. Choosing one fills in an airfare estimate you can edit. Book through your travel office.</p></div>;
 }
 
 function FlightSummary({option,best,cheapest}:{option:FlightOption;best:boolean;cheapest:boolean}){

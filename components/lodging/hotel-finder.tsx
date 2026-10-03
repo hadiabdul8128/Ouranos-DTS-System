@@ -21,7 +21,7 @@ export function HotelTripSearch({trip,catalog,catalogError,catalogLoading,retry,
  function changeWorkZip(value:string){setWorkZip(value);setLimit(12)}
  function changeHotelName(value:string){setHotelName(value);setLimit(12)}
  return <>
-  {!embedded&&<><p className="cw-eyebrow">Travel · hotel finder</p><h1>Find a place to stay.</h1></>}<p className="hotel-lead">Start with real FedRooms properties near your destination. Confirm the lodging order, room availability, and final rate in DTS.</p>
+  {!embedded&&<><p className="cw-eyebrow">Travel · hotel finder</p><h1>Find a place to stay.</h1></>}<p className="hotel-lead">Start with real FedRooms properties near your destination. Book through your travel office, and check room availability and the final rate with the hotel.</p>
   <div className="hotel-trip"><div><span>Saved trip</span><strong>{trip.destination}</strong><small>{date(trip.departure)} – {date(trip.returnDate)}</small></div>{trip.lodgingBudgetMinor!==null&&<div><span>{trip.budgetLabel}</span><strong>{money(trip.lodgingBudgetMinor)}</strong><small>Total in your travel plan · not a hotel quote</small></div>}</div>
   <HotelSearchFields destination={destination} onDestination={changeDestination} workZip={workZip} onWorkZip={changeWorkZip} hotelName={hotelName} onHotelName={changeHotelName}/>
   <HotelBookingGuidance/>

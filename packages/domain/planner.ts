@@ -61,7 +61,7 @@ export const GUIDES:Guide[]=[
  {title:'Prepare for a PCS move',match:/\b(pcs|permanent change of station|change of station|relocat\w*|new duty station)\b/i,steps:[
   ['Get your orders','You need official PCS orders before scheduling a move or making travel arrangements.'],
   ['Schedule your household goods move','Start your shipment request early through move.mil or your installation transportation office.'],
-  ['Plan travel','Arrange travel through DTS or your travel office as your orders allow.'],
+  ['Plan travel','Arrange travel through your travel office as your orders allow.'],
   ['Handle housing','Give notice to base housing or your landlord, and contact the housing office at your new installation.'],
   ['Out-process your current installation','Complete your unit and installation checkout requirements.'],
   ['Hand-carry important records','Keep orders, medical and dental records, and family documents with you rather than in the shipment.'],
@@ -85,7 +85,7 @@ export const GUIDES:Guide[]=[
  {title:'Temporary duty (TDY) travel',match:/\b(tdy|temporary duty|travel orders)\b/i,steps:[
   ['Create your trip in Ouranos','Enter where and when you are going, then plan your expenses.'],
   ['Get your authorization approved','Submit your plan for S1 and command review before you travel.'],
-  ['Book travel','Book through DTS or your travel office; Ouranos suggestions are estimates only.'],
+  ['Book travel','Book through your travel office; Ouranos suggestions are estimates only.'],
   ['Keep your receipts','Save lodging and other required receipts during the trip.'],
   ['File your voucher after you return','Submit your travel voucher within 5 working days of returning.'],
   CONFIRM]},
