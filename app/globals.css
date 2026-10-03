@@ -156,3 +156,4 @@ body { isolation:isolate; }
   .prompt-page .quiet-footer { padding:0 25px 23px; }
 }
 .description-field{display:flex;flex-direction:column;gap:8px;min-width:0}
+.cw-quick-add{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}.cw-quick-add button{gap:6px;min-height:44px;border-color:#343c33;background:#141815;color:#edf0e8}.cw-item-name{font-size:14px!important;letter-spacing:0!important;color:#edf0e8!important}.cw-item-hint{margin:-4px 0 0!important;font-size:12px!important;color:#c9d3b4!important}
