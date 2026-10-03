@@ -162,3 +162,13 @@ html[data-text=large] body{zoom:1.18}html[data-text=large],html[data-text=large]
 .text-size-switch{display:flex;align-items:flex-start;gap:12px;min-height:44px;cursor:pointer}.text-size-switch input{width:22px;height:22px;margin-top:2px;accent-color:#a5b38a;flex-shrink:0}.text-size-switch span{display:flex;flex-direction:column;gap:3px}.text-size-switch strong{font-size:15px;font-weight:500;color:#edf0e8}.text-size-switch small{font-size:12px;color:#a7afa3}
 .home-header .exit-link{flex-shrink:0;min-width:44px;min-height:44px}
 @media(max-width:650px){.home-header{height:auto;min-height:84px;flex-wrap:wrap;gap:8px 16px;padding-top:16px;padding-bottom:16px}.home-header .inbox-header-actions{gap:8px;margin-left:auto;flex-wrap:wrap}}
+
+.cw-trip-list .cw-trip-row{display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--cw-line)}
+.cw-trip-list .cw-trip-row>a{flex:1;min-width:0;border:0}
+.cw-draft-action{flex:0 0 auto;max-width:260px}
+.cw-draft-action p{font-size:12px;line-height:1.5}
+.cw-deleted-drafts{margin-top:32px;font-size:13px;color:var(--cw-muted)}
+.cw-deleted-drafts summary{cursor:pointer;min-height:44px;padding:12px 0}
+.cw-deleted-drafts .cw-trip-row{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:10px 0;border-bottom:1px solid var(--cw-line)}
+#cw-expense-editor,#cw-expense-receipts{scroll-margin-top:24px}
+@media(max-width:600px){.cw-trip-list .cw-trip-row{flex-wrap:wrap;gap:0;padding-bottom:10px}.cw-trip-list .cw-trip-row>a{flex-basis:100%}.cw-draft-action{max-width:100%}}

@@ -95,3 +95,26 @@ describe('demo approval',()=>{
   expect((await call('stranger','GET',`/v1/authorizations/${unrelated.id}/approved?organizationId=${organizationId}`)).status).toBe(409);
  });
 });
+
+
+describe('unfinished draft deletion',()=>{
+ it('keeps the draft records, syncs deletion, and restores the same trip',async()=>{
+  const trip=ok(await send('member','trip.save',crypto.randomUUID(),0,{destination:'Draft destination',departure:'2026-11-05',returnDate:'2026-11-08',purpose:'Training',timezone:'UTC'}));
+  const plan=ok(await send('member','authorization.save',crypto.randomUUID(),0,{tripId:trip.id,formSchemaVersion:PLANNING_SCHEMA_VERSION,formData:{traveler:'Traveler',origin:'Austin',travelMode:'air',currency:'USD',approvedExpenseItems:[]}}));
+  const command:Command={type:'trip.delete',entityId:trip.id,expectedVersion:trip.version,payload:{},organizationId,commandId:crypto.randomUUID(),deviceId:users.member.deviceId,schemaVersion:1};
+  const deleted=ok(await call('member','POST','/v1/commands',command));expect(deleted.status).toBe('cancelled');
+  expect((await call('member','POST','/v1/commands',command)).body.replayed).toBe(true);
+  expect((await send('member','trip.restore',trip.id,trip.version,{})).body.error.code).toBe('VERSION_CONFLICT');
+  expect((await send('member','trip.save',trip.id,deleted.version,trip.data as PayloadOf<'trip.save'>)).body.error.code).toBe('INVALID_STATE_TRANSITION');
+  expect((await send('member','authorization.submit',plan.id,plan.version,{})).body.error.code).toBe('INVALID_STATE_TRANSITION');
+  expect((await send('member','authorization.save',plan.id,plan.version,plan.data as PayloadOf<'authorization.save'>)).body.error.code).toBe('INVALID_STATE_TRANSITION');
+  const restored=ok(await send('member','trip.restore',trip.id,deleted.version,{}));expect(restored.status).toBe('draft');expect(restored.data).toEqual(trip.data);
+  expect((await pool.query('select status from ouranos.authorizations where id=$1',[plan.id])).rows[0].status).toBe('draft');
+  expect((await pool.query("select entity->>'status' as status from ouranos.change_log where entity_id=$1 order by cursor desc limit 1",[trip.id])).rows[0].status).toBe('draft');
+ });
+ it('refuses other travelers and submitted plans',async()=>{
+  const {trip}=await submitted('member');
+  expect((await send('stranger','trip.delete',trip.id,trip.version,{})).body.error.code).toBe('PERMISSION_DENIED');
+  expect((await send('member','trip.delete',trip.id,trip.version,{})).body.error.code).toBe('INVALID_STATE_TRANSITION');
+ });
+});

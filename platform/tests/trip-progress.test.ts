@@ -6,23 +6,28 @@ const states=(p:ReturnType<typeof tripProgress>)=>p.steps.map(s=>s.state).join('
 describe('trip progress',()=>{
  it('starts at the plan',()=>{
   const p=tripProgress({...trip,today:'2026-10-01'});
-  expect(states(p)).toBe('current todo todo todo todo');expect(p.next.action?.to).toBe('plan');
+  expect(states(p)).toBe('current todo todo todo');expect(p.next.action?.to).toBe('plan');expect(p.steps.map(step=>step.label)).toEqual(['Authorization','Approval','Voucher','Paid']);
  });
  it('waits on the named approver while in review',()=>{
   const p=tripProgress({...trip,today:'2026-10-01',planStatus:'in_review',waitingOn:'S1 · Administration'});
-  expect(states(p)).toBe('done current todo todo todo');expect(p.next).toMatchObject({title:'Waiting on S1 · Administration'});expect(p.next.action).toBeUndefined();
+  expect(states(p)).toBe('done current todo todo');expect(p.next).toMatchObject({title:'Waiting on S1 · Administration'});expect(p.next.action).toBeUndefined();
  });
  it('gets an approved trip ready, then sends you to expenses once back',()=>{
   expect(tripProgress({...trip,today:'2026-10-01',planStatus:'approved'}).next).toMatchObject({title:'Get ready for your trip',action:{to:'hotels'}});
   expect(tripProgress({...trip,today:'2026-11-06',planStatus:'approved'}).next.title).toBe('You’re traveling');
   const back=tripProgress({...trip,today:'2026-11-09',planStatus:'approved'});
-  expect(states(back)).toBe('done done done current todo');expect(back.next.action?.to).toBe('expenses');
+  expect(states(back)).toBe('done done current todo');expect(back.next.action?.to).toBe('expenses');
  });
  it('waits for payment after the voucher, then finishes',()=>{
   expect(tripProgress({...trip,today:'2026-11-20',planStatus:'approved',voucherStatus:'verified'}).next).toEqual({title:'Waiting for payment',detail:'Your expenses are in. You’ll be paid once they’re processed.'});
   const paid=tripProgress({...trip,today:'2026-12-01',planStatus:'approved',voucherStatus:'verified',paid:true});
-  expect(states(paid)).toBe('done done done done done');expect(paid.next.title).toBe('All done');
-  expect(states(tripProgress({...trip,today:'2026-12-01',planStatus:'approved',paid:true}))).toBe('done done done done done');
+  expect(states(paid)).toBe('done done done done');expect(paid.next.title).toBe('All done');
+  expect(states(tripProgress({...trip,today:'2026-12-01',planStatus:'approved',paid:true}))).toBe('done done done done');
+ });
+ it('moves to the voucher after approval and honors early filing',()=>{
+  expect(states(tripProgress({...trip,today:'2026-10-01',planStatus:'approved'}))).toBe('done done current todo');
+  const filed=tripProgress({...trip,today:'2026-10-01',planStatus:'approved',voucherStatus:'verified'});
+  expect(states(filed)).toBe('done done done current');expect(filed.next.title).toBe('Waiting for payment');
  });
  it('handles a plan sent back or being changed',()=>{
   expect(tripProgress({...trip,today:'2026-10-01',planStatus:'changes_requested'}).next.title).toBe('Fix what your approver asked');

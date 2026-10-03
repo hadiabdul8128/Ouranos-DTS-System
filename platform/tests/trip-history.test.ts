@@ -22,6 +22,7 @@ describe('trip history',()=>{
   expect(done).toMatchObject({id:'past',phase:'past',nights:4,plannedMinor:100000,claimedMinor:95500,expenseCount:3,foreignExpenseCount:1,planStatus:'approved',voucherStatus:'verified',payStatus:'awaiting'});
   expect(done!.categories).toEqual([{category:'lodging',plannedMinor:60000,claimedMinor:57500},{category:'airfare',plannedMinor:40000,claimedMinor:38000}]);
  });
+ it('omits deleted drafts from history and upcoming trips',()=>{expect(tripHistory([{...next,status:'cancelled'}],{},today)).toEqual([])});
  it('marks recorded payments and past trips without a voucher',()=>{
   const paid=tripHistory(entities,{past:{amountMinor:95500,date:'2026-08-20'}},today);
   expect(paid[1]).toMatchObject({payStatus:'paid',payment:{amountMinor:95500,date:'2026-08-20'}});
