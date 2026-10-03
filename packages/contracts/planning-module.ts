@@ -14,10 +14,19 @@ export const plannedExpenseSchema = z.object({
   date:dateOnly.optional(), startDate:dateOnly.optional(), endDate:dateOnly.optional(),
   nights:z.number().int().nonnegative().max(1000).optional(),
 }).strict().refine(v=>Boolean(v.startDate)===Boolean(v.endDate)&&(!v.startDate||v.startDate<=v.endDate!), 'Stay dates must be an ordered pair');
+/** What the approvers last approved, kept on a change so they see only what's different. */
+export const amendmentBaselineSchema = z.object({
+  destination:z.string().max(120), installation:z.string().max(120).optional(), departure:dateOnly, returnDate:dateOnly, purpose:z.string().max(2000),
+  items:z.array(z.object({id:uuid, category:z.enum(travelCategories), description:z.string().max(300), authorizedAmountMinor:z.number().int().nonnegative()}).strict()).max(100),
+}).strict();
+export const amendmentSchema = z.object({number:z.number().int().min(1).max(99), reason:z.string().trim().min(1).max(1000), previous:amendmentBaselineSchema}).strict();
+export type AmendmentBaseline = z.infer<typeof amendmentBaselineSchema>;
+export type Amendment = z.infer<typeof amendmentSchema>;
 export const planningModuleSchema = z.object({
   traveler:z.string().trim().min(1).max(200), origin:z.string().trim().min(1).max(120),
   travelMode:z.enum(['air','pov','rental','government','other']).optional(), mileage:z.object({miles:z.number().positive().max(20000),centsPerMile:z.number().positive().max(500)}).strict().optional(),
   aeaJustification:z.string().trim().min(1).max(4000).optional(),
+  amendment:amendmentSchema.optional(),
   preAudit:z.object({flightFare:z.enum(['gsa','other']).optional(),flightReason:z.string().trim().min(1).max(2000).optional(),rentalClass:z.enum(['compact','larger']).optional(),rentalReason:z.string().trim().min(1).max(2000).optional()}).strict().optional(),
   currency:z.literal('USD'), approvedExpenseItems:z.array(plannedExpenseSchema).min(1).max(100),
   allowance:z.object({enabled:z.boolean(),governmentMess:z.boolean().default(false),mealsProvided:z.record(dateOnly,z.object({breakfast:z.boolean().optional(),lunch:z.boolean().optional(),dinner:z.boolean().optional()}).strict()).default({})}).strict().optional(),
