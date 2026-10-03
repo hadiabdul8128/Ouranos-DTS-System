@@ -16,6 +16,8 @@ const envelope = {commandId:uuid, organizationId:uuid, entityId:uuid, deviceId:u
 const command = <T extends string, S extends z.ZodTypeAny>(type:T,payload:S)=>z.object({...envelope,type:z.literal(type),payload}).strict();
 export const commandSchema = z.discriminatedUnion('type',[
  command('trip.save',tripInput),
+ command('trip.delete',z.object({}).strict()),
+ command('trip.restore',z.object({}).strict()),
  command('authorization.save',authorizationInput),
  command('expense.save',expenseInput),
  command('voucher.save',voucherInput),

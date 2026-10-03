@@ -4590,6 +4590,112 @@
               "type": {
                 "type": "string",
                 "enum": [
+                  "trip.delete"
+                ]
+              },
+              "payload": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "commandId",
+              "organizationId",
+              "entityId",
+              "deviceId",
+              "schemaVersion",
+              "expectedVersion",
+              "type",
+              "payload"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "commandId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "organizationId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "entityId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "deviceId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "schemaVersion": {
+                "type": "number",
+                "enum": [
+                  1
+                ]
+              },
+              "expectedVersion": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "trip.restore"
+                ]
+              },
+              "payload": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "commandId",
+              "organizationId",
+              "entityId",
+              "deviceId",
+              "schemaVersion",
+              "expectedVersion",
+              "type",
+              "payload"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "commandId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "organizationId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "entityId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "deviceId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "schemaVersion": {
+                "type": "number",
+                "enum": [
+                  1
+                ]
+              },
+              "expectedVersion": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "type": {
+                "type": "string",
+                "enum": [
                   "authorization.save"
                 ]
               },
@@ -5725,6 +5831,112 @@
                         "returnDate",
                         "purpose"
                       ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "commandId",
+                    "organizationId",
+                    "entityId",
+                    "deviceId",
+                    "schemaVersion",
+                    "expectedVersion",
+                    "type",
+                    "payload"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "commandId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "organizationId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "entityId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "deviceId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "schemaVersion": {
+                      "type": "number",
+                      "enum": [
+                        1
+                      ]
+                    },
+                    "expectedVersion": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "trip.delete"
+                      ]
+                    },
+                    "payload": {
+                      "type": "object",
+                      "properties": {},
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "commandId",
+                    "organizationId",
+                    "entityId",
+                    "deviceId",
+                    "schemaVersion",
+                    "expectedVersion",
+                    "type",
+                    "payload"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "commandId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "organizationId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "entityId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "deviceId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "schemaVersion": {
+                      "type": "number",
+                      "enum": [
+                        1
+                      ]
+                    },
+                    "expectedVersion": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "trip.restore"
+                      ]
+                    },
+                    "payload": {
+                      "type": "object",
+                      "properties": {},
                       "additionalProperties": false
                     }
                   },
