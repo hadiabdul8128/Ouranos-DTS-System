@@ -94,6 +94,7 @@ async function apply(db:PoolClient,storage:SupabaseClient,c:Command,userId:strin
   const r=current?await db.query('update ouranos.workflow_definitions set data=$3,kind=$4,version=version+1,updated_at=now() where organization_id=$1 and id=$2 returning *',[org,id,c.payload,c.payload.kind]):await db.query('insert into ouranos.workflow_definitions(id,organization_id,kind,data,created_by) values($1,$2,$3,$4,$5) returning *',[id,org,c.payload.kind,c.payload,userId]);return publishChange(db,'workflow',r.rows[0]);
  }
  if(c.type==='authorization.submit')return submitAuthorization(db,c,userId,development,approvalMode);
+ if(c.type==='authorization.amend')return amendAuthorization(db,c,approvalMode);
  if(c.type==='voucher.submit')return verifyVoucher(db,c,userId,development);
  if(c.type==='approval.decide')return decide(db,c,userId,role);
  if(c.type==='notification.read'){
@@ -147,6 +148,25 @@ async function submitAuthorization(db:PoolClient,c:Extract<Command,{type:'author
  const notice=authorizationSubmissionNotice({authorization:toEntity('authorization',entity),trip:toEntity('trip',trip),recipientId:userId,...(req?{requestId:req.id}:{}),revisionId:rev.id,submittedAt:new Date(rev.created_at).toISOString()});
  await notify(db,org,entity.trip_id,userId,notice.title,req?.id??null,notice);
  return updateStatus(db,'authorization',entity.id,org,'in_review');
+}
+
+/** Reopen an approved plan as a numbered change. What was approved is kept on the plan so approvers see only what's different; the voucher waits until the change is approved. */
+async function amendAuthorization(db:PoolClient,c:Extract<Command,{type:'authorization.amend'}>,approvalMode:PlatformConfig['APPROVAL_MODE']){
+ const org=c.organizationId;
+ check(approvalMode!=='preview','INVALID_STATE_TRANSITION','Changes are not used in preview mode',409);
+ const entity=await loadEntity(db,'authorization',c.entityId,org,true);await verifyVersion(entity,c.expectedVersion);await requireOwner(db,org,entity.trip_id);
+ check(entity.status==='approved','INVALID_STATE_TRANSITION','Only an approved plan can be changed',409);
+ check(entity.data.formSchemaVersion===PLANNING_SCHEMA_VERSION,'VALIDATION_FAILED','This plan uses an older form and can’t be changed here');
+ const submittedVoucher=(await db.query("select 1 from ouranos.vouchers where organization_id=$1 and trip_id=$2 and status not in ('draft','changes_requested','needs_action') limit 1",[org,entity.trip_id])).rowCount;
+ check(!submittedVoucher,'INVALID_STATE_TRANSITION','Your voucher for this trip has already been submitted, so the plan can’t be changed here. Ask your approver about an amendment in DTS.',409);
+ const approved=await loadApprovedAuthorization(db,org,entity.id);
+ const trip=approved.snapshot.trip.data,form=planningModuleSchema.parse(approved.snapshot.entity.data.formData);
+ const current=planningModuleSchema.parse(entity.data.formData);
+ const previous={destination:String(trip.destination),...(trip.installation?{installation:String(trip.installation)}:{}),departure:String(trip.departure),returnDate:String(trip.returnDate),purpose:String(trip.purpose),
+  items:form.approvedExpenseItems.map(item=>({id:item.id,category:item.category,description:item.description,authorizedAmountMinor:item.authorizedAmountMinor}))};
+ const amendment={number:(current.amendment?.number??0)+1,reason:c.payload.reason,previous};
+ const r=await db.query("update ouranos.authorizations set data=$3,status='draft',version=version+1,updated_at=now() where organization_id=$1 and id=$2 returning *",[org,entity.id,{...entity.data,formData:{...current,amendment}}]);
+ return publishChange(db,'authorization',r.rows[0]);
 }
 
 const activeWorkflow=async(db:PoolClient,org:string)=>(await db.query("select * from ouranos.workflow_definitions where organization_id=$1 and kind='authorization' and status='active'",[org])).rows[0];
