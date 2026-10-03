@@ -2,9 +2,9 @@
 import {useEffect,useState} from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import {ArrowLeft,ArrowUpRight,Settings} from 'lucide-react';
+import {ArrowLeft,Settings} from 'lucide-react';
 import {InboxLink} from '@/components/inbox/inbox-link';
-import {dtsHome,helpGuides} from './guides';
+import {helpGuides} from './guides';
 import './help-page.css';
 import {Explain} from '@/components/travel/explain';
 
@@ -34,8 +34,7 @@ export function HelpPage(){
     <h2 id="help-ask-title">Who to ask</h2>
     <dl>
      <div><dt>Your S1</dt><dd>Orders, who your approvers are, and anything about your unit’s process.</dd></div>
-     <div><dt>Unit DTS administrator (ODTA)</dt><dd>Your DTS account, routing list and lines of accounting.</dd></div>
-     <div><dt>DTS live chat</dt><dd>Problems inside DTS itself. On the DTS home page, Monday to Friday, 8am to 6pm ET. <a href={dtsHome} target="_blank" rel="noopener noreferrer">Open DTS <ArrowUpRight size={13}/></a></dd></div>
+     <div><dt>Your unit travel administrator</dt><dd>Your account, your approvers and which funding (line of accounting) to use.</dd></div>
     </dl>
    </aside>
   </section></main>;
