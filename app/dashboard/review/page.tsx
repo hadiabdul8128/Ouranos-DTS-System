@@ -197,7 +197,7 @@ function Submission({detail, kind}: {detail: RevisionDetail; kind: string}) {
           <Field name="GTCC (USD)">{usd(paidBy('gtcc'))}</Field>
           <Field name="Personal funds (USD)">{usd(paidBy('personal'))}</Field>
         </dl>
-        <p className="platform-muted">Payment totals reflect the submitted expenses. They do not establish reimbursement or external DTS acceptance.</p>
+        <p className="platform-muted">Payment totals reflect the submitted expenses.</p>
       </section>
       <FrozenExpenses snapshot={snapshot} plan={plan}/>
       <FrozenResolutions form={voucher} snapshot={snapshot} plan={plan}/>

@@ -16,7 +16,7 @@ export function mileageMinor(miles:number,centsPerMile:number){
  return Math.round(miles*centsPerMile);
 }
 
-/** Driving more than 400 miles each way needs a Constructed Travel Worksheet (CTW) cost comparison in DTS. */
+/** Driving more than 400 miles each way needs a Constructed Travel Worksheet (CTW) cost comparison. */
 export const CTW_ONE_WAY_MILES=400;
 export const needsCostComparison=(roundTripMiles:number)=>Number.isFinite(roundTripMiles)&&roundTripMiles/2>CTW_ONE_WAY_MILES;
 

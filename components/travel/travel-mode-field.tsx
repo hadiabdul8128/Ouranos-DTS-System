@@ -24,7 +24,7 @@ export function TravelModeField({mode,onMode,miles,rate,onMileage,onAddMileage,o
    <div className="travel-mode-estimate"><span>Estimate</span><strong>{estimate===null?'—':usd(estimate)}</strong></div>
    <Button type="button" variant="outline" disabled={disabled||estimate===null} onClick={()=>estimate!==null&&onAddMileage(estimate)}>Add mileage to costs</Button>
   </div>}
-  {mode==='pov'&&needsCostComparison(Number(miles))&&<p className="travel-mode-ctw" role="status">That’s more than {CTW_ONE_WAY_MILES} miles each way, so flying is usually the official way to go. You can still drive, but attach a <Term term="CTW"/> (Constructed Travel Worksheet) in DTS, and you’re paid the lower of driving or the flight cost.</p>}
+  {mode==='pov'&&needsCostComparison(Number(miles))&&<p className="travel-mode-ctw" role="status">That’s more than {CTW_ONE_WAY_MILES} miles each way, so flying is usually the official way to go. You can still drive, but attach a <Term term="CTW"/> (Constructed Travel Worksheet) to your voucher, and you’re paid the lower of driving or the flight cost.</p>}
   {mode==='rental'&&<Button type="button" variant="outline" className="travel-mode-add" disabled={disabled} onClick={onAddRental}>Add rental car and fuel lines</Button>}
  </section>;
 }

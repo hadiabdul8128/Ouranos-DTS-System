@@ -3,7 +3,7 @@ import {useEffect,useId,useRef,useState} from 'react';
 import {GLOSSARY,splitTerms} from '@/packages/domain/glossary';
 import './explain.css';
 
-/** A DTS term with a dotted underline; tap it for a one-sentence meaning. */
+/** A travel term with a dotted underline; tap it for a one-sentence meaning. */
 export function Term({term}:{term:string}){
  const entry=GLOSSARY[term],[open,setOpen]=useState(false),[shift,setShift]=useState(0),id=useId(),ref=useRef<HTMLSpanElement>(null);
  useEffect(()=>{
@@ -24,7 +24,7 @@ export function Term({term}:{term:string}){
  </span>;
 }
 
-/** Plain text with each known DTS term made tappable the first time it appears. */
+/** Plain text with each known travel term made tappable the first time it appears. */
 export function Explain({children}:{children:string}){
  return <>{splitTerms(children).map((part,index)=>typeof part==='string'?part:<Term key={index} term={part.term}/>)}</>;
 }

@@ -49,7 +49,7 @@ export function TripHistory(){
    {paymentError&&<p role="alert" className="form-error">{paymentError}</p>}
    {rows===undefined?<p className="cw-muted" role="status">Loading your trips…</p>:!shown.length?<p className="claims-empty">{view==='past'?'No past trips yet. A trip lands here the day after you return.':'Nothing here yet.'}</p>:
    <ol className="claims-list">{shown.map(trip=><TripCard key={trip.id} trip={trip} today={today} onPayment={payment=>setPayment(trip.id,payment)}/>)}</ol>}
-   <p className="history-note">Amounts in USD. Ouranos isn’t connected to DTS or finance, so a PAID stamp is a payment you recorded here. It’s saved to your account, and your leaders can see it.</p>
+   <p className="history-note">Amounts in USD. A PAID stamp is a payment you recorded here. It’s saved to your account, and your leaders can see it.</p>
   </section>
   <footer className="cw-footer"><span/><SyncIndicator/></footer>
  </main>;

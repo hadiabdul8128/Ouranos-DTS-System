@@ -20,7 +20,7 @@ export function ApprovalTracker({request}:{request:Pick<Entity,'status'|'data'>&
   <strong>With {current.label}</strong>
   <span>{levels.length>1?`Step ${current.position+1} of ${levels.length}`:'Waiting for review'}{previous?` · ${previous.label} approved${day(previous.decidedAt)}`:''}</span>
   {levels.length>1&&<div className="approval-steps" aria-hidden="true">{levels.map(level=><i key={level.position} className={level.status==='approved'?'is-done':level.position===current.position?'is-current':''}/>)}</div>}
-  {wait?.late&&<p className="approval-late">Waiting {wait.days} days. DTS asks approvers to act within 72 hours, so check in with {current.label}.</p>}
+  {wait?.late&&<p className="approval-late">Waiting {wait.days} days. Approvers are asked to act within 72 hours, so check in with {current.label}.</p>}
  </section>;
 }
 

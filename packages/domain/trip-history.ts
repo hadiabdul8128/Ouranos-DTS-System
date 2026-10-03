@@ -1,6 +1,6 @@
 import type {Entity} from '../contracts';
 
-/** A payment the traveler recorded; Ouranos is not connected to finance or DTS. */
+/** A payment the traveler recorded; recorded by the traveler. */
 export type TripPayment={amountMinor:number;date:string};
 export type TripPhase='past'|'current'|'upcoming';
 export type TripHistoryEntry={
