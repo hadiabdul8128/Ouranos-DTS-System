@@ -15,14 +15,20 @@ const latest=(rows:LocalRecord[],kind:string,tripId:string)=>rows.filter(r=>r.ki
 const text=(value:unknown)=>typeof value==='string'?value:'';
 
 /** Five plain steps for the trip and the one thing to do next, at the top of every trip page. */
-export function TripTimeline({trip,rows,page}:{trip:Entity;rows:LocalRecord[];page:Page}){
- const [today]=useState(localToday),{payments}=usePayments();
+/** The trip's steps and next step from the saved records; shared by the trip pages and the Travel list. */
+export function progressFor(trip:Entity,rows:LocalRecord[],paid:boolean,today:string){
  const plan=latest(rows,'authorization',trip.id),voucher=latest(rows,'voucher',trip.id);
  const planStatus=plan?(plan.server?.status||plan.local.status):undefined;
  const request=plan?rows.filter(r=>r.kind==='approval'&&r.local.data.entityId===plan.id&&r.local.status==='in_review').sort((a,b)=>b.local.updatedAt.localeCompare(a.local.updatedAt))[0]:undefined;
  const waitingOn=request?currentApprovalLevel(approvalLevelsOf(request.local))?.label:undefined;
- const {steps,next}=tripProgress({planStatus,changing:Boolean((plan?.local.data.formData as {amendment?:unknown}|undefined)?.amendment),waitingOn,departure:text(trip.data.departure),returnDate:text(trip.data.returnDate),today,voucherStatus:voucher?(voucher.server?.status||voucher.local.status):undefined,paid:Boolean(payments[trip.id])});
- const href={plan:`/dashboard/travel/planning?tripId=${trip.id}`,expenses:`/dashboard/travel/vouchers?tripId=${trip.id}`,dts:`/dashboard/travel/dts?tripId=${trip.id}`,hotels:`/dashboard/travel/hotels?tripId=${trip.id}`};
+ return tripProgress({planStatus,changing:Boolean((plan?.local.data.formData as {amendment?:unknown}|undefined)?.amendment),waitingOn,departure:text(trip.data.departure),returnDate:text(trip.data.returnDate),today,voucherStatus:voucher?(voucher.server?.status||voucher.local.status):undefined,paid});
+}
+export const tripHref=(tripId:string)=>({plan:`/dashboard/travel/planning?tripId=${tripId}`,expenses:`/dashboard/travel/vouchers?tripId=${tripId}`,dts:`/dashboard/travel/dts?tripId=${tripId}`,hotels:`/dashboard/travel/hotels?tripId=${tripId}`});
+
+export function TripTimeline({trip,rows,page}:{trip:Entity;rows:LocalRecord[];page:Page}){
+ const [today]=useState(localToday),{payments}=usePayments();
+ const {steps,next}=progressFor(trip,rows,Boolean(payments[trip.id]),today);
+ const href=tripHref(trip.id);
  const pageOf={plan:'planning',expenses:'vouchers',dts:'dts',hotels:''} as const;
  const stepLink=(id:string)=>id==='plan'||id==='approval'?href.plan:id==='expenses'||id==='paid'?href.expenses:null;
  return <section className="trip-timeline" aria-label="Where this trip is">
