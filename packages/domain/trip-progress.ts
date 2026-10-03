@@ -1,7 +1,7 @@
 /** Where a trip is, in five plain steps, and the one thing to do next. */
 export type StepState='done'|'current'|'todo';
 export type TripStep={id:'plan'|'approval'|'travel'|'expenses'|'paid';label:string;state:StepState};
-export type NextStep={title:string;detail:string;action?:{label:string;to:'plan'|'expenses'|'dts'|'hotels'}};
+export type NextStep={title:string;detail:string;action?:{label:string;to:'plan'|'expenses'|'hotels'}};
 type Input={planStatus?:string;changing?:boolean;waitingOn?:string;departure:string;returnDate:string;today:string;voucherStatus?:string;paid?:boolean};
 
 const day=(value:string)=>new Date(`${value}T12:00:00Z`).toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'});
@@ -30,8 +30,8 @@ export function tripProgress(t:Input):{steps:TripStep[];next:NextStep}{
  else if(t.planStatus==='in_review')next={title:t.waitingOn?`Waiting on ${t.waitingOn}`:'Waiting for approval',detail:'Nothing to do right now. You’ll get a message in your inbox when it’s decided.'};
  else if(!back)next=away
   ?{title:'You’re traveling',detail:`Keep your receipts. When you’re back on ${day(t.returnDate)}, add your expenses.`,action:{label:'Add expenses',to:'expenses'}}
-  :{title:'Enter your trip in DTS',detail:`Approved. Copy your trip into DTS and book your travel before ${day(t.departure)}.`,action:{label:'Enter this in DTS',to:'dts'}};
+  :{title:'Get ready for your trip',detail:`Approved. Book your travel and find a place to stay before ${day(t.departure)}.`,action:{label:'Find a hotel',to:'hotels'}};
  else if(!filed)next={title:'Add your expenses',detail:'Add what you spent and your receipts, then check your voucher.',action:{label:'Add expenses',to:'expenses'}};
- else next={title:'Enter your voucher in DTS',detail:'Copy your expenses into DTS and attach your documents. Then wait for payment.',action:{label:'Enter this in DTS',to:'dts'}};
+ else next={title:'Waiting for payment',detail:'Your expenses are in. You’ll be paid once they’re processed.'};
  return {steps,next};
 }
