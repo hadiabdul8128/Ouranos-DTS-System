@@ -26,6 +26,24 @@ const string = (value: unknown, fallback = 'Not provided') => typeof value === '
 const rows = (value: unknown): Row[] => Array.isArray(value) ? value.map(record) : [];
 const label = (value: unknown) => string(value).replaceAll('_', ' ');
 const data = (value: unknown) => record(record(value).data);
+const STATUS_TEXT: Record<string, string> = {in_review: 'Waiting for review', approved: 'Approved', changes_requested: 'Sent back', rejected: 'Not approved', verified: 'Checked'};
+const statusText = (value: unknown) => STATUS_TEXT[string(value, '')] ?? label(value);
+const kindText = (kind: unknown) => kind === 'voucher' ? 'Expenses (voucher)' : 'Travel plan';
+/** Who, where, when and how much, so a leader knows what they're deciding before reading the details. */
+function ReviewSummary({detail, kind}: {detail: RevisionDetail; kind: string}) {
+  const snapshot = detail.revision.snapshot, trip = data(snapshot.trip);
+  const plan = kind === 'authorization' ? planningForm(snapshot.entity) : planningForm(record(record(snapshot.authorizationRevision).snapshot).entity);
+  const voucher = kind === 'voucher' ? voucherForm(snapshot.entity) : null;
+  const planned = plan ? plan.approvedExpenseItems.reduce((sum, item) => sum + item.authorizedAmountMinor, 0) : 0;
+  const flags = kind === 'authorization' && plan ? [plan.amendment && `Change ${plan.amendment.number} to an approved plan`, plan.aeaJustification && 'Hotel over the lodging rate', plan.preAudit?.flightFare === 'other' && 'Flight isn’t a GSA fare', plan.preAudit?.rentalClass === 'larger' && 'Rental car larger than compact'].filter(Boolean) as string[] : [];
+  return <section className="review-summary" aria-label="Summary">
+    <p className="review-summary-who">{plan?.traveler || 'Traveler'}</p>
+    <p className="review-summary-trip">{plan?.origin ? `${plan.origin} → ` : ''}{string(trip.installation, '') ? `${string(trip.installation)} · ` : ''}{string(trip.destination)}</p>
+    <p className="review-summary-when">{date(trip.departure)} – {date(trip.returnDate)} · {string(trip.purpose, '')}</p>
+    <p className="review-summary-money">{voucher ? <>{usd(voucher.reconciliation.totalAmountMinor)} <span>claimed of {usd(planned)} approved</span></> : <>{usd(planned)} <span>planned</span></>}</p>
+    {flags.length > 0 && <ul className="review-summary-flags">{flags.map(flag => <li key={flag}>{flag} · see below</li>)}</ul>}
+  </section>;
+}
 const usd = (minor: number) => new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'}).format(minor / 100);
 const money = (minor: unknown, currency: unknown = 'USD') => {
   if (typeof minor !== 'number' || !Number.isSafeInteger(minor)) return 'Not provided';
@@ -288,7 +306,7 @@ function ReviewInbox({client, organizationId, actorId, role}: {client: OuranosCl
       if (!result.ok) throw new Error(result.error.message);
       if (result.entity.id !== selected.id || result.entity.organizationId !== organizationId || result.entity.kind !== 'approval') throw new Error('The response could not be matched to this request. Refresh the inbox to confirm the recorded decision.');
       ++detailGeneration.current; setSelected(null); setDetail(null); setComment('');
-      setNotice(decision === 'approved' ? result.entity.status === 'approved' ? 'Revision approved.' : `Approved at your level. Forwarded to ${approvalLevelName(steps.indexOf(current!) + 1, levelLabels[steps.indexOf(current!) + 1])}; the traveler was notified.` : decision === 'changes_requested' ? 'Changes requested. Your decision was recorded.' : 'Revision rejected. Your decision was recorded.');
+      setNotice(decision === 'approved' ? result.entity.status === 'approved' ? 'Approved. The traveler has been told.' : `Approved. It’s gone to ${approvalLevelName(steps.indexOf(current!) + 1, levelLabels[steps.indexOf(current!) + 1])} next, and the traveler has been told.` : decision === 'changes_requested' ? 'Sent back. The traveler has your note.' : 'Not approved. The traveler has been told.');
       await refresh();
       if (alive.current) void platform.engine?.sync().catch(() => { /* The server decision is already recorded; workspace sync can retry independently. */ });
     } catch (reason) {
@@ -305,30 +323,31 @@ function ReviewInbox({client, organizationId, actorId, role}: {client: OuranosCl
   }
 
   return <>
-    <div className="connected-review-item-header"><div><h1>Review inbox</h1><p className="platform-muted">Review the submitted revision and its evidence.</p></div>{!selected && <Button variant="ghost" aria-label="Refresh review inbox" disabled={loading || busy} onClick={() => void refresh()}><RefreshCw size={16} aria-hidden="true"/>Refresh</Button>}</div>
+    <div className="connected-review-item-header"><div><h1>Requests to review</h1><p className="platform-muted">Travel plans and expenses waiting for a decision.</p></div>{!selected && <Button variant="ghost" aria-label="Refresh review inbox" disabled={loading || busy} onClick={() => void refresh()}><RefreshCw size={16} aria-hidden="true"/>Refresh</Button>}</div>
     {notice && <p className="connected-review-status" role="status">{notice}</p>}
     {error && <p className="connected-review-error" role="alert">{error}</p>}
     {!selected ? <div aria-busy={loading}>
       {loading && <p role="status" className="platform-muted">Loading review requests…</p>}
-      {requests.map(request => <button type="button" className="platform-record review-record" key={request.id} disabled={busy || loading} onClick={() => void open(request)}>{(() => { const wait = approvalWait(request, now); return <div><strong>{request.data.kind === 'voucher' ? 'Travel voucher' : 'Travel authorization'}{typeof request.data.destination === 'string' ? ` · ${request.data.destination}` : ''}</strong><p className="connected-review-meta">Updated {timestamp(request.updatedAt)}</p>{wait?.late && <p className="review-late">Waiting {wait.days} days · past the 72-hour mark</p>}</div>; })()}<span>{label(request.status)} <ArrowUpRight size={14} aria-hidden="true"/></span></button>)}
-      {!loading && !requests.length && !error && <div className="platform-block"><h2>Nothing to review yet</h2><p className="platform-muted">Submitted requests appear here when they are available to your workspace role.</p></div>}
+      {[...requests].sort((a, b) => Number(b.status === 'in_review') - Number(a.status === 'in_review')).map(request => <button type="button" className="platform-record review-record" key={request.id} disabled={busy || loading} onClick={() => void open(request)}>{(() => { const wait = approvalWait(request, now); return <div><strong>{kindText(request.data.kind)}{typeof request.data.destination === 'string' ? ` · ${request.data.destination}` : ''}</strong><p className="connected-review-meta">Updated {timestamp(request.updatedAt)}</p>{wait?.late && <p className="review-late">Waiting {wait.days} days · past the 72-hour mark</p>}</div>; })()}<span>{statusText(request.status)} <ArrowUpRight size={14} aria-hidden="true"/></span></button>)}
+      {!loading && !requests.length && !error && <div className="platform-block"><h2>Nothing to review</h2><p className="platform-muted">When someone on your team sends a plan or expenses, it shows up here.</p></div>}
     </div> : <div className="platform-block">
-      <Button variant="ghost" disabled={busy} onClick={close}><ArrowLeft size={16} aria-hidden="true"/>Back to inbox</Button>
-      <div className="connected-review-item-header"><h2>{kind === 'voucher' ? 'Travel voucher' : 'Travel authorization'}</h2><span className="connected-review-status">{label(selected.status)}</span></div>
-      {detailLoading ? <p role="status" className="platform-muted">Loading the frozen submission…</p> : detail ? <>
+      <Button variant="ghost" disabled={busy} onClick={close}><ArrowLeft size={16} aria-hidden="true"/>Back to requests</Button>
+      <div className="connected-review-item-header"><h2>{kindText(kind)}</h2><span className="connected-review-status">{statusText(selected.status)}</span></div>
+      {detailLoading ? <p role="status" className="platform-muted">Loading…</p> : detail ? <>
         {!supported && <p className="connected-review-error" role="alert">This form version cannot be fully displayed here. A decision is unavailable in this view.</p>}
+        <ReviewSummary detail={detail} kind={kind}/>
         <Submission detail={detail} kind={kind}/>
-        <section className="connected-review-section">
-          <h3>Approval route</h3>
-          <ol className="connected-review-route">{steps.map((step, index) => <li key={string(step.id, String(index))}><strong>Level {index + 1} · {approvalLevelName(index, levelLabels[index])}</strong><span className="connected-review-status">{step.status === 'pending' && step !== current ? 'Waiting for prior step' : label(step.status)}</span><p className="connected-review-meta">{step.assignee_id === actorId ? 'Assigned to you' : <>Assigned to <code>{string(step.assignee_id)}</code></>}</p></li>)}</ol>
-          {rows(detail.decisions).length > 0 && <><h3>Recorded decisions</h3>{rows(detail.decisions).map((decision, index) => <article className="connected-review-item" key={string(decision.id, String(index))}><div className="connected-review-item-header"><strong>{label(decision.decision)}</strong><span className="connected-review-meta">{timestamp(decision.created_at)}</span></div><p className="connected-review-meta">{decision.actor_id === actorId ? 'You' : <>Reviewer <code>{string(decision.actor_id)}</code></>}</p>{decision.comment ? <p>{string(decision.comment)}</p> : null}</article>)}</>}
-        </section>
+        <details className="connected-review-section review-route">
+          <summary>Approval route</summary>
+          <ol className="connected-review-route">{steps.map((step, index) => <li key={string(step.id, String(index))}><strong>Level {index + 1} · {approvalLevelName(index, levelLabels[index])}</strong><span className="connected-review-status">{step.status === 'pending' ? step === current ? 'Deciding now' : 'Next' : statusText(step.status)}</span>{step.assignee_id === actorId && <p className="connected-review-meta">That’s you</p>}</li>)}</ol>
+          {rows(detail.decisions).length > 0 && <><h3>Decisions so far</h3>{rows(detail.decisions).map((decision, index) => <article className="connected-review-item" key={string(decision.id, String(index))}><div className="connected-review-item-header"><strong>{statusText(decision.decision)}</strong><span className="connected-review-meta">{timestamp(decision.created_at)}</span></div><p className="connected-review-meta">{decision.actor_id === actorId ? 'You' : (() => { const at = steps.findIndex(step => step.id === decision.step_id); return at >= 0 ? approvalLevelName(at, levelLabels[at]) : 'Approver'; })()}</p>{decision.comment ? <p>{string(decision.comment)}</p> : null}</article>)}</>}
+        </details>
         {canDecide ? <section className="connected-review-section connected-review-actions">
-          <h3>Your decision</h3><p className="platform-muted">A connection is required. This decision applies to the frozen revision above.</p>
-          <label htmlFor="decision-comment">Comment <span className="platform-muted">(optional)</span></label><Textarea id="decision-comment" value={comment} onChange={event => setComment(event.target.value)} maxLength={4000} disabled={busy} rows={3}/>
-          <div className="platform-actions"><Button disabled={busy} onClick={() => void decide('approved')}>{busy ? 'Recording decision…' : 'Approve this revision'}</Button><Button disabled={busy} variant="outline" onClick={() => void decide('changes_requested')}>Request changes</Button><Button disabled={busy} variant="outline" onClick={() => void decide('rejected')}>Reject</Button></div>
-        </section> : <p className="platform-muted">{selected.status !== 'in_review' ? `This request is ${label(selected.status)}.` : current?.assignee_id === actorId && current.required_role !== role ? 'Your current workspace role does not match the assigned review step.' : supported ? 'Awaiting the current assigned reviewer.' : 'Review requires a supported form version.'}</p>}
-        {!busy && <Button variant="ghost" onClick={() => void open(selected)}>Reload this request</Button>}
+          <h3>Your decision</h3><p className="platform-muted">The traveler gets a message as soon as you decide.</p>
+          <label htmlFor="decision-comment">Note to the traveler <span className="platform-muted">(say what to fix if you send it back)</span></label><Textarea id="decision-comment" value={comment} onChange={event => setComment(event.target.value)} maxLength={4000} disabled={busy} rows={3}/>
+          <div className="platform-actions"><Button disabled={busy} onClick={() => void decide('approved')}>{busy ? 'Saving…' : 'Approve'}</Button><Button disabled={busy} variant="outline" onClick={() => void decide('changes_requested')}>Send back for changes</Button><Button disabled={busy} variant="outline" onClick={() => void decide('rejected')}>Don’t approve</Button></div>
+        </section> : <p className="platform-muted">{selected.status !== 'in_review' ? `This request is ${statusText(selected.status).toLowerCase()}.` : current?.assignee_id === actorId && current.required_role !== role ? 'Your role in this workspace doesn’t match this step. Ask your admin.' : supported ? 'Someone else decides this step.' : 'This request uses an older form and can’t be decided here.'}</p>}
+        {!busy && <Button variant="ghost" onClick={() => void open(selected)}>Refresh</Button>}
       </> : <Button variant="outline" onClick={() => void open(selected)}>Retry loading submission</Button>}
     </div>}
   </>;
