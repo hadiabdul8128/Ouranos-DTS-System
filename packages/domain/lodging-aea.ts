@@ -33,6 +33,17 @@ export function lodgingOverage(trip:Trip,items:Lodging[]):LodgingOverage|null{
  return {nights,allowedNightlyMinor,actualNightlyMinor,allowedTotalMinor,actualTotalMinor,differenceMinor:actualTotalMinor-allowedTotalMinor,percent,overMax:percent>AEA_MAX_PERCENT,locality:perDiem.locality.name,destination:trip.destination,match:perDiem.locality.match};
 }
 
+/** A hotel priced at the GSA lodging rate for every night of the trip, to start a new hotel cost from. */
+export function hotelAtRate(trip:Trip){
+ if(!trip.destination||!trip.departure||trip.departure>=trip.returnDate)return null;
+ const perDiem=computePerDiem({startDate:trip.departure,endDate:trip.returnDate,destination:trip.destination});
+ if(!perDiem.locality)return null;
+ const cap=lodgingCapFor(perDiem,trip.departure,trip.returnDate);
+ if(!cap.nights||cap.perNight.length!==cap.nights)return null;
+ const totalMinor=Math.round(cap.cap*100);
+ return {nights:cap.nights,totalMinor,nightlyMinor:Math.round(totalMinor/cap.nights)};
+}
+
 /** Whether the trip is in a GSA (CONUS) per diem locality, where hotel taxes are claimed as their own line. */
 export function inGsaLocality(trip:Trip){
  if(!trip.destination||!trip.departure||trip.departure>trip.returnDate)return false;

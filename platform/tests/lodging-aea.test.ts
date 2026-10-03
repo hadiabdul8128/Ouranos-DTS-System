@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {aeaJustificationDraft,lodgingOverage} from '../../packages/domain/lodging-aea';
+import {aeaJustificationDraft,hotelAtRate,lodgingOverage} from '../../packages/domain/lodging-aea';
 import {planningModuleSchema} from '../../packages/contracts/planning-module';
 
 const trip={destination:'Seattle, WA',departure:'2026-12-05',returnDate:'2026-12-08'};
@@ -28,5 +28,10 @@ describe('lodging over per diem',()=>{
   const plan={traveler:'A',origin:'Austin, TX',currency:'USD' as const,approvedExpenseItems:[{id:'00000000-0000-4000-8000-000000000001',...hotel(120000)}]};
   expect(planningModuleSchema.parse({...plan,aeaJustification:' Conference week '}).aeaJustification).toBe('Conference week');
   expect(planningModuleSchema.safeParse({...plan,aeaJustification:''}).success).toBe(false);
+ });
+ it('prices a hotel at the lodging rate for every night',()=>{
+  expect(hotelAtRate(trip)).toEqual({nights:3,totalMinor:56400,nightlyMinor:18800});
+  expect(hotelAtRate({...trip,destination:'Paris, France'})).toBeNull();
+  expect(hotelAtRate({...trip,returnDate:trip.departure})).toBeNull();
  });
 });
