@@ -1,5 +1,6 @@
 import { config as loadEnv } from 'dotenv';
 import { z } from 'zod';
+import { DEMO_WORKSPACES } from './demo-workspaces';
 loadEnv({path:process.env.OURANOS_ENV_FILE || '.env.platform',quiet:true});
 const environment=z.object({
  NODE_ENV:z.enum(['development','test','production']).default('development'),
@@ -19,6 +20,7 @@ const environment=z.object({
 export type PlatformConfig=z.infer<typeof environment>;
 export function readConfig():PlatformConfig {
  const c=environment.parse(process.env);
+ c.DEMO_APPROVAL_ORGANIZATIONS=[...new Set([...DEMO_WORKSPACES,...c.DEMO_APPROVAL_ORGANIZATIONS])];
  // Production Authorization requires the assigned human review sequence.
  // Retain alternative modes only for development; a stale deployment variable
  // must not silently bypass approval after restoring the production workflow.
