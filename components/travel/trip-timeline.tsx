@@ -10,7 +10,7 @@ import type {LocalRecord} from '@/packages/offline/database';
 import {usePayments} from './use-payments';
 import './trip-timeline.css';
 
-type Page='planning'|'vouchers'|'dts';
+type Page='planning'|'vouchers';
 const latest=(rows:LocalRecord[],kind:string,tripId:string)=>rows.filter(r=>r.kind===kind&&r.local.tripId===tripId).sort((a,b)=>b.local.updatedAt.localeCompare(a.local.updatedAt))[0];
 const text=(value:unknown)=>typeof value==='string'?value:'';
 
@@ -23,13 +23,13 @@ export function progressFor(trip:Entity,rows:LocalRecord[],paid:boolean,today:st
  const waitingOn=request?currentApprovalLevel(approvalLevelsOf(request.local))?.label:undefined;
  return tripProgress({planStatus,changing:Boolean((plan?.local.data.formData as {amendment?:unknown}|undefined)?.amendment),waitingOn,departure:text(trip.data.departure),returnDate:text(trip.data.returnDate),today,voucherStatus:voucher?(voucher.server?.status||voucher.local.status):undefined,paid});
 }
-export const tripHref=(tripId:string)=>({plan:`/dashboard/travel/planning?tripId=${tripId}`,expenses:`/dashboard/travel/vouchers?tripId=${tripId}`,dts:`/dashboard/travel/dts?tripId=${tripId}`,hotels:`/dashboard/travel/hotels?tripId=${tripId}`});
+export const tripHref=(tripId:string)=>({plan:`/dashboard/travel/planning?tripId=${tripId}`,expenses:`/dashboard/travel/vouchers?tripId=${tripId}`,hotels:`/dashboard/travel/hotels?tripId=${tripId}`});
 
 export function TripTimeline({trip,rows,page}:{trip:Entity;rows:LocalRecord[];page:Page}){
  const [today]=useState(localToday),{payments}=usePayments();
  const {steps,next}=progressFor(trip,rows,Boolean(payments[trip.id]),today);
  const href=tripHref(trip.id);
- const pageOf={plan:'planning',expenses:'vouchers',dts:'dts',hotels:''} as const;
+ const pageOf={plan:'planning',expenses:'vouchers',hotels:''} as const;
  const stepLink=(id:string)=>id==='plan'||id==='approval'?href.plan:id==='expenses'||id==='paid'?href.expenses:null;
  return <section className="trip-timeline" aria-label="Where this trip is">
   <ol>{steps.map(step=>{const link=stepLink(step.id),inner=<><span className="trip-timeline-dot" aria-hidden="true">{step.state==='done'&&<Check size={12}/>}</span><span>{step.label}</span></>;return <li key={step.id} className={`is-${step.state}`} aria-current={step.state==='current'?'step':undefined}>{link?<Link href={link}>{inner}</Link>:<span className="trip-timeline-step">{inner}</span>}</li>})}</ol>
@@ -40,7 +40,6 @@ export function TripTimeline({trip,rows,page}:{trip:Entity;rows:LocalRecord[];pa
   <nav className="trip-timeline-pages" aria-label="Trip pages">
    <Link href={href.plan} aria-current={page==='planning'?'page':undefined}>Plan</Link>
    <Link href={href.expenses} aria-current={page==='vouchers'?'page':undefined}>Expenses</Link>
-   <Link href={href.dts} aria-current={page==='dts'?'page':undefined}>Enter this in DTS</Link>
   </nav>
  </section>;
 }
