@@ -13,6 +13,8 @@ const environment=z.object({
  DTS_PROVIDER:z.enum(['disabled','mock']).default('disabled'),
  APPROVAL_MODE:z.enum(['required','preview','automatic']).default('required'),
  WORKER_POLL_MS:z.coerce.number().min(100).default(2000),
+ // Workspaces (comma-separated IDs) where a traveler may approve their own authorization for a demo. Empty means nowhere.
+ DEMO_APPROVAL_ORGANIZATIONS:z.string().default('').transform(value=>value.split(',').map(id=>id.trim()).filter(Boolean)).pipe(z.array(z.string().uuid())),
 });
 export type PlatformConfig=z.infer<typeof environment>;
 export function readConfig():PlatformConfig {
