@@ -32,6 +32,7 @@ import {LodgingAeaCard} from './lodging-aea-card';
 import {isNonconventionalLodging,preAuditProblem,relevantPreAudit,type PreAudit} from '@/packages/domain/pre-audit';
 import {DtsChecksCard} from './dts-checks-card';
 import {DemoApprove} from './demo-approve';
+import {AmendmentBanner,ChangeTrip} from './amendment';
 import {voucherDocuments} from '@/packages/domain/voucher-documents';
 import {VoucherDocumentsCard} from './voucher-documents-card';
 import type {TravelMode} from '@/packages/domain/travel-mode';
@@ -97,7 +98,7 @@ async function routeWaiting(p:Platform,id:string){
   if(!result.ok)return false;await p.engine.merge(result.entity);return true;
  }catch{return false}
 }
-async function onlineCommand(p:Platform,type:'authorization.submit'|'voucher.submit'|'document.confirm'|'document.reprocess',id:string){
+async function onlineCommand(p:Platform,type:'authorization.submit'|'authorization.amend'|'voucher.submit'|'document.confirm'|'document.reprocess',id:string,payload:Record<string,unknown>={}){
  if(!p.client||!p.repository||!p.engine||!p.organizationId)throw new Error('A connection to your workspace is required.');
  const kind=type.startsWith('authorization')?'authorization':type.startsWith('voucher')?'voucher':'document';
  if(await p.repository.db.outbox.where('entityKey').equals(`${kind}:${id}`).count())throw new Error('Sync this record’s pending changes first.');
@@ -105,8 +106,8 @@ async function onlineCommand(p:Platform,type:'authorization.submit'|'voucher.sub
  // A response can be lost after a successful submission. Reading its current
  // state avoids saving over it or submitting the same revision twice.
  if((type.endsWith('.submit')&&['in_review','approved','verified','needs_action'].includes(entity.status))||(type==='document.confirm'&&entity.status==='ready')){await p.engine.merge(entity);return entity}
- const key=`online:${type}:${id}:${entity.version}`;let saved=(await p.repository.db.meta.get(key))?.value;
- if(!saved){const command:Command={type,commandId:crypto.randomUUID(),organizationId:p.organizationId,deviceId:await deviceId(p),entityId:id,expectedVersion:entity.version,schemaVersion:1,payload:{}};saved=JSON.stringify(command);await p.repository.db.meta.put({key,value:saved})}
+ const key=`online:${type}:${id}:${entity.version}${type==='authorization.amend'?`:${JSON.stringify(payload)}`:''}`;let saved=(await p.repository.db.meta.get(key))?.value;
+ if(!saved){const command:Command={type,commandId:crypto.randomUUID(),organizationId:p.organizationId,deviceId:await deviceId(p),entityId:id,expectedVersion:entity.version,schemaVersion:1,payload} as Command;saved=JSON.stringify(command);await p.repository.db.meta.put({key,value:saved})}
  const result=await p.client.command(JSON.parse(saved));if(!result.ok)throw new Error(result.error.message);
  await p.engine.merge(result.entity);await p.engine.sync();return result.entity;
 }
@@ -146,6 +147,7 @@ function PlanningForm({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
  const [allowance]=useState(()=>parsed.success&&parsed.data.allowance?parsed.data.allowance:{enabled:false,governmentMess:false,mealsProvided:{}});
  const [aea,setAea]=useState(()=>parsed.success?parsed.data.aeaJustification??'':'');
  const [preAudit,setPreAudit]=useState<PreAudit>(()=>parsed.success?parsed.data.preAudit??{}:{});
+ const [amendment]=useState(()=>parsed.success?parsed.data.amendment:undefined);
  const [rates,setRates]=useState<ExchangeRates|null>(null),[rateError,setRateError]=useState(''),[rateReload,setRateReload]=useState(0);
  useEffect(()=>{let active=true;const abort=new AbortController();void fetch('/api/exchange-rates',{signal:abort.signal}).then(async response=>{if(!response.ok)throw new Error('Exchange rates unavailable.');return validateExchangeRates(await response.json())}).then(value=>{if(active){setRates(value);setRateError('');setItems(current=>current.map(item=>item.currency!=='USD'&&!item.usdAmount?{...item,...editPlanningAmount(item,item.amount,value)}:item))}}).catch(()=>{if(active)setRateError('Exchange rates are unavailable. USD still works; retry to convert currencies.')});return()=>{active=false;abort.abort()}},[rateReload]);
  const [dirty,setDirty]=useState(false);const baselineVersion=useRef(initial?.local.version||0);useUnsaved(dirty);
@@ -215,7 +217,7 @@ function PlanningForm({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
   if((current?.local.version||0)!==baselineVersion.current)throw new Error('This plan changed in another session. Your edits are still here; reload to review the newer version before saving.');
   const normalized=items.map(item=>item.currency!=='USD'&&!item.usdAmount?{...item,...editPlanningAmount(item,item.amount,rates)}:item);
   const miles=Number(mileage.miles),centsPerMile=Math.round(Number(mileage.rate)*100);
-  const form=planningModuleSchema.parse({traveler,origin,...(travelMode?{travelMode}:{}),...(travelMode==='pov'&&miles>0&&centsPerMile>0?{mileage:{miles,centsPerMile}}:{}),currency:'USD',allowance,...(overage&&aea.trim()?{aeaJustification:aea.trim()}:{}),...(relevantPreAudit(checkedItems,preAudit)?{preAudit:relevantPreAudit(checkedItems,preAudit)}:{}),approvedExpenseItems:normalized.map(item=>({id:item.id,category:item.category,description:item.description.trim()||categoryLabels[item.category],authorizedAmountMinor:parseAmountMinor(item.currency==='USD'?item.amount:item.usdAmount),...(item.currency!=='USD'?{originalEstimate:{currency:item.currency,amountMinor:parseReceiptAmount(item.amount,item.currency),conversionNote:item.conversionNote}}:{}),...(item.merchant?{merchant:item.merchant}:{}),...(item.payment?{expectedPaymentMethod:item.payment}:{}),...(item.date?{date:item.date}:{}),...(item.startDate||item.endDate?{startDate:item.startDate,endDate:item.endDate}:{} )}))});
+  const form=planningModuleSchema.parse({traveler,origin,...(travelMode?{travelMode}:{}),...(travelMode==='pov'&&miles>0&&centsPerMile>0?{mileage:{miles,centsPerMile}}:{}),currency:'USD',allowance,...(amendment?{amendment}:{}),...(overage&&aea.trim()?{aeaJustification:aea.trim()}:{}),...(relevantPreAudit(checkedItems,preAudit)?{preAudit:relevantPreAudit(checkedItems,preAudit)}:{}),approvedExpenseItems:normalized.map(item=>({id:item.id,category:item.category,description:item.description.trim()||categoryLabels[item.category],authorizedAmountMinor:parseAmountMinor(item.currency==='USD'?item.amount:item.usdAmount),...(item.currency!=='USD'?{originalEstimate:{currency:item.currency,amountMinor:parseReceiptAmount(item.amount,item.currency),conversionNote:item.conversionNote}}:{}),...(item.merchant?{merchant:item.merchant}:{}),...(item.payment?{expectedPaymentMethod:item.payment}:{}),...(item.date?{date:item.date}:{}),...(item.startDate||item.endDate?{startDate:item.startDate,endDate:item.endDate}:{} )}))});
   await p.repository!.stage('authorization.save',id,{tripId:trip.id,formSchemaVersion:PLANNING_SCHEMA_VERSION,formData:form});baselineVersion.current=(await p.repository!.db.entities.get(`authorization:${id}`))!.local.version;setDirty(false);return stageMessage(p,id,'authorization');
  }
  async function submit(){
@@ -229,8 +231,10 @@ function PlanningForm({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
  }
  if(unsupported)return <div className="cw-card"><h2>A different planning form is attached.</h2><p className="cw-muted">This saved authorization uses an older or partner form. Its data has been preserved.</p><Link href="/dashboard/platform">Return to workspace</Link></div>;
  return <><div className="cw-section-heading"><h2>Travel details</h2><Status value={status}/></div>
+ {amendment&&status!=='approved'&&<AmendmentBanner amendment={amendment} status={status} current={{...tripDates,purpose:text(trip.data.purpose),...(text(trip.data.installation)?{installation:text(trip.data.installation)}:{}),items:items.flatMap(item=>{const minor=amountMinorOrNull(item.currency==='USD'?item.amount:item.usdAmount);return minor===null?[]:[{id:item.id,category:item.category,description:item.description.trim()||categoryLabels[item.category],authorizedAmountMinor:minor}]})}}/>}
+ {status==='approved'&&p.approvalMode!=='preview'&&<ChangeTrip onStart={async reason=>{await onlineCommand(p,'authorization.amend',id,{reason});window.location.reload()}}/>}
  {locked&&status!=='in_review'&&<div className="cw-banner"><Check size={18}/><div><strong>{status==='approved'&&p.approvalMode==='automatic'?'Verified by Ouranos.':status==='approved'?'Approved.':status==='in_review'?'In review.':'This revision is closed.'}</strong><p>{status==='approved'&&p.approvalMode==='automatic'?'Internal checks passed. This is not DTS approval.':''}</p></div>{status==='approved'&&<Link href={`/dashboard/travel/vouchers?tripId=${trip.id}`}>Open voucher <ArrowRight size={16}/></Link>}</div>}
- {p.approvalMode==='required'&&status!=='approved'&&(approval?<ApprovalTracker request={approval}/>:status==='in_review'&&row?.server&&<WaitingForApprovers/>)}{p.approvalMode==='required'&&status==='in_review'&&row?.server&&<DemoApprove authorizationId={id} tripId={trip.id}/>}
+ {p.approvalMode==='required'&&status!=='approved'&&(approval&&!(amendment&&approval.status==='approved')?<ApprovalTracker request={approval}/>:status==='in_review'&&row?.server&&<WaitingForApprovers/>)}{p.approvalMode==='required'&&status==='in_review'&&row?.server&&<DemoApprove authorizationId={id} tripId={trip.id}/>}
  <PlanningHotelFinder trip={{id:trip.id,destination:text(trip.data.destination),departure:text(trip.data.departure),returnDate:text(trip.data.returnDate),lodgingBudgetMinor:items.filter(item=>item.category==='lodging').reduce<number|null>((sum,item)=>{if(sum===null)return null;try{return sum+parseAmountMinor(item.currency==='USD'?item.amount:item.usdAmount)}catch{return null}},0)||null,budgetLabel:status==='approved'?'Approved lodging budget':'Planned lodging budget'}} onSelectHotel={locked||!!feedback.busy?undefined:selectHotel}/>
  <form onSubmit={e=>{e.preventDefault();void feedback.run('save',save)}}><fieldset disabled={locked||!!feedback.busy} className="cw-fieldset"><div className="cw-card cw-grid"><Field label="Traveler name"><Input value={traveler} onChange={e=>{setTraveler(e.target.value);setDirty(true)}} autoComplete="name" maxLength={200} required/></Field><PlaceField id="origin" label="Starting location" variant="plan" value={origin} onChange={value=>{setOrigin(value);setDirty(true);try{localStorage.setItem(originKey,value)}catch{}}}/><div className="cw-span-full cw-purpose"><span>Purpose</span><p>{text(trip.data.purpose)}</p></div></div>
  <TravelModeField mode={travelMode} onMode={chooseTravelMode} miles={mileage.miles} rate={mileage.rate} onMileage={patch=>{setMileage(m=>({...m,...patch}));setDirty(true)}} onAddMileage={addMileage} onAddRental={addRental} disabled={locked||!!feedback.busy}/>
@@ -248,7 +252,8 @@ function VoucherGate({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
  const p=usePlatform();const preview=p.approvalMode==='preview';
  const auth=rows.filter(r=>r.kind==='authorization'&&r.local.tripId===trip.id&&(preview?Boolean(r.server):r.server?.status==='approved')).sort((a,b)=>b.server!.updatedAt.localeCompare(a.server!.updatedAt))[0];
  if(!auth&&preview)return <><ReceiptInbox trip={trip} rows={rows}/><Button asChild variant="outline"><Link href={`/dashboard/travel/planning?tripId=${trip.id}`}>Add travel plan <ArrowRight size={16}/></Link></Button></>;
- if(!auth)return <><div className="cw-card cw-empty"><FileText size={28}/><h2>Plan approval pending.</h2><p className="cw-muted">You can collect receipts while waiting. Preparing the voucher still requires an approved plan.</p><Button asChild><Link href={`/dashboard/travel/planning?tripId=${trip.id}`}>Open travel plan <ArrowRight size={16}/></Link></Button></div><ReceiptInbox trip={trip} rows={rows}/></>;
+ const changing=!auth&&rows.some(r=>r.kind==='authorization'&&r.local.tripId===trip.id&&record(r.local.data.formData).amendment);
+ if(!auth)return <><div className="cw-card cw-empty"><FileText size={28}/><h2>{changing?'Your trip change is waiting for approval.':'Plan approval pending.'}</h2><p className="cw-muted">{changing?'The voucher opens again once your approvers approve the change. Your expenses and receipts are kept.':'You can collect receipts while waiting. Preparing the voucher still requires an approved plan.'}</p><Button asChild><Link href={`/dashboard/travel/planning?tripId=${trip.id}`}>Open travel plan <ArrowRight size={16}/></Link></Button></div><ReceiptInbox trip={trip} rows={rows}/></>;
  return <ApprovedVoucher key={`${auth.id}:${auth.server!.version}`} authorizationId={auth.id} trip={trip} rows={rows}/>;
 }
 function ApprovedVoucher({authorizationId,trip,rows}:{authorizationId:string;trip:Entity;rows:LocalRecord[]}){
