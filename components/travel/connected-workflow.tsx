@@ -81,6 +81,17 @@ const QUICK_COSTS:Array<{id:QuickCost;label:string;category:Category;description
  {id:'parking',label:'Parking',category:'parking',description:'Parking - TDY Area'},
  {id:'other',label:'Other',category:'other',description:''},
 ];
+/** Glide to a section that just opened, briefly highlight it, and put the cursor in its first field, so it doesn't just appear somewhere below. */
+function bringIntoView(id:string,focus='input:not([type=hidden]):not([disabled]),select,textarea'){
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  const target=document.getElementById(id);if(!target)return;
+  const still=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  target.scrollIntoView({behavior:still?'auto':'smooth',block:'start'});
+  target.classList.remove('cw-arrived');void target.offsetWidth;target.classList.add('cw-arrived');
+  window.setTimeout(()=>target.classList.remove('cw-arrived'),1800);
+  const field=target.querySelector<HTMLElement>(focus);(field??target).focus({preventScroll:true});
+ }));
+}
 const amountMinorOrNull=(value:string)=>{try{return parseAmountMinor(value)}catch{return null}};
 function planProblems(traveler:string,origin:string,items:Array<{amount:string;currency:string;usdAmount:string}>){
  const problems=[!traveler.trim()&&'Enter the traveler’s name.',!origin.trim()&&'Choose your starting city and state.',!items.length&&'Add at least one cost, like your flight or hotel.'];
@@ -318,12 +329,12 @@ function VoucherForm({trip,rows,revision}:{trip:Entity;rows:LocalRecord[];revisi
  function differentFromPlanned(item:PlannedExpense){
   const lodging=item.category==='lodging';
   setEditor({...expenseDraft(),authorizationItemId:item.id,category:item.category,merchant:(item.merchant||item.description).slice(0,200),description:item.description,paymentMethod:item.expectedPaymentMethod||usualPayment(),date:item.date||(lodging?item.endDate||text(trip.data.returnDate):item.startDate||text(trip.data.departure)),...(lodging?{startDate:item.startDate||text(trip.data.departure),endDate:item.endDate||text(trip.data.returnDate)}:{})});
-  feedback.setError('');window.setTimeout(()=>document.getElementById('cw-expense-editor')?.scrollIntoView({block:'start'}),0);
+  feedback.setError('');bringIntoView('cw-expense-editor','input[placeholder="0.00"]');
  }
  function markNotUsed(item:PlannedExpense,notUsed:boolean){
   setResolutions(current=>{const next={...current},key=`auth:${item.id}:not_used`;if(notUsed)next[key]={type:'not_used',value:item.id,at:new Date().toISOString()};else delete next[key];return next});changed();
  }
- function editExpense(entity?:Entity,receipts=false){const draft=expenseDraft(entity);setEditor(entity?draft:{...draft,paymentMethod:usualPayment()});feedback.setError('');window.setTimeout(()=>{const target=document.getElementById(receipts?'cw-expense-receipts':'cw-expense-editor');target?.scrollIntoView({block:'start'});target?.focus({preventScroll:true})},0)}
+ function editExpense(entity?:Entity,receipts=false){const draft=expenseDraft(entity);setEditor(entity?draft:{...draft,paymentMethod:usualPayment()});feedback.setError('');bringIntoView(receipts?'cw-expense-receipts':'cw-expense-editor',receipts?'button':undefined)}
  async function saveExpense(){
   if(!editor)return;const current=await p.repository!.db.entities.get(`voucher:${id}`);if(!editable(current))throw new Error('This voucher has already been submitted.');
   const currentExpense=await p.repository!.db.entities.get(`expense:${editor.id}`);if((currentExpense?.local.version||0)!==editor.version)throw new Error('This expense changed in another session. Cancel this edit and reopen its current details before saving.');
