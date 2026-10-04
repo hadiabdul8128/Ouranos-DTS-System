@@ -25,7 +25,7 @@ export function MealsEstimate({trip,allowance,onChange,locked,hasMealExpense=fal
  return <section className="meals-estimate" aria-labelledby="meals-title">
   <div className="meals-estimate-head">
    <div><h3 id="meals-title">Meals and incidentals estimate</h3>
-    {estimate.supported?<p><strong>About {usd(estimate.totals.mie)}</strong> for {estimate.days.length} days in {estimate.locality?.name??trip.destination}, estimated before travel.</p>
+    {estimate.supported?<p><strong>About {usd(estimate.totals.mie)}</strong> for {estimate.days.length} days in {estimate.locality&&estimate.locality.match==='city'?estimate.locality.name:trip.destination}, estimated before travel.</p>
      :<p>Ouranos can’t estimate this trip yet. Your travel office can tell you the rate.</p>}
    </div>
   </div>
