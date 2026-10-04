@@ -83,14 +83,17 @@ const QUICK_COSTS:Array<{id:QuickCost;label:string;category:Category;description
 ];
 /** Glide to a section that just opened, briefly highlight it, and put the cursor in its first field, so it doesn't just appear somewhere below. */
 function bringIntoView(id:string,focus='input:not([type=hidden]):not([disabled]),select,textarea'){
- requestAnimationFrame(()=>requestAnimationFrame(()=>{
+ // A short timer (not an animation frame) so it also runs while the tab is in the background.
+ window.setTimeout(()=>{
   const target=document.getElementById(id);if(!target)return;
   const still=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  target.scrollIntoView({behavior:still?'auto':'smooth',block:'start'});
+  target.scrollIntoView({behavior:still||document.visibilityState!=='visible'?'auto':'smooth',block:'start'});
+  // Some browsers skip smooth scrolling; if it didn't arrive, jump there.
+  window.setTimeout(()=>{if(Math.abs(target.getBoundingClientRect().top)>160)target.scrollIntoView({block:'start'})},900);
   target.classList.remove('cw-arrived');void target.offsetWidth;target.classList.add('cw-arrived');
   window.setTimeout(()=>target.classList.remove('cw-arrived'),1800);
   const field=target.querySelector<HTMLElement>(focus);(field??target).focus({preventScroll:true});
- }));
+ },60);
 }
 const amountMinorOrNull=(value:string)=>{try{return parseAmountMinor(value)}catch{return null}};
 function planProblems(traveler:string,origin:string,items:Array<{amount:string;currency:string;usdAmount:string}>){
@@ -323,6 +326,7 @@ function VoucherForm({trip,rows,revision}:{trip:Entity;rows:LocalRecord[];revisi
   const start=item.startDate||departure,end=item.endDate||returnDate,expenseId=crypto.randomUUID();
   const payload:PayloadOf<'expense.save'>={tripId:trip.id,merchant:(item.merchant||item.description).slice(0,200),incurredOn:item.date||(lodging?end:start),amountMinor:item.authorizedAmountMinor,currency:'USD',category:item.category,paymentMethod:item.expectedPaymentMethod||usualPayment(),authorizationItemId:item.id,description:item.description,documentIds:[],...(lodging&&start<end?{serviceStartDate:start,serviceEndDate:end}:{})};
   await p.repository!.stage('expense.save',expenseId,payload);setIncluded(current=>[...current,expenseId]);
+  setEditor(current=>current&&current.authorizationItemId===item.id&&!expenses.some(e=>e.id===current.id)?null:current);
   setResolutions(current=>{const next={...current};delete next[`auth:${item.id}:not_used`];return next});changed();
   return `${item.description} added. Add its receipt below.`;
  }
@@ -332,6 +336,7 @@ function VoucherForm({trip,rows,revision}:{trip:Entity;rows:LocalRecord[];revisi
   feedback.setError('');bringIntoView('cw-expense-editor','input[placeholder="0.00"]');
  }
  function markNotUsed(item:PlannedExpense,notUsed:boolean){
+  if(notUsed)setEditor(current=>current&&current.authorizationItemId===item.id&&!expenses.some(e=>e.id===current.id)?null:current);
   setResolutions(current=>{const next={...current},key=`auth:${item.id}:not_used`;if(notUsed)next[key]={type:'not_used',value:item.id,at:new Date().toISOString()};else delete next[key];return next});changed();
  }
  function editExpense(entity?:Entity,receipts=false){const draft=expenseDraft(entity);setEditor(entity?draft:{...draft,paymentMethod:usualPayment()});feedback.setError('');bringIntoView(receipts?'cw-expense-receipts':'cw-expense-editor',receipts?'button':undefined)}
@@ -376,7 +381,12 @@ function VoucherForm({trip,rows,revision}:{trip:Entity;rows:LocalRecord[];revisi
  }
  async function capture(files:File[],attach=false){const ids:string[]=[];for(const file of files)ids.push(await p.repository!.captureReceipt(trip.id,file));if(attach)setEditor(current=>current&&current.id===editor?.id?{...current,documentIds:[...new Set([...current.documentIds,...ids])]}:current);await p.engine?.sync();changed();return attach?'Receipts selected. Save the expense to attach them, then review their processing status below.':'Receipts saved. Their processing status appears below.'}
  async function captureForExpense(expense:Entity,files:File[]){
-  if(editor)throw new Error('Save or cancel the open expense before attaching a receipt.');
+  if(editor?.id===expense.id){
+   // The open form would overwrite the expense's receipts when saved, so add the new ones to the form.
+   const ids:string[]=[];for(const file of files)ids.push(await p.repository!.captureReceipt(trip.id,file));
+   setEditor(current=>current&&current.id===expense.id?{...current,documentIds:[...new Set([...current.documentIds,...ids])]}:current);
+   return `Receipt added to the open expense. Save it to keep the receipt with it.`;
+  }
   const voucher=await p.repository!.db.entities.get(`voucher:${id}`);if(!editable(voucher))throw new Error('This voucher has already been submitted.');
   const current=await p.repository!.db.entities.get(`expense:${expense.id}`);
   if(!current||current.local.version!==expense.version)throw new Error('This expense changed. Refresh before attaching a receipt.');
@@ -425,7 +435,7 @@ function VoucherForm({trip,rows,revision}:{trip:Entity;rows:LocalRecord[];revisi
  <div className="cw-section-heading"><div><h2>Review</h2></div></div>
  <div className="cw-totals"><div><span>Actual expenses</span><strong>{money(Math.round(reconciliation.totals.actual*100))}</strong></div><div><span>GTCC</span><strong>{money(Math.round(reconciliation.totals.gtcc*100))}</strong></div><div><span>Personal</span><strong>{money(Math.round(reconciliation.totals.traveler*100))}</strong></div></div>
  {reconciliation.issues.length?<div className="cw-issues">{reconciliation.issues.map(issue=><Issue key={issue.id} issue={issue} locked={locked} busy={!!feedback.busy} expense={selected.find(e=>e.id===issue.expenseId)} receiptContent={issue.code==='receipt_missing'&&selected.some(e=>e.id===issue.expenseId)?<>
-  <ReceiptIntake disabled={!!feedback.busy||!!editor} onFiles={files=>void feedback.run('receipt',()=>captureForExpense(selected.find(e=>e.id===issue.expenseId)!,files))}/>
+  <ReceiptIntake disabled={!!feedback.busy} onFiles={files=>void feedback.run('receipt',()=>captureForExpense(selected.find(e=>e.id===issue.expenseId)!,files))}/>
   <p className="cw-muted">JPEG, PNG or PDF · 20 MB max. Attached to this expense automatically.</p>
   {documents.filter(doc=>(selected.find(e=>e.id===issue.expenseId)?.data.documentIds as string[]||[]).includes(doc.id)).map(doc=><div key={doc.id} className="cw-inline-document"><strong>{text(doc.data.filename)}</strong><p className="cw-muted" role="status">{receiptStatus(doc.status)}</p>{['needs_review','ready'].includes(doc.status)?<ReceiptReview id={doc.id} document={doc} locked={locked} onConfirmed={changed}/>:['failed','awaiting_provider'].includes(doc.status)?<Button variant="outline" disabled={!!feedback.busy} onClick={()=>void feedback.run('retry',async()=>{await onlineCommand(p,'document.reprocess',doc.id);return 'Receipt queued for processing.'})}>Retry</Button>:null}</div>)}
   <Feedback error={feedback.error} notice={feedback.busy==='receipt'?'Uploading receipt…':feedback.notice}/>
