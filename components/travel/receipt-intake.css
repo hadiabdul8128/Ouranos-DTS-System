@@ -8,3 +8,11 @@
 .cw-camera-footer>.cw-muted{max-width:380px;margin:0}
 .cw-intake-actions button:focus-visible{outline:2px solid #a5b38a;outline-offset:3px}
 @media(max-width:600px){.cw-intake-heading{align-items:flex-start;flex-direction:column}.cw-intake-actions{width:100%}.cw-intake-actions>button,.cw-intake-actions>.cw-upload-button{flex:1;justify-content:center}.cw-camera-footer{align-items:flex-start;flex-direction:column}.cw-camera-footer>.cw-muted{max-width:none}}
+
+.cw-issue-receipt.is-open{flex:1 0 100%;min-width:0}
+.cw-inline-receipts{margin-top:18px;border-block:1px solid var(--cw-line);padding-block:16px}
+.cw-inline-receipts .cw-intake-heading{margin:0 0 12px;flex-wrap:wrap}
+.cw-inline-receipts .cw-muted{color:var(--cw-ink)}
+.cw-inline-document{padding-block:16px;overflow-wrap:anywhere}
+.cw-inline-document>.cw-receipt-review{border:0;border-radius:0;padding:0;background:transparent;box-shadow:none}
+.cw-inline-receipts .cw-camera{margin:16px 0;border:0;padding:0;background:transparent;box-shadow:none}
