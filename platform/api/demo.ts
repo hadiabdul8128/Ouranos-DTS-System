@@ -8,11 +8,11 @@ import {withActor} from '../shared/database';
 import {notify,requireOwner} from './commands';
 import {loadEntity,updateStatus} from './entities';
 
-/** Lets a traveler skip the wait for approvers while showing the product, only in workspaces listed in DEMO_APPROVAL_ORGANIZATIONS. Every step is recorded and audited as a demo approval. */
+/** Lets a traveler skip the wait for approvers while showing the product, in every workspace by default. Every step is recorded and audited as a demo approval. */
 export function registerDemoRoutes(app:FastifyInstance,pool:Pool,config:PlatformConfig){
  app.post('/v1/demo/approve',async req=>{
   const b=demoApproveInput.parse(req.body);
-  check(config.DEMO_APPROVAL_ORGANIZATIONS.includes(b.organizationId),'PERMISSION_DENIED','Demo approval is turned off for this workspace',403);
+  check(config.DEMO_APPROVAL_ALL_WORKSPACES||config.DEMO_APPROVAL_ORGANIZATIONS.includes(b.organizationId),'PERMISSION_DENIED','Demo approval is turned off for this workspace',403);
   return withActor(pool,req.actor.id,b.organizationId,async db=>{
    const auth=await loadEntity(db,'authorization',b.authorizationId,b.organizationId,true);
    await requireOwner(db,b.organizationId,auth.trip_id);
