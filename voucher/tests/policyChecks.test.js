@@ -32,7 +32,9 @@ test('a lost-receipt statement clears the missing receipt only for the same fact
   assert.equal(reconcile(trip, [parking], { 'p:receipt_missing': { type: 'lost_receipt_statement', value: statement } }).issues.length, 0);
   const changed = { ...parking, amount: 80 };
   assert.ok(reconcile(trip, [changed], { 'p:receipt_missing': { type: 'lost_receipt_statement', value: statement } }).issues.some(issue => issue.code === 'receipt_missing'));
-  assert.throws(() => buildLostReceiptStatement(parking, { reason: 'lost' }), /at least 8/);
+  assert.equal(buildLostReceiptStatement(parking, { reason: ' Lost ' }).reason, 'Lost');
+  assert.throws(() => buildLostReceiptStatement(parking, { reason: '   ' }), /Describe what happened/);
+  assert.throws(() => buildLostReceiptStatement(parking, { reason: 'x'.repeat(2001) }), /2,000/);
 });
 
 test('reservation confirmations and card slips are flagged at capture', () => {
