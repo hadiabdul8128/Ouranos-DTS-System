@@ -8,6 +8,6 @@ Submission freezes the expense, M&IE and combined totals alongside the per-diem 
 
 Travel’s Review inbox opens the shared Inbox. Reviewers can open Requests to review there to make approval decisions.
 
-Demo approval records the exact submitted revision in its immutable audit, including when no S1 or command is assigned. The voucher loader accepts this explicit demo approval evidence. Earlier demo approvals are recovered only for the latest revision submitted before the matching audit, within the same organization, trip, authorization and submitting user. An approved status by itself does not authorize a voucher. Demo approval remains limited to configured demo workspaces and the trip owner.
+Demo approval records the exact submitted revision in its immutable audit, including when no S1 or command is assigned. The voucher loader accepts this explicit demo approval evidence. Earlier demo approvals are recovered only for the latest revision submitted before the matching audit, within the same organization, trip, authorization and submitting user. An approved status by itself does not authorize a voucher. Demo approval is available in every workspace by default and remains limited to the trip owner. An explicit DEMO_APPROVAL_ALL_WORKSPACES=false setting restores the workspace allowlist.
 
 No database migration is required.

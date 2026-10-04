@@ -29,6 +29,12 @@ Requests submitted before levels were recorded still work; they show a single re
 
 No database migration is needed: levels live in the request's JSON data and notifications use the existing notifications table.
 
+## Demo approval
+
+Every workspace, including newly created workspaces, offers **Approve for demo** after a traveler submits their own authorization. This approves the frozen submission and opens its voucher. Every skipped approval step and the audit record are marked **Approved for demo**; normal submissions still use the assigned reviewer sequence. Authentication, active workspace membership, traveler ownership, and submitted-revision checks remain required.
+
+Demo access defaults to `DEMO_APPROVAL_ALL_WORKSPACES=true`. Deployments can explicitly set it to `false` to use the `DEMO_APPROVAL_ORGANIZATIONS` workspace allowlist instead. The session response includes the global capability and each active membership’s workspace ID for compatibility with older clients. No workspace-by-workspace setup or database migration is needed.
+
 ## Verification
 
 `platform/tests/approval-chain.test.ts` covers level names, decisions and notice wording. `platform/tests/connected-travel.integration.test.ts` checks, against a real database, that level 1 approval notifies the traveler and forwards to command, that final approval sends *Authorization approved*, and that reviewers do not receive the traveler's updates.

@@ -201,7 +201,7 @@
             }
           }
         },
-        "description": "Only in workspaces listed in DEMO_APPROVAL_ORGANIZATIONS. Each level is recorded as \"Approved for demo\" and audited as approval.demo_approved."
+        "description": "Available in all workspaces by default. DEMO_APPROVAL_ALL_WORKSPACES=false restricts access to DEMO_APPROVAL_ORGANIZATIONS. Each level is recorded as \"Approved for demo\" and audited as approval.demo_approved."
       }
     },
     "/v1/team/members": {
@@ -7465,6 +7465,9 @@
               "preview",
               "automatic"
             ]
+          },
+          "demoApprovalEnabled": {
+            "type": "boolean"
           },
           "demoApprovalOrganizations": {
             "type": "array",
