@@ -404,11 +404,14 @@ describe('connected planning and Voucher Copilot',()=>{
   expect(blocked.status).toBe('needs_action');
   const report=await request('traveler','GET',`/v1/vouchers/${voucher.id}/verification?organizationId=${organizationId}`);
   expect(report.body.report.blockingIssues).toContainEqual(expect.objectContaining({code:'receipt_missing'}));
-  const resolved={...form,resolutions:{[`${expense.id}:receipt_missing`]:{type:'lost_receipt_statement' as const,value:{reason:'Paper receipt lost during travel.',expenseVersion:expense.version}}}};
+  const resolved={...form,resolutions:{[`${expense.id}:receipt_missing`]:{type:'lost_receipt_statement' as const,value:{reason:'Lost',expenseVersion:expense.version}}}};
   const saved=expectSuccess(await send('traveler','voucher.save',voucher.id,blocked.version,{tripId,authorizationId:companionId,expenseIds:[expense.id],formSchemaVersion:VOUCHER_MODULE_SCHEMA_VERSION,formData:resolved}));
+  const reloaded=await pool.query('select data from ouranos.vouchers where id=$1',[voucher.id]);
+  expect(reloaded.rows[0].data.formData.resolutions).toEqual(resolved.resolutions);
   expect(expectSuccess(await send('traveler','voucher.submit',voucher.id,saved.version,{})).status).toBe('verified');
   const exported=await request('traveler','GET',url);expect(exported.status,JSON.stringify(exported.body)).toBe(200);
   expect(exported.body.html).toContain('LOST RECEIPT STATEMENT');
+  expect(exported.body.html).toContain('How the receipt was lost: Lost');
   expect(exported.body.html).toContain('Companion fuel');
   expect(exported.body.snapshot.statements[`${expense.id}:receipt_missing`].value.amount).toBe(100);
   for(const user of ['outsider','peer'] as const)expect((await request(user,'GET',url)).status).toBe(404);
