@@ -6,7 +6,7 @@ import {usePlatform} from '@/components/platform/provider';
 import {Button} from '@/components/ui/button';
 import './demo-approve.css';
 
-/** In demo workspaces only: approve your own submitted plan at every level and open the voucher. */
+/** Across workspaces: approve your own submitted plan at every level and open the voucher. */
 export function DemoApprove({authorizationId,tripId}:{authorizationId:string;tripId:string}){
  const p=usePlatform(),router=useRouter();
  const [busy,setBusy]=useState(false),[error,setError]=useState('');
@@ -21,7 +21,7 @@ export function DemoApprove({authorizationId,tripId}:{authorizationId:string;tri
   }catch(e){setError(e instanceof Error?e.message:'The demo approval didn’t go through. Try again.');setBusy(false)}
  }
  return <div className="demo-approve">
-  <div><strong>Demo workspace</strong><span>Skip the wait and approve every level now, so you can show the voucher.</span></div>
+  <div><strong>Try the voucher demo</strong><span>Approve your submitted authorization for this demo and open its voucher.</span></div>
   <Button type="button" variant="outline" onClick={()=>void approve()} disabled={busy}><FastForward size={15}/> {busy?'Approving…':'Approve for demo'}</Button>
   {error&&<p role="alert">{error}</p>}
  </div>;
