@@ -172,3 +172,4 @@ html[data-text=large] body{zoom:1.18}html[data-text=large],html[data-text=large]
 .cw-deleted-drafts .cw-trip-row{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:10px 0;border-bottom:1px solid var(--cw-line)}
 #cw-expense-editor,#cw-expense-receipts{scroll-margin-top:24px}
 @media(max-width:600px){.cw-trip-list .cw-trip-row{flex-wrap:wrap;gap:0;padding-bottom:10px}.cw-trip-list .cw-trip-row>a{flex-basis:100%}.cw-draft-action{max-width:100%}}
+@keyframes cw-arrived{0%{box-shadow:0 0 0 0 #e0bf7a00}20%{box-shadow:0 0 0 3px #e0bf7a99}100%{box-shadow:0 0 0 0 #e0bf7a00}}.cw-arrived{animation:cw-arrived 1.6s ease-out;scroll-margin-top:24px}@media(prefers-reduced-motion:reduce){.cw-arrived{animation:none;outline:2px solid #e0bf7a;outline-offset:2px}}#cw-expense-editor,#cw-expense-receipts{scroll-margin-top:24px}
