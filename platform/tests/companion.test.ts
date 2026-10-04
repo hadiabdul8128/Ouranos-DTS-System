@@ -10,7 +10,7 @@ const revision:ApprovedRevision={id:crypto.randomUUID(),sha256:'a'.repeat(64),sn
 const fuel=entity('expense',{tripId,merchant:'Test fuel',incurredOn:'2026-10-12',amountMinor:10000,currency:'USD',category:'fuel',authorizationItemId:itemId,paymentMethod:'gtcc',documentIds:[]});
 describe('connected companion',()=>{
  it('binds a lost receipt statement to the exact expense version',()=>{
-  const key=`${fuel.id}:receipt_missing`;const resolution={type:'lost_receipt_statement' as const,value:{reason:'Receipt was lost during the trip.',expenseVersion:1}};
+  const key=`${fuel.id}:receipt_missing`;const resolution={type:'lost_receipt_statement' as const,value:{reason:'Lost',expenseVersion:1}};
   expect(reconcileStoredExpenses(revision,[fuel],[],{[key]:resolution}).ready).toBe(true);
   expect(resolvedStatements(revision,[fuel],{[key]:resolution})[key].value).toMatchObject({vendor:'Test fuel',amount:100,date:'2026-10-12',traveler:'Synthetic Traveler'});
   expect(reconcileStoredExpenses(revision,[{...fuel,version:2}],[],{[key]:resolution}).ready).toBe(false);

@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {VOUCHER_MODULE_SCHEMA_VERSION,voucherModuleSchema,type VoucherModuleInput} from '../../packages/contracts/voucher-module';
+import {VOUCHER_MODULE_SCHEMA_VERSION,voucherModuleSchema,voucherResolutionSchema,type VoucherModuleInput} from '../../packages/contracts/voucher-module';
 import {validateVoucher} from '../../modules/vouchers/validator';
 
 function submission():VoucherModuleInput{
@@ -50,6 +50,12 @@ describe('Voucher Copilot platform submission boundary',()=>{
   expect(voucherModuleSchema.parse(input).resolutions).toEqual(input.resolutions);
   expect(voucherModuleSchema.safeParse({...input,resolutions:{x:{type:'explanation',value:'  '}}}).success).toBe(false);
   expect(voucherModuleSchema.safeParse({...input,resolutions:{x:{type:'confirmed_date',value:'2026-02-30'}}}).success).toBe(false);
+ });
+ it('accepts short non-empty lost-receipt reasons while preserving expense version binding',()=>{
+  const resolution={type:'lost_receipt_statement',value:{reason:' Lost ',expenseVersion:1}};
+  expect(voucherResolutionSchema.parse(resolution).value).toEqual({reason:'Lost',expenseVersion:1});
+  for(const reason of ['', '   ', 'x'.repeat(2001)])expect(voucherResolutionSchema.safeParse({...resolution,value:{...resolution.value,reason}}).success).toBe(false);
+  expect(voucherResolutionSchema.safeParse({...resolution,value:{...resolution.value,expenseVersion:0}}).success).toBe(false);
  });
  it('retains the fixture only in development and rejects unknown form versions',()=>{
   expect(validateVoucher('ouranos.fixture.v1',{certified:true},true)).toEqual([]);
