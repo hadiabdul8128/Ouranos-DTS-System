@@ -20,21 +20,21 @@ async function call(user:User,method:'GET'|'POST'|'PUT',url:string,payload?:unkn
  const response=await app.inject({method,url,remoteAddress:`127.0.2.${names.indexOf(user)+1}`,headers:{authorization:`Bearer ${users[user].token}`},payload:payload as object});
  return {status:response.statusCode,body:response.json()};
 }
-async function send<T extends CommandType>(user:User,type:T,entityId:string,expectedVersion:number,payload:PayloadOf<T>){
- return call(user,'POST','/v1/commands',{type,entityId,expectedVersion,payload,organizationId,commandId:crypto.randomUUID(),deviceId:users[user].deviceId,schemaVersion:1} as Command);
+async function send<T extends CommandType>(user:User,type:T,entityId:string,expectedVersion:number,payload:PayloadOf<T>,targetOrganizationId=organizationId){
+ return call(user,'POST','/v1/commands',{type,entityId,expectedVersion,payload,organizationId:targetOrganizationId,commandId:crypto.randomUUID(),deviceId:users[user].deviceId,schemaVersion:1} as Command);
 }
 function ok(result:{status:number;body:any}):Entity{expect(result.status,JSON.stringify(result.body)).toBe(200);expect(result.body.ok,JSON.stringify(result.body)).toBe(true);return result.body.entity}
-async function submitted(user:User){
- const trip=ok(await send(user,'trip.save',crypto.randomUUID(),0,{destination:'Denver, CO',departure:'2026-11-05',returnDate:'2026-11-08',purpose:'Training',timezone:'UTC'}));
+async function submitted(user:User,targetOrganizationId=organizationId){
+ const trip=ok(await send(user,'trip.save',crypto.randomUUID(),0,{destination:'Denver, CO',departure:'2026-11-05',returnDate:'2026-11-08',purpose:'Training',timezone:'UTC'},targetOrganizationId));
  const planning:PlanningModuleInput={traveler:'Demo Traveler',origin:'Austin, TX',travelMode:'air',currency:'USD',approvedExpenseItems:[{id:crypto.randomUUID(),category:'airfare',description:'Round-trip flight',authorizedAmountMinor:43000}]};
- const plan=ok(await send(user,'authorization.save',crypto.randomUUID(),0,{tripId:trip.id,formSchemaVersion:PLANNING_SCHEMA_VERSION,formData:planning}));
- expect(ok(await send(user,'authorization.submit',plan.id,plan.version,{})).status).toBe('in_review');
+ const plan=ok(await send(user,'authorization.save',crypto.randomUUID(),0,{tripId:trip.id,formSchemaVersion:PLANNING_SCHEMA_VERSION,formData:planning},targetOrganizationId));
+ expect(ok(await send(user,'authorization.submit',plan.id,plan.version,{},targetOrganizationId)).status).toBe('in_review');
  return {trip,plan};
 }
 
 beforeAll(async()=>{
  pool=makePool(config);
- app=await buildApp({...config,APPROVAL_MODE:'required',DEMO_APPROVAL_ORGANIZATIONS:demoOrganizations},{pool,logger:false});
+ app=await buildApp({...config,APPROVAL_MODE:'required',DEMO_APPROVAL_ALL_WORKSPACES:true,DEMO_APPROVAL_ORGANIZATIONS:demoOrganizations},{pool,logger:false});
  const admin=createClient(config.SUPABASE_URL,config.SUPABASE_SECRET_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
  for(const name of names){
   const email=`demo-${name}-${crypto.randomUUID()}@ouranos.test`,password=`Local-${crypto.randomUUID()}!`;
@@ -52,10 +52,28 @@ beforeAll(async()=>{
 afterAll(async()=>{await app?.close();await pool?.end()});
 
 describe('demo approval',()=>{
- it('is refused in a workspace that is not marked for demos',async()=>{
+ it('enables demo approval without allowlisting the workspace',async()=>{
   const {plan}=await submitted('member');
-  expect((await call('member','POST','/v1/demo/approve',{organizationId,authorizationId:plan.id})).status).toBe(403);
-  expect((await call('member','GET','/v1/session')).body.demoApprovalOrganizations).toEqual([]);
+  const session=(await call('member','GET','/v1/session')).body;
+  expect(session.demoApprovalEnabled).toBe(true);expect(session.demoApprovalOrganizations).toContain(organizationId);
+  expect((await call('member','POST','/v1/demo/approve',{organizationId,authorizationId:plan.id})).status).toBe(200);
+ });
+ it('works immediately in a newly created workspace while enforcing membership',async()=>{
+  const other=(await call('stranger','POST','/v1/organizations',{name:'New demo access workspace'})).body.id;
+  const {plan}=await submitted('stranger',other);
+  expect((await call('stranger','GET','/v1/session')).body.demoApprovalOrganizations).toContain(other);
+  expect((await call('member','GET','/v1/session')).body.demoApprovalOrganizations).not.toContain(other);
+  expect([403,404]).toContain((await call('member','POST','/v1/demo/approve',{organizationId:other,authorizationId:plan.id})).status);
+  expect((await call('stranger','POST','/v1/demo/approve',{organizationId:other,authorizationId:plan.id})).status).toBe(200);
+  expect((await call('stranger','GET',`/v1/authorizations/${plan.id}/approved?organizationId=${other}`)).status).toBe(200);
+ });
+ it('honors an explicit restricted deployment setting',async()=>{
+  const restricted=await buildApp({...config,APPROVAL_MODE:'required',DEMO_APPROVAL_ALL_WORKSPACES:false,DEMO_APPROVAL_ORGANIZATIONS:[]},{pool,logger:false});
+  try{
+   const {plan}=await submitted('member');
+   const response=await restricted.inject({method:'POST',url:'/v1/demo/approve',headers:{authorization:`Bearer ${users.member.token}`},payload:{organizationId,authorizationId:plan.id}});
+   expect(response.statusCode).toBe(403);
+  }finally{await restricted.close()}
  });
  it('approves every level of the traveler’s own plan, records it, and opens the voucher',async()=>{
   demoOrganizations.push(organizationId);

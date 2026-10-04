@@ -21,3 +21,15 @@ describe('Authorization approval deployment policy',()=>{
   expect(configure('development',mode).APPROVAL_MODE).toBe(mode);
  });
 });
+
+
+describe('Demo approval availability',()=>{
+ it('defaults to every workspace, including in production',()=>{
+  vi.stubEnv('DEMO_APPROVAL_ALL_WORKSPACES',undefined);
+  expect(configure('production','required').DEMO_APPROVAL_ALL_WORKSPACES).toBe(true);
+ });
+ it('allows an explicit restricted deployment setting',()=>{
+  vi.stubEnv('DEMO_APPROVAL_ALL_WORKSPACES','false');
+  expect(configure('production','required').DEMO_APPROVAL_ALL_WORKSPACES).toBe(false);
+ });
+});
