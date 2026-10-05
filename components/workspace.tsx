@@ -13,6 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { CalendarDays } from "lucide-react";
 import { UpcomingPanel, useUpcoming } from "@/components/planner/upcoming-panel";
+import { TypingAnimation } from "@/components/ui/typing-animation";
+
+// Each example routes somewhere real through workspaceIntent.
+const EXAMPLES=["Plan a trip to Fort Liberty","Book a flight to San Diego","File my travel voucher","Start a TDY to Norfolk","How do I file a voucher?"];
 
 export default function Workspace() {
   const router=useRouter();
@@ -46,7 +50,7 @@ export default function Workspace() {
     if (!text) return;
     const destination=workspaceIntent(text);
     if(destination){setOpening(true);router.push(destination)}
-    else setMessage("You can plan travel or explore life after the military.");
+    else setMessage("Try a trip, a flight or a voucher, like the examples in the box.");
   }
   return <main className="quiet-page prompt-page">
     <header className="quiet-header home-header"><Link href="/dashboard" className="quiet-brand">Ouranos</Link><nav className="inbox-header-actions" aria-label="Workspace"><Sheet><SheetTrigger className="home-upcoming-button" aria-label={`Upcoming${upcoming.soon?`, ${upcoming.soon} this week`:""}`}><CalendarDays size={16}/> Upcoming{upcoming.soon>0&&<span>{upcoming.soon}</span>}</SheetTrigger><SheetContent side="right" className="home-upcoming-sheet"><SheetTitle className="sr-only">Upcoming</SheetTitle><UpcomingPanel/></SheetContent></Sheet><InboxLink/><Link href="/dashboard/platform" className="exit-link" aria-label="Settings" title="Settings"><Settings size={18} aria-hidden="true"/></Link><button onClick={() => void platform.signOut()} className="exit-link" aria-label="Sign out"><LogOut size={17}/></button></nav></header>
@@ -54,7 +58,7 @@ export default function Workspace() {
       <ServiceCloud />
       <h1 id="intent-heading">What do you want to do?</h1>
       <form className="intent-input" onSubmit={submit}>
-        <Input aria-label="What do you want to do?" placeholder="Tell us what you need…" value={request} onChange={event => {setRequest(event.target.value); setMessage("");}} autoComplete="off" maxLength={500} disabled={opening}/>
+        <span className="intent-field">{!request&&<TypingAnimation className="intent-examples" words={EXAMPLES} delay={900}/>}<Input aria-label="What do you want to do?" placeholder="" value={request} onChange={event => {setRequest(event.target.value); setMessage("");}} autoComplete="off" maxLength={500} disabled={opening}/></span>
         <Button type="submit" aria-label="Continue with your request" className="intent-submit" disabled={!request.trim() || opening}><ArrowRight size={20}/></Button>
       </form>
       <p className={`intent-hint ${message ? "has-message" : ""}`} role="status">{opening ? "Opening your workspace…" : message || ''}</p>
