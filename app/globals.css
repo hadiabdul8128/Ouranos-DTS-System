@@ -183,10 +183,9 @@ body{font-family:var(--font-body);font-size:16px;line-height:1.5;letter-spacing:
 .app-surface :is(input,select,textarea,button){font-variation-settings:inherit}
 .ambient-dots{display:none}
 .quiet-brand,.gateway-wordmark,.hyper-wordmark,.cw-brand{font-family:var(--font-brand)}
-/* Headlines in a tall high-contrast serif. Astralaga is first in the stack: add its licensed webfont with an
-   @font-face and it takes over; until then Instrument Serif, its closest free match, is used. One weight only,
-   so browsers must not fake bold. Smaller headings stay in the reading face. */
-.app-surface :is(h1,h2){font-family:var(--font-display);font-weight:400;font-synthesis:none;letter-spacing:-.005em;color:var(--ink)}
+/* One soft, heavy serif everywhere: Fraunces with its softness axis at full, a free stand-in for MadeType's
+   Gentle (Cooper Black style). Gentle leads the stack so a licensed webfont takes over once added. */
+.app-surface :is(h1,h2){font-family:var(--font-display);font-weight:800;font-optical-sizing:auto;letter-spacing:-.015em;color:var(--ink)}
 .app-surface :is(h3,h4){font-family:var(--font-body);font-weight:600;letter-spacing:0;color:var(--ink)}
 .app-surface h1{font-weight:600;letter-spacing:-.02em}
 .app-surface :is(h2,h3){font-weight:500}
