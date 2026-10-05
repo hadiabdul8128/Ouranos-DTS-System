@@ -57,6 +57,7 @@
 :root .app-surface .cw-sheet.inbox-shell .inbox-open-plan{border-color:var(--ap-rule);border-radius:4px;font-size:14px}
 :root .app-surface .cw-sheet.inbox-shell .inbox-empty{border:1px solid var(--ap-rule);border-radius:4px;align-items:flex-start;text-align:left}
 :root .app-surface .cw-sheet.inbox-shell .inbox-empty h2{font-family:var(--ap-font-display)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-message-row:focus-visible{outline:2px solid var(--ap-accent);outline-offset:-2px}
 
 @media(max-width:650px){
  :root .app-surface .cw-sheet.inbox-shell .inbox-heading{margin-top:var(--ap-space-lg)}
