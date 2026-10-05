@@ -59,7 +59,7 @@
 :root .app-surface .cw-sheet :is(.cw-status-approved,.cw-status-ready)::before{background:var(--ap-accent)}
 :root .app-surface .cw-sheet :is(.cw-status-in_review,.cw-status-changes_requested,.cw-status-failed)::before{background:var(--ap-signal)}
 
-:root .app-surface .cw-sheet .cw-section-heading+form .cw-fieldset>.cw-card:first-child{border-top:0;padding-top:var(--ap-space-xs)}
+:root .app-surface .cw-sheet :is(.cw-section-heading+form .cw-fieldset>.cw-card:first-child,.cw-section-heading+.planned-costs,.cw-section-heading+.cw-card){border-top:0;padding-top:var(--ap-space-xs)}
 
 :root .app-surface .cw-sheet .cw-budget-total{font-family:var(--ap-font-display);font-variant-numeric:tabular-nums;color:var(--ap-ink)}
 :root .app-surface .cw-sheet .cw-budget-total small{font-family:var(--font-body);font-size:13px;letter-spacing:0;color:var(--ap-ink-3)}
