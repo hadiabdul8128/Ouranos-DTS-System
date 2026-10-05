@@ -48,7 +48,7 @@ function CompanionPanel() {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button className="companion-launcher" aria-label="Open Ouranos assistant" title="Ask Ouranos">
-          <span className="companion-orb" aria-hidden="true"></span>
+          <span className="companion-orb" aria-hidden="true"><span className="companion-orb-core"/></span>
         </button>
       </PopoverTrigger>
       <PopoverContent className="companion-panel" side="top" align="end" sideOffset={8} collisionPadding={16} aria-labelledby="companion-title">
