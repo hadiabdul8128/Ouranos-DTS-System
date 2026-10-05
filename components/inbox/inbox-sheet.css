@@ -12,6 +12,14 @@
 /* The list: no box around it, one ruled line per message, the date in its own column. */
 :root .app-surface .cw-sheet.inbox-shell .inbox-layout{border:0;border-radius:0;background:none;min-height:0;gap:0 var(--ap-space-xl)}
 :root .app-surface .cw-sheet.inbox-shell .inbox-list{background:none;border-right:0}
+:root .app-surface .cw-sheet.inbox-shell .inbox-message-row{display:grid;grid-template-columns:56px minmax(0,1fr);column-gap:var(--ap-space-sm);row-gap:var(--ap-space-2xs);align-items:baseline;padding:var(--ap-space-md) var(--ap-space-xs) var(--ap-space-md) 0;border-bottom:1px solid var(--ap-rule-soft);box-shadow:none}
+:root .app-surface .cw-sheet.inbox-shell .inbox-message-row:hover{background:var(--ap-paper-2)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-message-row[aria-current=true]{background:var(--ap-paper-2);box-shadow:none}
+:root .app-surface .cw-sheet.inbox-shell .inbox-row-meta{grid-column:1;grid-row:1/span 2;display:block}
+:root .app-surface .cw-sheet.inbox-shell .inbox-row-meta>span{display:none}
+:root .app-surface .cw-sheet.inbox-shell .inbox-row-meta time{font-size:14px;font-variant-numeric:tabular-nums;color:var(--ap-ink-3);padding-left:var(--ap-space-xs)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-message-row strong{grid-column:2;justify-content:flex-start;font-size:16px;font-weight:400;color:var(--ap-ink-2)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-preview{grid-column:2;font-size:14px;color:var(--ap-ink-3)}
 
 @media(max-width:650px){
  :root .app-surface .cw-sheet.inbox-shell .inbox-heading{margin-top:var(--ap-space-lg)}
