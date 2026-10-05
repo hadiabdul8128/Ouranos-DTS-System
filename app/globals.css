@@ -214,3 +214,10 @@ body{font-family:var(--font-body);font-size:16px;line-height:1.5;letter-spacing:
 :root .app-surface .cw-card.cw-grid{padding-top:24px}
 :root .app-surface .cw-budget-list{display:flex;flex-direction:column}
 :root .app-surface .cw-budget-list .cw-budget-item{margin:0;padding:20px 0 8px}
+/* Things that need attention get an inset bar on the left, not a full box. */
+:root .app-surface :is(.trip-timeline-next,.cw-banner,.amendment-banner,.review-summary,.demo-approve,.lodging-aea){background:transparent;border:0;border-left:4px solid #a5b38a;border-radius:0;box-shadow:none;padding:6px 0 6px 18px}
+:root .app-surface :is(.trip-timeline-next,.amendment-banner,.lodging-aea){border-left-color:#e0bf7a}
+:root .app-surface .demo-approve{border-left-style:dashed}
+:root .app-surface .cw-issue{background:#1c1a12;border:0;border-left:4px solid #e0bf7a;border-radius:0}
+:root .app-surface .cw-error{border-radius:0;border:0;border-left:4px solid #f0a09a}
+:root .app-surface .cw-notice{border-radius:0;border:0;border-left:4px solid #a5b38a}
