@@ -267,3 +267,11 @@ body{font-family:var(--font-body);font-size:16px;line-height:1.5;letter-spacing:
 
 /* Home dashboard: its one headline at the heaviest weight. */
 :root .app-surface .prompt-page :is(h1,h2){font-weight:900}
+
+/* Home request box: example requests type themselves out behind the empty field. */
+.intent-field{position:relative;flex:1;min-width:0;display:flex;align-items:center}
+.intent-examples{position:absolute;z-index:2;left:0;right:0;text-align:left;top:50%;transform:translateY(-50%);pointer-events:none;color:#a7afa3;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.intent-field:focus-within .intent-examples{opacity:.55}
+.typing-animation-cursor{display:inline-block;margin-left:1px;animation:typing-cursor-blink 1s step-end infinite}
+@keyframes typing-cursor-blink{50%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.typing-animation-cursor{animation:none}}
