@@ -58,6 +58,8 @@
 :root .app-surface .cw-plan :is(.cw-status-approved,.cw-status-ready)::before{background:var(--ap-accent)}
 :root .app-surface .cw-plan :is(.cw-status-in_review,.cw-status-changes_requested,.cw-status-failed)::before{background:var(--ap-signal)}
 
+:root .app-surface .cw-plan .cw-section-heading+form .cw-fieldset>.cw-card:first-child{border-top:0;padding-top:var(--ap-space-xs)}
+
 @media(max-width:600px){
  :root .app-surface .cw-plan .cw-heading{margin:var(--ap-space-lg) 0 var(--ap-space-md)}
  :root .app-surface .cw-plan .trip-timeline li a,
