@@ -228,3 +228,12 @@ body{font-family:var(--font-body);font-size:16px;line-height:1.5;letter-spacing:
 :root .app-surface .cw-status{border:0;border-radius:2px;background:#262c25;color:#d6dcd0;text-transform:uppercase;letter-spacing:.06em;font-weight:600;padding:4px 8px}
 :root .app-surface .cw-status-approved,:root .app-surface .cw-status-ready{background:#24331f;color:#c9e0b8}
 :root .app-surface .cw-status-changes_requested,:root .app-surface .cw-status-failed{background:#3a2f17;color:#e0bf7a}
+/* Single choices are real radio buttons: a large circle, then the label. */
+:root .app-surface :is(.travel-mode-options,.dts-check-choice){display:flex;flex-direction:column;align-items:stretch;gap:2px}
+:root .app-surface :is(.travel-mode-options,.dts-check-choice) button{display:flex;align-items:center;justify-content:flex-start;gap:12px;min-height:48px;padding:6px 6px 6px 2px;border:0;border-radius:0;background:transparent;color:var(--ink);font-size:16px;text-align:left}
+:root .app-surface :is(.travel-mode-options,.dts-check-choice) button::before{content:'';flex:0 0 26px;height:26px;border:2px solid #c9d0c3;border-radius:50%;box-sizing:border-box;transition:border-color .15s,background .15s}
+:root .app-surface :is(.travel-mode-options,.dts-check-choice) button[aria-checked=true]::before{border-color:#d4e0b0;background:radial-gradient(circle,#d4e0b0 0 6px,transparent 7px)}
+:root .app-surface :is(.travel-mode-options,.dts-check-choice) button:hover:not(:disabled){background:transparent;color:#fff}
+:root .app-surface :is(.travel-mode-options,.dts-check-choice) button:hover:not(:disabled)::before{border-color:#fff}
+:root .app-surface :is(.travel-mode-options,.dts-check-choice) button:focus-visible{outline:3px solid #e0bf7a;outline-offset:2px}
+:root .app-surface .travel-mode-options button svg{order:3;color:#8f9a8b}
