@@ -63,6 +63,11 @@
 :root .app-surface .cw-plan .cw-budget-total{font-family:var(--ap-font-display);font-variant-numeric:tabular-nums;color:var(--ap-ink)}
 :root .app-surface .cw-plan .cw-budget-total small{font-family:var(--font-body);font-size:13px;letter-spacing:0;color:var(--ap-ink-3)}
 
+/* Planned costs: the icon sits inline with the name, no tile behind it. */
+:root .app-surface .cw-plan .cw-budget-list .cw-budget-item.cw-cost{background:var(--ap-paper-2);border-color:var(--ap-rule)}
+:root .app-surface .cw-plan .cw-cost-icon{flex:0 0 auto;width:auto;height:auto;background:none;color:var(--ap-ink-2);align-self:flex-start;padding-top:2px}
+:root .app-surface .cw-plan .cw-cost-amount{font-family:var(--ap-font-display);font-weight:500;font-variant-numeric:tabular-nums}
+
 @media(max-width:600px){
  :root .app-surface .cw-plan .cw-heading{margin:var(--ap-space-lg) 0 var(--ap-space-md)}
  :root .app-surface .cw-plan .trip-timeline li a,
