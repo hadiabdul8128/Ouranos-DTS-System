@@ -23,7 +23,7 @@ export default function RootLayout({
         {/* Atkinson Hyperlegible Next for reading and forms (made for low-vision readers), Instrument Serif for headlines. */}
         <link rel="preconnect" href="https://fonts.googleapis.com"/>
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous"/>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Atkinson+Hyperlegible+Next:wght@400..700&display=swap"/>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Fraunces:opsz,wght,SOFT,WONK@9..144,400..900,0..100,0..1&family=Atkinson+Hyperlegible+Next:wght@400..700&display=swap"/>
       </head>
       <body className="antialiased">
         <div className="ambient-dots" aria-hidden="true"><DotPattern width={24} height={24} cr={0.8} glow={false} /></div>
