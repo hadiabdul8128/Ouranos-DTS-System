@@ -176,13 +176,17 @@ html[data-text=large] body{zoom:1.18}html[data-text=large],html[data-text=large]
 
 /* Readability pass (UI Pro Max: Corporate Trust pairing, visible labels, 16px fields, 4.5:1 contrast).
    The typewriter face stays as the Ouranos wordmark only; everything people read or type uses a clean sans. */
-:root{--font-body:"Atkinson Hyperlegible Next",system-ui,-apple-system,"Segoe UI",sans-serif;--font-display:"Lexend","Atkinson Hyperlegible Next",system-ui,sans-serif;--font-brand:"Tirto Writter",Georgia,serif;
+:root{--font-body:"Atkinson Hyperlegible Next",system-ui,-apple-system,"Segoe UI",sans-serif;--font-display:"Astralaga","Instrument Serif",Georgia,serif;--font-brand:"Tirto Writter",Georgia,serif;
  --ink:#edf0e8;--ink-soft:#c9d0c3;--ink-muted:#a9b1a4;--field:#1a1f1a;--field-line:#3a4338;--field-focus:#c9d3a8;--card:#171b17;--card-line:#2a3129}
 @theme inline{--font-sans:var(--font-body)}
 body{font-family:var(--font-body);font-size:16px;line-height:1.5;letter-spacing:0;font-feature-settings:"kern","liga"}
 .ambient-dots{display:none}
 .quiet-brand,.gateway-wordmark,.hyper-wordmark,.cw-brand{font-family:var(--font-brand)}
-.app-surface :is(h1,h2,h3,h4){font-family:var(--font-display);letter-spacing:-.01em;color:var(--ink)}
+/* Headlines in a tall high-contrast serif. Astralaga is first in the stack: add its licensed webfont with an
+   @font-face and it takes over; until then Instrument Serif, its closest free match, is used. One weight only,
+   so browsers must not fake bold. Smaller headings stay in the reading face. */
+.app-surface :is(h1,h2){font-family:var(--font-display);font-weight:400;font-synthesis:none;letter-spacing:-.005em;color:var(--ink)}
+.app-surface :is(h3,h4){font-family:var(--font-body);font-weight:600;letter-spacing:0;color:var(--ink)}
 .app-surface h1{font-weight:600;letter-spacing:-.02em}
 .app-surface :is(h2,h3){font-weight:500}
 /* Labels sit above every field, readable at a glance. */
