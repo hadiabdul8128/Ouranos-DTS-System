@@ -242,3 +242,17 @@ body{font-family:var(--font-body);font-size:16px;line-height:1.5;letter-spacing:
 :root .app-surface .cw-purpose>span{margin:12px 0 0;min-width:120px}
 :root .app-surface .travel-mode-label{font-family:var(--font-display);font-size:18px;font-weight:500;color:var(--ink);margin:8px 0 12px}
 :root .app-surface .cw-approved-summary{background:transparent;border:0;border-left:4px solid #a5b38a;border-radius:0;padding:4px 0 4px 18px}
+/* Each planned cost is its own framed block with a scannable header: icon, name, kind and amount. */
+:root .app-surface .cw-budget-list{gap:12px}
+:root .app-surface .cw-budget-list .cw-budget-item.cw-cost{background:#161a16;border:1px solid #303830;border-radius:4px;padding:16px 18px 6px;margin:0}
+:root .app-surface .cw-cost-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+:root .app-surface .cw-cost-icon{flex:0 0 36px;height:36px;display:grid;place-items:center;border-radius:4px;background:#232a22;color:#c9d3a8}
+:root .app-surface .cw-cost-title{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+:root .app-surface .cw-cost-title .cw-item-name{font-size:16px!important;font-weight:600;color:var(--ink)!important;overflow-wrap:anywhere}
+:root .app-surface .cw-cost-title small{font-size:13px;color:var(--ink-muted)}
+:root .app-surface .cw-cost-amount{font-size:16px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+:root .app-surface .cw-cost-head .cw-icon-button{margin:0 -8px 0 0}
+:root .app-surface .cw-quick-add-label{font-size:14px;font-weight:600;color:var(--ink-soft);margin:20px 0 8px}
+:root .app-surface .cw-quick-add{margin-top:0}
+:root .app-surface .cw-cost{scroll-margin-top:24px}
+:root .app-surface .cw-cost .cw-disclosure{margin:0;padding:2px 0;border-top:1px solid #272e26}:root .app-surface .cw-cost .planning-hotel-finder{margin:4px 0 0}:root .app-surface .cw-cost .cw-grid{row-gap:12px}:root .app-surface .cw-cost .cw-item-hint{margin:-2px 0 4px!important}
