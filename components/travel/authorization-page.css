@@ -78,6 +78,8 @@
 :root .app-surface .cw-plan .authorization-total .authorization-total-final>strong{font-family:var(--ap-font-display);font-size:30px;font-weight:500;padding-bottom:3px;border-bottom:4px double var(--ap-ink)}
 :root .app-surface .cw-plan .authorization-total p{font-size:14px;color:var(--ap-ink-3)}
 
+:root .app-surface .cw-plan :is(.trip-timeline li a,.cw-icon-button,button):focus-visible{outline:2px solid var(--ap-accent);outline-offset:3px}
+
 @media(max-width:600px){
  :root .app-surface .cw-plan .cw-heading{margin:var(--ap-space-lg) 0 var(--ap-space-md)}
  :root .app-surface .cw-plan .trip-timeline li a,
