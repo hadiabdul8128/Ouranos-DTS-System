@@ -1,6 +1,7 @@
 import {companionInput} from '../../packages/contracts/companion';
 import {guideAskInput,guideBuildInput,guideChecklistSchema} from '../../packages/contracts/guide';
 import {demoApproveInput} from '../../packages/contracts/demo';
+import {personalStateInput,personalStateResponse} from '../../packages/contracts/personal-state';
 import {checklistProgressInput,paymentInput,paymentRemoval,teamChecklistInput,teamMemberInput,teamMemberRemoval} from '../../packages/contracts/team';
 import {readFile, mkdir, writeFile} from 'node:fs/promises';
 import {z} from 'zod';
@@ -28,6 +29,7 @@ const approvalStep = z.object({id:uuid, organization_id:uuid, request_id:uuid, p
 const approvalDecision = z.object({id:uuid, organization_id:uuid, request_id:uuid, step_id:uuid, actor_id:uuid, decision:z.enum(['approved','changes_requested','rejected']), comment:z.string(), created_at:timestamp}).passthrough();
 
 const models = {
+  PersonalStateInput:personalStateInput,PersonalStateResponse:personalStateResponse,
   CompanionInput:companionInput, CompanionResponse:z.object({answer:z.string()}),
   DemoApproveInput:demoApproveInput, DemoApproveResponse:z.object({entity:z.record(z.unknown())}),
   TeamMemberInput:teamMemberInput, TeamMemberRemoval:teamMemberRemoval, PaymentInput:paymentInput, PaymentRemoval:paymentRemoval, TeamChecklistInput:teamChecklistInput, ChecklistProgressInput:checklistProgressInput,
@@ -83,6 +85,7 @@ function operation(operationId:string, summary:string, result:SchemaName, extra:
 }
 const commandError = {description:'Command rejected. Domain failures include commandId and ok:false; request/database failures use the error envelope.',content:json({oneOf:[ref('CommandFailure'),ref('ErrorResponse')]})};
 const paths:Record<string,Record<string,SpecObject>> = {
+  '/v1/personal-state':{get:operation('personalState','Read the caller’s private workspace state','PersonalStateResponse',{parameters:[organization,{name:'key',in:'query',required:true,schema:{type:'string',enum:['planner','preferences','voucher_documents']}}]}),put:operation('savePersonalState','Save the caller’s private workspace state','PersonalStateResponse',{requestBody:request('PersonalStateInput')})},
   '/v1/companion/chat':{post:operation('companionChat','Answer using the caller’s own recent travel status','CompanionResponse',{requestBody:request('CompanionInput'),description:'Read-only AI assistant. At most 10 messages; the last must be from the user. Rate limited to 10 requests per minute per user.'})},
   '/v1/team':{get:operation('team','Overview of the people the caller leads','TeamResponse',{parameters:[organization,{name:'today',in:'query',required:false,schema:{type:'string',format:'date'}}],description:'S1, command and admins. Trips, where each request is in the chain, overdue items, money totals and checklist progress for people the caller added. Records are not added to the caller’s sync.'})},
   '/v1/demo/approve':{post:operation('demoApprove','Approve your own submitted authorization at every level, for a demo','DemoApproveResponse',{requestBody:request('DemoApproveInput'),description:'Available in all workspaces by default. DEMO_APPROVAL_ALL_WORKSPACES=false restricts access to DEMO_APPROVAL_ORGANIZATIONS. Each level is recorded as "Approved for demo" and audited as approval.demo_approved.'})},
@@ -135,7 +138,7 @@ const document = {
 };
 
 // Prevent route additions/renames from silently disappearing from the handoff.
-const apiSource = (await Promise.all(['app.ts','transition.ts','companion.ts','guide.ts','team.ts','demo.ts'].map(file=>readFile(new URL(`../api/${file}`,import.meta.url),'utf8')))).join('\n');
+const apiSource = (await Promise.all(['app.ts','transition.ts','companion.ts','guide.ts','team.ts','demo.ts','personal-state.ts'].map(file=>readFile(new URL(`../api/${file}`,import.meta.url),'utf8')))).join('\n');
 const implemented = [...apiSource.matchAll(/app\.(get|post|put|patch|delete)\('([^']+)'/g)].map(([,method,path])=>`${method} ${path.replace(/:([A-Za-z]+)/g,'{$1}')}`).sort();
 const documented = Object.entries(paths).flatMap(([path,methods])=>Object.keys(methods).map(method=>`${method} ${path}`)).sort();
 if(JSON.stringify(implemented)!==JSON.stringify(documented))throw new Error('API route inventory differs from OpenAPI. Update generate-contracts.ts before generating.');

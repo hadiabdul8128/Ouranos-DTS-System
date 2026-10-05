@@ -38,13 +38,14 @@ import {MealsEstimate} from './meals-estimate';
 import {PlannedCosts} from './planned-costs';
 import {voucherDocuments} from '@/packages/domain/voucher-documents';
 import {VoucherDocumentsCard} from './voucher-documents-card';
+import {usePersonalState} from '@/components/platform/personal-state';
 import type {TravelMode} from '@/packages/domain/travel-mode';
 import type {FlightOption} from '@/packages/domain/flight-search';
 const originKey='ouranos.travel.origin',travelerKey='ouranos.travel.traveler',paymentKey='ouranos.travel.payment';
 const remembered=(key:string)=>{try{return localStorage.getItem(key)||''}catch{return ''}};
 const remember=(key:string,value:string)=>{try{localStorage.setItem(key,value)}catch{/* Browser storage may be off; nothing to remember then. */}};
 /** Most people pay with their travel card, so that's the default until they pick otherwise. */
-const usualPayment=():'gtcc'|'personal'=>remembered(paymentKey)==='personal'?'personal':'gtcc';
+const usualPayment=(saved?:unknown):'gtcc'|'personal'=>saved==='personal'||(!saved&&remembered(paymentKey)==='personal')?'personal':'gtcc';
 import type {HotelProperty} from '@/packages/domain/hotel-discovery';
 import {TravelPackagePanel} from './package-panel';
 import {assessReceipt} from '@/voucher/src/receiptValidity.js';
@@ -167,9 +168,11 @@ type BudgetDraft={hint?:string;id:string;category:Category;description:string;am
 function budgetDraft(item?:PlannedExpense):BudgetDraft{return {id:item?.id||crypto.randomUUID(),category:item?.category||'airfare',description:item?.description||'',amount:item?.originalEstimate?receiptAmountText(item.originalEstimate.amountMinor,item.originalEstimate.currency):item?dollars(item.authorizedAmountMinor):'',currency:(item?.originalEstimate?.currency||'USD') as ReceiptCurrency,usdAmount:item?.originalEstimate?dollars(item.authorizedAmountMinor):'',conversionNote:item?.originalEstimate?.conversionNote||'',merchant:item?.merchant||'',payment:item?.expectedPaymentMethod||'',date:item?.date||'',startDate:item?.startDate||'',endDate:item?.endDate||''}}
 function PlanningForm({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
  const p=usePlatform(),feedback=useFeedback();
+ const {state:preferences,update:updatePreferences}=usePersonalState<{traveler?:string;origin?:string;paymentMethod?:'gtcc'|'personal'}>('preferences',{});
  const [initial]=useState(()=>recent(rows,'authorization',trip.id));const [id]=useState(()=>initial?.id||crypto.randomUUID());
  const parsed=planningModuleSchema.safeParse(initial?.local.data.formData);
  const [traveler,setTraveler]=useState(()=>parsed.success?parsed.data.traveler:remembered(travelerKey)),[origin,setOrigin]=useState(()=>{if(parsed.success)return parsed.data.origin;try{return localStorage.getItem(originKey)||''}catch{return ''}});
+ const travelerValue=traveler||preferences.traveler||'',originValue=origin||preferences.origin||'';
  const [items,setItems]=useState<BudgetDraft[]>(()=>parsed.success?parsed.data.approvedExpenseItems.map(budgetDraft):[]);
  const [flight,setFlight]=useState<SelectedFlight|null>(null),flightItem=useRef<string|null>(null);
  const [travelMode,setTravelMode]=useState<TravelMode|undefined>(()=>parsed.success?(parsed.data.travelMode??(parsed.data.approvedExpenseItems.some(i=>i.category==='airfare')?'air':undefined)):undefined);
@@ -249,12 +252,12 @@ function PlanningForm({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
   setDirty(true);feedback.setError('');feedback.setNotice(`${option.airline} flight added to planned airfare. Adjust the amount if needed.`);
  }
  async function save(){
-  const problems=planProblems(traveler,origin,items);if(problems)throw new Error(problems);remember(travelerKey,traveler.trim());
+  const problems=planProblems(travelerValue,originValue,items);if(problems)throw new Error(problems);remember(travelerKey,travelerValue.trim());updatePreferences(current=>({...current,traveler:travelerValue.trim(),origin:originValue.trim()}));
   const current=await p.repository!.db.entities.get(`authorization:${id}`);if(!editable(current))throw new Error('This plan has already been submitted. Refresh to see its review status.');
   if((current?.local.version||0)!==baselineVersion.current)throw new Error('This plan changed in another session. Your edits are still here; reload to review the newer version before saving.');
   const normalized=items.map(item=>item.currency!=='USD'&&!item.usdAmount?{...item,...editPlanningAmount(item,item.amount,rates)}:item);
   const miles=Number(mileage.miles),centsPerMile=Math.round(Number(mileage.rate)*100);
-  const form=planningModuleSchema.parse({traveler,origin,...(travelMode?{travelMode}:{}),...(travelMode==='pov'&&miles>0&&centsPerMile>0?{mileage:{miles,centsPerMile}}:{}),currency:'USD',allowance:{...allowance,mealsProvided:Object.fromEntries(Object.entries(allowance.mealsProvided).filter(([date])=>date>=text(trip.data.departure)&&date<=text(trip.data.returnDate)))},...(amendment?{amendment}:{}),...(overage&&aea.trim()?{aeaJustification:aea.trim()}:{}),...(relevantPreAudit(checkedItems,preAudit)?{preAudit:relevantPreAudit(checkedItems,preAudit)}:{}),approvedExpenseItems:normalized.map(item=>({id:item.id,category:item.category,description:item.description.trim()||categoryLabels[item.category],authorizedAmountMinor:parseAmountMinor(item.currency==='USD'?item.amount:item.usdAmount),...(item.currency!=='USD'?{originalEstimate:{currency:item.currency,amountMinor:parseReceiptAmount(item.amount,item.currency),conversionNote:item.conversionNote}}:{}),...(item.merchant?{merchant:item.merchant}:{}),...(item.payment?{expectedPaymentMethod:item.payment}:{}),...(item.date?{date:item.date}:{}),...(item.startDate||item.endDate?{startDate:item.startDate,endDate:item.endDate}:{} )}))});
+  const form=planningModuleSchema.parse({traveler:travelerValue,origin:originValue,...(travelMode?{travelMode}:{}),...(travelMode==='pov'&&miles>0&&centsPerMile>0?{mileage:{miles,centsPerMile}}:{}),currency:'USD',allowance:{...allowance,mealsProvided:Object.fromEntries(Object.entries(allowance.mealsProvided).filter(([date])=>date>=text(trip.data.departure)&&date<=text(trip.data.returnDate)))},...(amendment?{amendment}:{}),...(overage&&aea.trim()?{aeaJustification:aea.trim()}:{}),...(relevantPreAudit(checkedItems,preAudit)?{preAudit:relevantPreAudit(checkedItems,preAudit)}:{}),approvedExpenseItems:normalized.map(item=>({id:item.id,category:item.category,description:item.description.trim()||categoryLabels[item.category],authorizedAmountMinor:parseAmountMinor(item.currency==='USD'?item.amount:item.usdAmount),...(item.currency!=='USD'?{originalEstimate:{currency:item.currency,amountMinor:parseReceiptAmount(item.amount,item.currency),conversionNote:item.conversionNote}}:{}),...(item.merchant?{merchant:item.merchant}:{}),...(item.payment?{expectedPaymentMethod:item.payment}:{}),...(item.date?{date:item.date}:{}),...(item.startDate||item.endDate?{startDate:item.startDate,endDate:item.endDate}:{} )}))});
   await p.repository!.stage('authorization.save',id,{tripId:trip.id,formSchemaVersion:PLANNING_SCHEMA_VERSION,formData:form});baselineVersion.current=(await p.repository!.db.entities.get(`authorization:${id}`))!.local.version;setDirty(false);return stageMessage(p,id,'authorization');
  }
  async function submit(){
@@ -272,7 +275,7 @@ function PlanningForm({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
  {status==='approved'&&p.approvalMode!=='preview'&&<ChangeTrip onStart={async reason=>{await onlineCommand(p,'authorization.amend',id,{reason});window.location.reload()}}/>}
  {locked&&status!=='in_review'&&<div className="cw-banner"><Check size={18}/><div><strong>{status==='approved'&&p.approvalMode==='automatic'?'Verified by Ouranos.':status==='approved'?'Approved.':status==='in_review'?'In review.':'This revision is closed.'}</strong><p>{status==='approved'&&p.approvalMode==='automatic'?'Internal checks passed.':''}</p></div>{status==='approved'&&<Link href={`/dashboard/travel/vouchers?tripId=${trip.id}`}>Open voucher <ArrowRight size={16}/></Link>}</div>}
  {p.approvalMode==='required'&&status!=='approved'&&(approval&&!(amendment&&approval.status==='approved')?<ApprovalTracker request={approval}/>:status==='in_review'&&row?.server&&<WaitingForApprovers/>)}{p.approvalMode==='required'&&status==='in_review'&&row?.server&&<DemoApprove authorizationId={id} tripId={trip.id}/>}
- <form onSubmit={e=>{e.preventDefault();void feedback.run('save',save)}}><fieldset disabled={locked||!!feedback.busy} className="cw-fieldset"><div className="cw-card cw-grid"><Field label="Traveler name"><Input value={traveler} onChange={e=>{setTraveler(e.target.value);setDirty(true);remember(travelerKey,e.target.value)}} autoComplete="name" maxLength={200} required/></Field><PlaceField id="origin" label="Starting location" variant="plan" value={origin} onChange={value=>{setOrigin(value);setDirty(true);try{localStorage.setItem(originKey,value)}catch{}}}/><div className="cw-span-full cw-purpose"><span>Purpose</span><p>{text(trip.data.purpose)}</p></div></div>
+ <form onSubmit={e=>{e.preventDefault();void feedback.run('save',save)}}><fieldset disabled={locked||!!feedback.busy} className="cw-fieldset"><div className="cw-card cw-grid"><Field label="Traveler name"><Input value={travelerValue} onChange={e=>{setTraveler(e.target.value);setDirty(true);remember(travelerKey,e.target.value)}} autoComplete="name" maxLength={200} required/></Field><PlaceField id="origin" label="Starting location" variant="plan" value={originValue} onChange={value=>{setOrigin(value);setDirty(true);try{localStorage.setItem(originKey,value)}catch{}}}/><div className="cw-span-full cw-purpose"><span>Purpose</span><p>{text(trip.data.purpose)}</p></div></div>
  <TravelModeField mode={travelMode} onMode={chooseTravelMode} miles={mileage.miles} rate={mileage.rate} onMileage={patch=>{setMileage(m=>({...m,...patch}));setDirty(true)}} onAddMileage={addMileage} onAddRental={addRental} disabled={locked||!!feedback.busy}/>
  {travelMode==='air'&&<FlightSuggestions from={origin} to={text(trip.data.destination)} departure={text(trip.data.departure)} returnDate={text(trip.data.returnDate)} selected={flight} onSelect={selectFlight} disabled={locked||!!feedback.busy}/>}
  <DtsChecksCard items={checkedItems} purpose={text(trip.data.purpose)} atInstallation={Boolean(text(trip.data.installation))} answers={preAudit} onAnswers={answers=>{setPreAudit(answers);setDirty(true)}} onAddLine={(category,description)=>{setItems(current=>current.length>=100?current:[...current,{...budgetDraft(),category,description}]);setDirty(true)}} taxSeparate={taxSeparate} locked={locked}/>
@@ -303,6 +306,7 @@ type ExpenseDraft={id:string;version:number;authorizationItemId:string;merchant:
 function expenseDraft(entity?:Entity):ExpenseDraft{const parsed=originalReceiptSchema.safeParse(entity?.data.originalReceipt),original=parsed.success?parsed.data:null;return {id:entity?.id||crypto.randomUUID(),version:entity?.version||0,authorizationItemId:text(entity?.data.authorizationItemId),merchant:text(entity?.data.merchant),date:text(entity?.data.incurredOn),amount:original?receiptAmountText(original.amountMinor,original.currency):entity?dollars(entity.data.amountMinor):'',currency:(original?.currency||'USD') as ReceiptCurrency,usdAmount:original?dollars(entity?.data.amountMinor):'',usdBasis:original?.usdBasis||'card_statement',conversionNote:original?.conversionNote||'',currencyCorrection:text(entity?.data.receiptCurrencyCorrection),category:(entity?.data.category==='transport'?'ground_transport':entity?.data.category||'other') as Category,paymentMethod:(entity?.data.paymentMethod||'') as ExpenseDraft['paymentMethod'],description:text(entity?.data.description),documentIds:Array.isArray(entity?.data.documentIds)?entity.data.documentIds as string[]:[],startDate:text(entity?.data.serviceStartDate),endDate:text(entity?.data.serviceEndDate),taxes:original?receiptAmountText(original.taxesMinor,original.currency):dollars(entity?.data.taxesMinor)||'',fees:original?receiptAmountText(original.feesMinor,original.currency):dollars(entity?.data.feesMinor)||'',bookedOnline:entity?.data.bookedOnline===true}}
 function VoucherForm({trip,rows,revision}:{trip:Entity;rows:LocalRecord[];revision:ApprovedRevision}){
  const p=usePlatform(),feedback=useFeedback();const approved=planningModuleSchema.parse(revision.snapshot.entity.data.formData);
+ const {state:preferences,update:updatePreferences}=usePersonalState<{traveler?:string;origin?:string;paymentMethod?:'gtcc'|'personal'}>('preferences',{});
  const [initial]=useState(()=>recent(rows,'voucher',trip.id));const [id]=useState(()=>initial?.id||crypto.randomUUID());const baselineVersion=useRef(initial?.local.version||0);const form=record(initial?.local.data.formData);
  const row=rows.find(r=>r.kind==='voucher'&&r.id===id),locked=!editable(row),status=row?.server?.status||row?.local.status||'draft';
  const expenses=rows.filter(r=>r.kind==='expense'&&r.local.tripId===trip.id).map(r=>r.local),documents=rows.filter(r=>r.kind==='document'&&r.local.tripId===trip.id).map(r=>r.local);
@@ -324,7 +328,7 @@ function VoucherForm({trip,rows,revision}:{trip:Entity;rows:LocalRecord[];revisi
   const current=await p.repository!.db.entities.get(`voucher:${id}`);if(!editable(current))throw new Error('This voucher has already been submitted.');
   const departure=text(trip.data.departure),returnDate=text(trip.data.returnDate),lodging=item.category==='lodging';
   const start=item.startDate||departure,end=item.endDate||returnDate,expenseId=crypto.randomUUID();
-  const payload:PayloadOf<'expense.save'>={tripId:trip.id,merchant:(item.merchant||item.description).slice(0,200),incurredOn:item.date||(lodging?end:start),amountMinor:item.authorizedAmountMinor,currency:'USD',category:item.category,paymentMethod:item.expectedPaymentMethod||usualPayment(),authorizationItemId:item.id,description:item.description,documentIds:[],...(lodging&&start<end?{serviceStartDate:start,serviceEndDate:end}:{})};
+  const payload:PayloadOf<'expense.save'>={tripId:trip.id,merchant:(item.merchant||item.description).slice(0,200),incurredOn:item.date||(lodging?end:start),amountMinor:item.authorizedAmountMinor,currency:'USD',category:item.category,paymentMethod:item.expectedPaymentMethod||usualPayment(preferences.paymentMethod),authorizationItemId:item.id,description:item.description,documentIds:[],...(lodging&&start<end?{serviceStartDate:start,serviceEndDate:end}:{})};
   await p.repository!.stage('expense.save',expenseId,payload);setIncluded(current=>[...current,expenseId]);
   setEditor(current=>current&&current.authorizationItemId===item.id&&!expenses.some(e=>e.id===current.id)?null:current);
   setResolutions(current=>{const next={...current};delete next[`auth:${item.id}:not_used`];return next});changed();
@@ -332,18 +336,18 @@ function VoucherForm({trip,rows,revision}:{trip:Entity;rows:LocalRecord[];revisi
  }
  function differentFromPlanned(item:PlannedExpense){
   const lodging=item.category==='lodging';
-  setEditor({...expenseDraft(),authorizationItemId:item.id,category:item.category,merchant:(item.merchant||item.description).slice(0,200),description:item.description,paymentMethod:item.expectedPaymentMethod||usualPayment(),date:item.date||(lodging?item.endDate||text(trip.data.returnDate):item.startDate||text(trip.data.departure)),...(lodging?{startDate:item.startDate||text(trip.data.departure),endDate:item.endDate||text(trip.data.returnDate)}:{})});
+  setEditor({...expenseDraft(),authorizationItemId:item.id,category:item.category,merchant:(item.merchant||item.description).slice(0,200),description:item.description,paymentMethod:item.expectedPaymentMethod||usualPayment(preferences.paymentMethod),date:item.date||(lodging?item.endDate||text(trip.data.returnDate):item.startDate||text(trip.data.departure)),...(lodging?{startDate:item.startDate||text(trip.data.departure),endDate:item.endDate||text(trip.data.returnDate)}:{})});
   feedback.setError('');bringIntoView('cw-expense-editor','input[placeholder="0.00"]');
  }
  function markNotUsed(item:PlannedExpense,notUsed:boolean){
   if(notUsed)setEditor(current=>current&&current.authorizationItemId===item.id&&!expenses.some(e=>e.id===current.id)?null:current);
   setResolutions(current=>{const next={...current},key=`auth:${item.id}:not_used`;if(notUsed)next[key]={type:'not_used',value:item.id,at:new Date().toISOString()};else delete next[key];return next});changed();
  }
- function editExpense(entity?:Entity,receipts=false){const draft=expenseDraft(entity);setEditor(entity?draft:{...draft,paymentMethod:usualPayment()});feedback.setError('');bringIntoView(receipts?'cw-expense-receipts':'cw-expense-editor',receipts?'button':undefined)}
+ function editExpense(entity?:Entity,receipts=false){const draft=expenseDraft(entity);setEditor(entity?draft:{...draft,paymentMethod:usualPayment(preferences.paymentMethod)});feedback.setError('');bringIntoView(receipts?'cw-expense-receipts':'cw-expense-editor',receipts?'button':undefined)}
  async function saveExpense(){
   if(!editor)return;const current=await p.repository!.db.entities.get(`voucher:${id}`);if(!editable(current))throw new Error('This voucher has already been submitted.');
   const currentExpense=await p.repository!.db.entities.get(`expense:${editor.id}`);if((currentExpense?.local.version||0)!==editor.version)throw new Error('This expense changed in another session. Cancel this edit and reopen its current details before saving.');
-  const paymentMethod=editor.paymentMethod;if(!paymentMethod)throw new Error('Choose a payment method.');remember(paymentKey,paymentMethod);
+  const paymentMethod=editor.paymentMethod;if(!paymentMethod)throw new Error('Choose a payment method.');remember(paymentKey,paymentMethod);updatePreferences(current=>({...current,paymentMethod}));
   const originalAmount=editor.currency==='USD'?parseAmountMinor(editor.amount):parseReceiptAmount(editor.amount,editor.currency);
   if(originalAmount<=0)throw new Error('Enter a positive receipt amount.');
   const taxesMinor=editor.category==='lodging'&&editor.taxes.trim()?parseReceiptAmount(editor.taxes,editor.currency):0;

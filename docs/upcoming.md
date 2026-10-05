@@ -4,7 +4,7 @@
 
 Calendar days with items have a dot (red when overdue), and the remaining days of current and upcoming trips, from today on, are shaded as travel days. Choosing a day shows only that day's items, and **Add** starts with that date. Items can be marked done or removed.
 
-Added items are saved in this browser for the signed-in account and workspace; they do not sync to other devices yet. Syncing them would need a new server record type and migration.
+Added items are saved privately to the signed-in account and workspace in Supabase, so they follow the user across devices. A small browser cache keeps the last state available during a temporary connection loss and uploads older browser-only items the next time the workspace connects.
 
 ## Checklists (hidden)
 

@@ -17,6 +17,134 @@
     }
   ],
   "paths": {
+    "/v1/personal-state": {
+      "get": {
+        "operationId": "personalState",
+        "summary": "Read the caller’s private workspace state",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonalStateResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organizationId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "planner",
+                "preferences",
+                "voucher_documents"
+              ]
+            }
+          }
+        ]
+      },
+      "put": {
+        "operationId": "savePersonalState",
+        "summary": "Save the caller’s private workspace state",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonalStateResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request could not be completed. Inspect error.code; error.details may be absent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PersonalStateInput"
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/companion/chat": {
       "post": {
         "operationId": "companionChat",
@@ -2363,6 +2491,65 @@
       }
     },
     "schemas": {
+      "PersonalStateInput": {
+        "type": "object",
+        "properties": {
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "key": {
+            "type": "string",
+            "enum": [
+              "planner",
+              "preferences",
+              "voucher_documents"
+            ]
+          },
+          "value": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "organizationId",
+          "key",
+          "value"
+        ],
+        "additionalProperties": false
+      },
+      "PersonalStateResponse": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "planner",
+              "preferences",
+              "voucher_documents"
+            ]
+          },
+          "value": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "exists": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "key",
+          "value",
+          "exists",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
       "CompanionInput": {
         "type": "object",
         "properties": {

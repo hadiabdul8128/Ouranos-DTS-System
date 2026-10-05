@@ -22,19 +22,19 @@ function group(date:string,today:string){const d=daysBetween(today,date);return 
 
 /** Added items plus trip departure and return dates within the next year, soonest first. Voucher deadlines are left out. */
 export function useUpcoming(){
- const p=usePlatform(),{state,update}=usePlanner(),[today]=useState(localToday);
+ const p=usePlatform(),{state,update,error}=usePlanner(),[today]=useState(localToday);
  const rows=useLiveQuery<LocalRecord[]>(()=>p.repository?.db.entities.where('kind').equals('trip').toArray()||Promise.resolve([]),[p.repository]);
  const trips=(rows||[]).map(r=>({id:r.id,destination:text(r.local.data.destination),departure:text(r.local.data.departure),returnDate:text(r.local.data.returnDate)})).filter(t=>t.destination&&t.departure&&t.returnDate);
  // Checklists from leaders appear once, on their due date, until every step is done.
  const assigned:Checklist[]=(useAssignedChecklists().checklists??[]).filter(c=>c.dueOn).map(c=>({id:c.id,title:'From your leader',source:'instructions',instructions:'',createdAt:c.createdAt,steps:[{id:c.id,title:c.title,due:c.dueOn!,done:c.doneStepIds.length>=c.steps.length}]}));
  const entries=upcomingEntries(state.items,assigned,trips,today,{vouchers:false}).filter(e=>e.date<=addDays(today,365));
- return {entries,trips,today,update,soon:entries.filter(e=>daysBetween(today,e.date)<7).length};
+ return {entries,trips,today,update,error,soon:entries.filter(e=>daysBetween(today,e.date)<7).length};
 }
 const toDate=(value:string)=>new Date(`${value}T12:00:00`);
 const fromDate=(date:Date)=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
 
 export function UpcomingPanel(){
- const {entries:all,trips,today,update}=useUpcoming();
+ const {entries:all,trips,today,update,error:syncError}=useUpcoming();
  const [adding,setAdding]=useState(false),[draft,setDraft]=useState({kind:'appointment' as PlannerKind,title:'',date:'',time:''}),[error,setError]=useState(''),[day,setDay]=useState<string|null>(null);
  const entries=day?all.filter(e=>e.date===day):all;
  const groups=day?[{name:new Date(`${day}T12:00:00Z`).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',timeZone:'UTC'}),entries}]:['Overdue','This week','This month','Later'].map(name=>({name,entries:entries.filter(e=>group(e.date,today)===name)})).filter(g=>g.entries.length);
@@ -68,6 +68,6 @@ export function UpcomingPanel(){
    <div className="upcoming-body"><span className="upcoming-kind">{kindNames[entry.kind]}{entry.time?` · ${entry.time}`:''}</span><strong>{entry.href?<Link href={entry.href}>{entry.title} <ArrowUpRight size={12}/></Link>:entry.title}</strong><small>{when(entry.date,today)}{entry.detail?` · ${entry.detail}`:''}</small></div>
    <div className="upcoming-actions">{entry.itemId&&<button type="button" aria-label={`Mark ${entry.title} done`} onClick={()=>complete(entry)}><Check size={14}/></button>}{entry.itemId&&<button type="button" aria-label={`Remove ${entry.title}`} onClick={()=>remove(entry.itemId!)}><Trash2 size={13}/></button>}</div>
   </li>})}</ul></div>)}
-  <p className="upcoming-note">Saved on this device.</p>
+  <p className="upcoming-note" role={syncError?'alert':undefined}>{syncError||'Saved to your workspace.'}</p>
  </section>;
 }

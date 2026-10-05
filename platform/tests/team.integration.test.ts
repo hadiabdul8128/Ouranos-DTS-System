@@ -94,6 +94,14 @@ describe('leaders and their people',()=>{
   expect(person!.checklists).toEqual([{id:sent.body.checklistId,title:'Deployment prep',done:1,total:2,dueOn:'2026-10-18'}]);
   expect(person!.overdue).toEqual(expect.arrayContaining([{kind:'checklist_late',label:'Checklist late · Deployment prep',checklistId:sent.body.checklistId}]));
  });
+ it('keeps personal workspace state in Supabase and private to its owner',async()=>{
+  const saved=await call('member','PUT','/v1/personal-state',{organizationId,key:'preferences',value:{traveler:'Team Member',origin:'Austin, TX'}});
+  expect(saved.status,JSON.stringify(saved.body)).toBe(200);
+  expect((await call('member','PUT','/v1/personal-state',{organizationId,key:'preferences',value:{largeText:true}})).body.value).toEqual({traveler:'Team Member',origin:'Austin, TX',largeText:true});
+  expect((await call('member','GET',`/v1/personal-state?organizationId=${organizationId}&key=preferences`)).body).toMatchObject({exists:true,value:{traveler:'Team Member',origin:'Austin, TX',largeText:true}});
+  expect((await call('stranger','GET',`/v1/personal-state?organizationId=${organizationId}&key=preferences`)).body).toMatchObject({exists:false,value:{}});
+  expect((await call('outsider','GET',`/v1/personal-state?organizationId=${organizationId}&key=preferences`)).status).toBe(403);
+ });
  it('removes someone from a team and leaves other people’s records out of the view',async()=>{
   const stranger=ok(await send('stranger','trip.save',crypto.randomUUID(),0,{destination:'Reno, NV',departure:'2026-11-01',returnDate:'2026-11-02',purpose:'Meeting',timezone:'UTC'}));
   expect(JSON.stringify(await team('s1'))).not.toContain(stranger.id);

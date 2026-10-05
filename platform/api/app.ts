@@ -18,6 +18,7 @@ import {registerCompanionRoutes} from './companion';
 import {registerGuideRoutes} from './guide';
 import {registerTeamRoutes} from './team';
 import {registerDemoRoutes} from './demo';
+import {registerPersonalStateRoutes} from './personal-state';
 import {CONTRACT_VERSION,uuid,entityKindSchema,organizationInput,membershipInput,syncPushSchema,commandSchema} from '../../packages/contracts/index';
 import {DomainError,requireCondition as check} from '../../packages/domain/errors';
 
@@ -98,5 +99,6 @@ export async function buildApp(config:PlatformConfig,options:{pool?:Pool;logger?
  registerGuideRoutes(app,pool);
  registerTeamRoutes(app,pool);
  registerDemoRoutes(app,pool,config);
+ registerPersonalStateRoutes(app,pool);
  app.addHook('onClose',async()=>{if(!options.pool)await pool.end()});return app;
 }
