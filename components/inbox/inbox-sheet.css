@@ -44,6 +44,11 @@
 :root .app-surface .cw-sheet.inbox-shell :is(.inbox-trip-details,.inbox-expenses) dt{margin:0;font-size:14px;color:var(--ap-ink-3)}
 :root .app-surface .cw-sheet.inbox-shell :is(.inbox-trip-details,.inbox-expenses) dd{font-size:15px;color:var(--ap-ink)}
 
+:root .app-surface .cw-sheet.inbox-shell .inbox-section-heading{align-items:baseline;margin:var(--ap-space-xl) 0 var(--ap-space-sm);padding-bottom:var(--ap-space-xs);border-bottom:1px solid var(--ap-rule)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-section-heading h2{font-family:var(--ap-font-display);font-size:20px;font-weight:500}
+:root .app-surface .cw-sheet.inbox-shell .inbox-section-heading span{font-size:14px;color:var(--ap-ink-2)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-section-heading strong{font-family:var(--ap-font-display);font-size:20px;font-weight:500;font-variant-numeric:tabular-nums;padding-bottom:2px;border-bottom:4px double var(--ap-ink)}
+
 @media(max-width:650px){
  :root .app-surface .cw-sheet.inbox-shell .inbox-heading{margin-top:var(--ap-space-lg)}
  :root .app-surface .cw-sheet.inbox-shell .inbox-reader{padding:0}
