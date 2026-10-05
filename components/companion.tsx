@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
@@ -45,16 +44,15 @@ function CompanionPanel() {
     (entity.kind === "authorization" && ["draft", "changes_requested"].includes(entity.status)) ||
     (entity.kind === "voucher" && ["draft", "needs_action", "changes_requested"].includes(entity.status))
   ).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-  return <aside className="companion" aria-label="Ouranos companion">
+  return <aside className="companion" aria-label="Ouranos assistant">
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button className="companion-launcher" aria-label="Open Ouranos companion" title="Your companion">
-          <Image src="/companion/robot-dog.png" alt="" width={144} height={144} sizes="(max-width: 600px) 88px, 112px" />
-          <span className="companion-chat-mark" aria-hidden="true"><MessageCircle size={13}/></span>
+        <button className="companion-launcher" aria-label="Open Ouranos assistant" title="Ask Ouranos">
+          <MessageCircle size={24} strokeWidth={2} aria-hidden="true"/>
         </button>
       </PopoverTrigger>
       <PopoverContent className="companion-panel" side="top" align="end" sideOffset={8} collisionPadding={16} aria-labelledby="companion-title">
-        <header><h2 id="companion-title">Your companion</h2><button aria-label="Close companion" onClick={() => setOpen(false)}><X size={17}/></button></header>
+        <header><h2 id="companion-title">Ouranos assistant</h2><button aria-label="Close assistant" onClick={() => setOpen(false)}><X size={17}/></button></header>
         <section aria-labelledby="companion-tasks">
           <h3 id="companion-tasks">To do</h3>
           {!rows || !platform.repository ? <p role="status">Loading your workspace…</p> : tasks.length ? <ul>{tasks.slice(0, 5).map(task => {
