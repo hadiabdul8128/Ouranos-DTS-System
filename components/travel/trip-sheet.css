@@ -79,6 +79,16 @@
 :root .app-surface .cw-sheet .authorization-total .authorization-total-final>strong{font-family:var(--ap-font-display);font-size:30px;font-weight:500;padding-bottom:3px;border-bottom:4px double var(--ap-ink)}
 :root .app-surface .cw-sheet .authorization-total p{font-size:14px;color:var(--ap-ink-3)}
 
+/* Approval status: a hairline frame with a coloured square, not a side stripe. */
+:root .app-surface .cw-sheet .approval-status{border:1px solid var(--ap-rule);border-radius:4px;background:var(--ap-paper-2);padding:var(--ap-space-md)}
+:root .app-surface .cw-sheet .approval-status strong{display:inline-flex;align-items:center;gap:var(--ap-space-xs);font-size:16px;font-weight:600}
+:root .app-surface .cw-sheet .approval-status strong::before{content:'';width:8px;height:8px;flex:0 0 8px;background:var(--ap-signal)}
+:root .app-surface .cw-sheet .approval-status.is-done strong::before{background:var(--ap-accent)}
+:root .app-surface .cw-sheet .approval-status.is-rejected strong::before{background:var(--ap-danger)}
+:root .app-surface .cw-sheet .approval-status span{font-size:14px;color:var(--ap-ink-2)}
+:root .app-surface .cw-sheet .approval-status blockquote{border-left:0;padding:0;font-size:14px;color:var(--ap-ink-2)}
+:root .app-surface .cw-sheet .approval-steps i{border-radius:0}
+
 /* Voucher: the approved plan as a framed reference block, plain-text labels. */
 :root .app-surface .cw-sheet .cw-approved-summary{border:1px solid var(--ap-rule);border-radius:4px;background:var(--ap-paper-2);padding:var(--ap-space-md);margin-bottom:var(--ap-space-xl)}
 :root .app-surface .cw-sheet .cw-summary-label,
