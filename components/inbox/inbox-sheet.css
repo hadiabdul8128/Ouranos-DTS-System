@@ -9,6 +9,10 @@
 :root .app-surface .cw-sheet.inbox-shell .inbox-heading h1{font-family:var(--ap-font-display);font-weight:500;font-style:normal;font-size:clamp(34px,7vw,44px);line-height:1.05;letter-spacing:-.02em}
 :root .app-surface .cw-sheet.inbox-shell .inbox-heading p{margin:var(--ap-space-xs) 0 0;font-size:16px;color:var(--ap-ink-2)}
 
+/* The list: no box around it, one ruled line per message, the date in its own column. */
+:root .app-surface .cw-sheet.inbox-shell .inbox-layout{border:0;border-radius:0;background:none;min-height:0;gap:0 var(--ap-space-xl)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-list{background:none;border-right:0}
+
 @media(max-width:650px){
  :root .app-surface .cw-sheet.inbox-shell .inbox-heading{margin-top:var(--ap-space-lg)}
 }
