@@ -202,3 +202,8 @@ body{font-family:var(--font-body);font-size:16px;line-height:1.5;letter-spacing:
 .app-surface :is(.cw-eyebrow,.travel-eyebrow){font-family:var(--font-body);font-weight:600;letter-spacing:.08em}
 .app-surface select:invalid{color:#7f8a7c}.app-surface select option{color:var(--ink);background:var(--field)}
 .app-surface .travel-stage h1{margin-bottom:24px}
+/* Size floors so nothing people need to read is tiny: 14px actions, 13px captions, 12px small caps labels. */
+:root .app-surface :is(button,.cw-upload-button,.back-link,.cw-workspace-link,.cw-inbox-link,.cw-text-button){font-size:14px}
+:root .app-surface :is(small,.cw-expense-info span,.cw-expense-info small,.planned-costs-name span,.planned-costs-head span,.voucher-docs-head span,.voucher-docs-na,.voucher-docs-todo,.voucher-docs-ok,.voucher-docs li p,.cw-check span,.cw-check small,.cw-inline-document strong,.cw-receipt strong,.cw-receipt span,.platform-status,.cw-totals span,.cw-hub-status,.trip-timeline li a,.trip-timeline-step,.meals-estimate-note,.dts-check>p,.dts-check-reason,.dts-perdiem li,.cw-trip-list span,.cw-approved-summary p,.connected-review-meta,.review-record span,.platform-record p,.help-step-text p,.history-note,.team-person>header p,.cw-item-heading>span,.cw-field){font-size:13px}
+:root .app-surface :is(.cw-eyebrow,.cw-status,.travel-eyebrow,.voucher-docs-auto,.voucher-docs-note,.trip-timeline-next span,.home-next-label,.review-summary-who,.meals-estimate h3){font-size:12px}
+:root .app-surface :is(.cw-purpose>span,.travel-mode-estimate span,.inbox-row-meta span,.inbox-row-meta time){font-size:13px}
