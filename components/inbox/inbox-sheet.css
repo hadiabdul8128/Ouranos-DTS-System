@@ -24,6 +24,15 @@
 :root .app-surface .cw-sheet.inbox-shell .inbox-unread-dot{order:-1;width:8px;height:8px;border-radius:0;background:var(--ap-signal)}
 :root .app-surface .cw-sheet.inbox-shell .inbox-preview{grid-column:2;font-size:14px;color:var(--ap-ink-3)}
 
+/* Reader: the message title in the display face, the status as a framed line, facts as label and value rows. */
+:root .app-surface .cw-sheet.inbox-shell .inbox-reader{padding:var(--ap-space-md) 0 0}
+:root .app-surface .cw-sheet.inbox-shell .inbox-reader-header{border-bottom-color:var(--ap-rule)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-reader-header>span{display:none}
+:root .app-surface .cw-sheet.inbox-shell .inbox-reader-header h2{font-family:var(--ap-font-display);font-size:28px;font-weight:500;letter-spacing:-.01em;margin:0 0 var(--ap-space-xs)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-reader-header time{font-size:14px;color:var(--ap-ink-3)}
+
 @media(max-width:650px){
  :root .app-surface .cw-sheet.inbox-shell .inbox-heading{margin-top:var(--ap-space-lg)}
+ :root .app-surface .cw-sheet.inbox-shell .inbox-reader{padding:0}
+ :root .app-surface .cw-sheet.inbox-shell .inbox-reader-header h2{font-size:24px}
 }
