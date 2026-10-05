@@ -69,7 +69,9 @@
 :root .app-surface .cw-sheet.inbox-shell .inbox-expenses h3{font-size:16px;font-weight:600}
 :root .app-surface .cw-sheet.inbox-shell .inbox-expenses header strong{font-size:16px;font-variant-numeric:tabular-nums}
 :root .app-surface .cw-sheet.inbox-shell .inbox-snapshot-note{font-size:14px;color:var(--ap-ink-3)}
-:root .app-surface .cw-sheet.inbox-shell .inbox-open-plan{border-color:var(--ap-rule);border-radius:4px;font-size:14px}
+:root .app-surface .cw-sheet.inbox-shell .inbox-open-plan{border-color:var(--ap-rule);border-radius:6px;font-size:15px;font-weight:500;transition:background-color .15s ease}
+:root .app-surface .cw-sheet.inbox-shell .inbox-open-plan:first-of-type{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-open-plan:first-of-type:hover{background:var(--ap-ink)}
 :root .app-surface .cw-sheet.inbox-shell .inbox-empty{border:1px solid var(--ap-rule);border-radius:4px;align-items:flex-start;text-align:left}
 :root .app-surface .cw-sheet.inbox-shell .inbox-empty h2{font-family:var(--ap-font-display)}
 :root .app-surface .cw-sheet.inbox-shell .inbox-message-row:focus-visible{outline:2px solid var(--ap-accent);outline-offset:-2px}
