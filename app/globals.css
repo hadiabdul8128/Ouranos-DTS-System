@@ -173,3 +173,32 @@ html[data-text=large] body{zoom:1.18}html[data-text=large],html[data-text=large]
 #cw-expense-editor,#cw-expense-receipts{scroll-margin-top:24px}
 @media(max-width:600px){.cw-trip-list .cw-trip-row{flex-wrap:wrap;gap:0;padding-bottom:10px}.cw-trip-list .cw-trip-row>a{flex-basis:100%}.cw-draft-action{max-width:100%}}
 @keyframes cw-arrived{0%{box-shadow:0 0 0 0 #e0bf7a00}20%{box-shadow:0 0 0 3px #e0bf7a99}100%{box-shadow:0 0 0 0 #e0bf7a00}}.cw-arrived{animation:cw-arrived 1.6s ease-out;scroll-margin-top:24px}@media(prefers-reduced-motion:reduce){.cw-arrived{animation:none;outline:2px solid #e0bf7a;outline-offset:2px}}#cw-expense-editor,#cw-expense-receipts{scroll-margin-top:24px}
+
+/* Readability pass (UI Pro Max: Corporate Trust pairing, visible labels, 16px fields, 4.5:1 contrast).
+   The typewriter face stays as the Ouranos wordmark only; everything people read or type uses a clean sans. */
+:root{--font-body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;--font-display:"Lexend","Source Sans 3",system-ui,sans-serif;--font-brand:"Tirto Writter",Georgia,serif;
+ --ink:#edf0e8;--ink-soft:#c9d0c3;--ink-muted:#a9b1a4;--field:#1a1f1a;--field-line:#3a4338;--field-focus:#c9d3a8;--card:#171b17;--card-line:#2a3129}
+@theme inline{--font-sans:var(--font-body)}
+body{font-family:var(--font-body);font-size:16px;line-height:1.5;letter-spacing:0;font-feature-settings:"kern","liga"}
+.ambient-dots{display:none}
+.quiet-brand,.gateway-wordmark,.hyper-wordmark,.cw-brand{font-family:var(--font-brand)}
+.app-surface :is(h1,h2,h3,h4){font-family:var(--font-display);letter-spacing:-.01em;color:var(--ink)}
+.app-surface h1{font-weight:600;letter-spacing:-.02em}
+.app-surface :is(h2,h3){font-weight:500}
+/* Labels sit above every field, readable at a glance. */
+.app-surface :is(.cw-field,.travel-field,.platform-block)>label,.app-surface .travel-field label,.app-surface .cw-field{font-size:14px;font-weight:500;color:var(--ink-soft);letter-spacing:0}
+/* One field style everywhere: 16px text (no iOS zoom), clear edge, obvious focus. */
+.app-surface :is(input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=range]),select,textarea){font-family:var(--font-body);font-size:16px;color:var(--ink);background-color:var(--field);border:1px solid var(--field-line);border-radius:8px;box-shadow:none;transition:border-color .15s,box-shadow .15s}
+.app-surface :is(input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=range]),select){min-height:48px}
+.app-surface :is(input,textarea)::placeholder{color:#7f8a7c;opacity:1}
+.app-surface :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea):hover:not(:disabled){border-color:#4b5648}
+.app-surface :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea):focus-visible,.app-surface :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea):focus{outline:none;border-color:var(--field-focus);box-shadow:0 0 0 3px #c9d3a833}
+/* Helper and secondary text: bigger and brighter than before. */
+.app-surface :is(.cw-muted,.place-hint,.dates-hint,.platform-muted,.travel-subtitle,.history-note,.help-summary,.help-sub){color:var(--ink-muted);font-size:14px;line-height:1.55}
+.app-surface :is(.place-field .place-hint,.installation-field .place-hint,.dates-hint){font-size:13px;margin-top:6px}
+/* Cards: one calm surface, a quiet edge, no glow. */
+.app-surface :is(.cw-card,.platform-block,.meals-estimate,.planned-costs,.team-person,.team-add,.team-compose,.trip-timeline-next,.review-summary,.change-trip,.help-ask){background:var(--card);border-color:var(--card-line);box-shadow:none;border-radius:10px}
+.app-surface button{font-family:var(--font-body);letter-spacing:0}
+.app-surface :is(.cw-eyebrow,.travel-eyebrow){font-family:var(--font-body);font-weight:600;letter-spacing:.08em}
+.app-surface select:invalid{color:#7f8a7c}.app-surface select option{color:var(--ink);background:var(--field)}
+.app-surface .travel-stage h1{margin-bottom:24px}
