@@ -30,6 +30,15 @@
 :root .app-surface .cw-sheet.inbox-shell .inbox-row-status{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 :root .app-surface .cw-sheet.inbox-shell .inbox-row-status::after{content:'. '}
 
+/* All / Unread switch under the title. */
+:root .app-surface .cw-sheet.inbox-shell .inbox-filter{display:inline-flex;gap:2px;margin-top:var(--ap-space-sm);padding:3px;border-radius:8px;background:var(--ap-paper-2);border:1px solid var(--ap-rule-soft)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-filter button{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 var(--ap-space-md);border:0;border-radius:6px;background:transparent;font-size:14px;font-weight:500;color:var(--ap-ink-2);cursor:pointer;transition:background-color .15s ease,color .15s ease}
+:root .app-surface .cw-sheet.inbox-shell .inbox-filter button:hover{color:var(--ap-ink)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-filter button[aria-pressed=true]{background:var(--ap-rule);color:var(--ap-ink);font-weight:600}
+:root .app-surface .cw-sheet.inbox-shell .inbox-filter span{display:grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--ap-signal);color:var(--ap-paper);font-size:12px;font-weight:700}
+:root .app-surface .cw-sheet.inbox-shell .inbox-filter-empty{margin:var(--ap-space-md) var(--ap-space-sm);font-size:15px;color:var(--ap-ink-2)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-filter-empty button{min-height:44px;margin-left:var(--ap-space-2xs);background:none;border:0;font-size:15px;color:var(--ap-ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+
 /* Reader: the message title in the display face, the status as a framed line, facts as label and value rows. */
 :root .app-surface .cw-sheet.inbox-shell .inbox-reader{padding:var(--ap-space-xs) 0 0 var(--ap-space-xl)}
 :root .app-surface .cw-sheet.inbox-shell .inbox-reader-header{border-bottom-color:var(--ap-rule)}
