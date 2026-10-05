@@ -265,11 +265,5 @@ body{font-family:var(--font-body);font-size:16px;line-height:1.5;letter-spacing:
 :root .app-surface :is(.quiet-header nav a,.quiet-header>a:not(.quiet-brand),.inbox-header-actions :is(a,button),.home-links a){font-family:var(--font-display);font-size:17px;font-weight:600;letter-spacing:0}
 @media(max-width:600px){:root .app-surface :is(.quiet-header nav a,.quiet-header>a:not(.quiet-brand),.inbox-header-actions :is(a,button)){font-size:16px}}
 
-/* Home dashboard: everything in a soft, heavy serif in the Cooper Black family. Fraunces with its softness
-   axis at full is the free stand-in for "Gentle" (MadeType); the brand wordmark keeps its own face. */
-:root .app-surface .prompt-page{--font-soft:"Gentle","Fraunces",Georgia,serif}
-:root .app-surface .prompt-page :is(h1,h2,p,a,button,input,textarea,span,label,time):not(.quiet-brand):not(.inbox-count){font-family:var(--font-soft);font-variation-settings:"SOFT" 100,"WONK" 0;font-synthesis:none}
-:root .app-surface .prompt-page :is(h1,h2){font-weight:900;font-optical-sizing:auto;letter-spacing:-.015em}
-:root .app-surface .prompt-page :is(.inbox-header-actions :is(a,button),.home-links a){font-size:18px;font-weight:600;letter-spacing:0}
-:root .app-surface .prompt-page :is(input,textarea){font-weight:500}
-:root .app-surface .prompt-page :is(input,textarea)::placeholder{font-family:var(--font-soft);font-variation-settings:"SOFT" 100,"WONK" 0}
+/* Home dashboard: its one headline at the heaviest weight. */
+:root .app-surface .prompt-page :is(h1,h2){font-weight:900}
