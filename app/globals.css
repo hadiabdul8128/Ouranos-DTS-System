@@ -179,7 +179,7 @@ html[data-text=large] body{zoom:1.18}html[data-text=large],html[data-text=large]
 :root{--font-body:"Atkinson Hyperlegible Next",system-ui,-apple-system,"Segoe UI",sans-serif;--font-display:"Astralaga","Instrument Serif",Georgia,serif;--font-brand:"Tirto Writter",Georgia,serif;
  --ink:#edf0e8;--ink-soft:#c9d0c3;--ink-muted:#a9b1a4;--field:#1a1f1a;--field-line:#3a4338;--field-focus:#c9d3a8;--card:#171b17;--card-line:#2a3129}
 @theme inline{--font-sans:var(--font-body)}
-body{font-family:var(--font-body);font-size:16px;line-height:1.5;letter-spacing:0;font-feature-settings:"kern","liga"}
+body{font-family:var(--font-body);font-size:16px;line-height:1.5;letter-spacing:0;font-feature-settings:"kern","liga";font-synthesis:none}
 .ambient-dots{display:none}
 .quiet-brand,.gateway-wordmark,.hyper-wordmark,.cw-brand{font-family:var(--font-brand)}
 /* Headlines in a tall high-contrast serif. Astralaga is first in the stack: add its licensed webfont with an
