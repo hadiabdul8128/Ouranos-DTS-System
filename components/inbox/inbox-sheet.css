@@ -19,6 +19,9 @@
 :root .app-surface .cw-sheet.inbox-shell .inbox-row-meta>span{display:none}
 :root .app-surface .cw-sheet.inbox-shell .inbox-row-meta time{font-size:14px;font-variant-numeric:tabular-nums;color:var(--ap-ink-3);padding-left:var(--ap-space-xs)}
 :root .app-surface .cw-sheet.inbox-shell .inbox-message-row strong{grid-column:2;justify-content:flex-start;font-size:16px;font-weight:400;color:var(--ap-ink-2)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-message-row.is-unread strong{font-weight:600;color:var(--ap-ink)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-message-row.is-unread time{color:var(--ap-ink)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-unread-dot{order:-1;width:8px;height:8px;border-radius:0;background:var(--ap-signal)}
 :root .app-surface .cw-sheet.inbox-shell .inbox-preview{grid-column:2;font-size:14px;color:var(--ap-ink-3)}
 
 @media(max-width:650px){
