@@ -20,3 +20,12 @@
  --ap-font-display:"Lexend",var(--font-body),sans-serif;
  --ap-space-2xs:4px;--ap-space-xs:8px;--ap-space-sm:12px;--ap-space-md:16px;--ap-space-lg:24px;--ap-space-xl:40px;--ap-space-2xl:56px;
 }
+
+/* Heading: the destination is the title; the document type sits under it in plain text. */
+:root .app-surface .cw-plan .cw-heading{margin:var(--ap-space-xl) 0 var(--ap-space-lg)}
+:root .app-surface .cw-plan .cw-heading h1{font-family:var(--ap-font-display);font-weight:500;font-style:normal;font-size:clamp(34px,7vw,48px);line-height:1.05;letter-spacing:-.02em;margin:0;color:var(--ap-ink);overflow-wrap:anywhere;min-width:0}
+:root .app-surface .cw-plan .cw-plan-subtitle{margin:var(--ap-space-xs) 0 var(--ap-space-md);font-size:16px;line-height:1.5;color:var(--ap-ink-2)}
+
+@media(max-width:600px){
+ :root .app-surface .cw-plan .cw-heading{margin:var(--ap-space-lg) 0 var(--ap-space-md)}
+}
