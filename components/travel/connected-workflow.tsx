@@ -114,7 +114,7 @@ function useUnsaved(dirty:boolean){useEffect(()=>{if(!dirty)return;const warn=(e
 function Feedback({error,notice}:{error:string;notice:string}){return <>{error&&<p className="cw-feedback cw-error" role="alert">{error}</p>}{notice&&<p className="cw-feedback cw-notice" role="status">{notice}</p>}</>}
 function Field({label:caption,children,className=''}:{label:string;children:ReactNode;className?:string}){return <label className={`cw-field ${className}`}><span>{caption}</span>{children}</label>}
 function Categories(){return travelCategories.map(c=><option key={c} value={c}>{categoryLabels[c]}</option>)}
-function Status({value}:{value:string}){return <span className={`cw-status cw-status-${value}`}>{label(value)}</span>}
+function Status({value}:{value:string}){const name=label(value);return <span className={`cw-status cw-status-${value}`}>{name.charAt(0).toUpperCase()+name.slice(1)}</span>}
 async function deviceId(p:Platform){const db=p.repository!.db;return db.transaction('rw',db.meta,async()=>{const saved=(await db.meta.get('deviceId'))?.value;if(saved)return saved;const id=crypto.randomUUID();await db.meta.put({key:'deviceId',value:id});return id})}
 async function readyToSubmit(p:Platform,tripId:string){
  if(!p.client||!p.engine||!p.repository||!p.organizationId)throw new Error('Connect your workspace before continuing.');

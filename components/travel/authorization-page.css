@@ -50,9 +50,18 @@
 :root .app-surface .cw-plan .trip-timeline-next p{flex-basis:100%;font-size:14px;color:var(--ap-ink-2)}
 :root .app-surface .cw-plan .dts-check.is-warning{border-left:0;padding-left:0}
 
+/* Section heads: heading on a hairline, status as plain words after a small square. */
+:root .app-surface .cw-plan .cw-section-heading{margin:var(--ap-space-2xl) 0 var(--ap-space-md);padding-bottom:var(--ap-space-sm);border-bottom:1px solid var(--ap-rule);align-items:baseline}
+:root .app-surface .cw-plan .cw-section-heading h2{font-family:var(--ap-font-display);font-size:22px;font-weight:500;letter-spacing:-.01em}
+:root .app-surface .cw-plan .cw-status{display:inline-flex;align-items:center;gap:var(--ap-space-xs);padding:0;background:none;border:0;text-transform:none;letter-spacing:0;font-size:14px;font-weight:500;color:var(--ap-ink-2)}
+:root .app-surface .cw-plan .cw-status::before{content:'';width:8px;height:8px;background:var(--ap-ink-3)}
+:root .app-surface .cw-plan :is(.cw-status-approved,.cw-status-ready)::before{background:var(--ap-accent)}
+:root .app-surface .cw-plan :is(.cw-status-in_review,.cw-status-changes_requested,.cw-status-failed)::before{background:var(--ap-signal)}
+
 @media(max-width:600px){
  :root .app-surface .cw-plan .cw-heading{margin:var(--ap-space-lg) 0 var(--ap-space-md)}
  :root .app-surface .cw-plan .trip-timeline li a,
  :root .app-surface .cw-plan .trip-timeline-step{font-size:12px}
  :root .app-surface .cw-plan .trip-timeline ol{grid-template-columns:minmax(0,1.5fr) repeat(3,minmax(0,1fr))}
+ :root .app-surface .cw-plan .cw-section-heading{margin-top:var(--ap-space-xl)}
 }
