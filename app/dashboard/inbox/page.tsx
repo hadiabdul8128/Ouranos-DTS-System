@@ -13,6 +13,8 @@ import {authorizationNoticeSchema,inboxMessages} from '@/packages/contracts/auth
 import type {LocalRecord} from '@/packages/offline/database';
 import type {Entity,Command} from '@/packages/contracts';
 import '@/components/inbox/inbox.css';
+import '@/components/travel/trip-sheet.css';
+import '@/components/inbox/inbox-sheet.css';
 export default function Inbox(){const p=usePlatform();return <InboxContent key={`${p.organizationId}:${p.session?.user.id}`} />}
 function InboxContent(){
  const p=usePlatform(),[selectedId,setSelectedId]=useState<string|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
@@ -46,7 +48,7 @@ function InboxContent(){
  }
  useEffect(()=>{if(!focused)return;const timer=setTimeout(()=>void open(focused));return()=>clearTimeout(timer)},[focused?.id]);// eslint-disable-line react-hooks/exhaustive-deps
  async function refresh(){setBusy(true);setError('');try{await p.engine?.sync()}catch{setError('Unable to refresh your inbox.')}finally{setBusy(false)}}
- return <main className="quiet-page cw-page"><header className="quiet-header"><Link href="/dashboard" className="quiet-brand">Ouranos</Link><Link href="/dashboard/travel" className="back-link">Travel system <ArrowUpRight size={15}/></Link></header><section className="cw-shell inbox-shell">
+ return <main className="quiet-page cw-page"><header className="quiet-header"><Link href="/dashboard" className="quiet-brand">Ouranos</Link><Link href="/dashboard/travel" className="back-link">Travel system <ArrowUpRight size={15}/></Link></header><section className="cw-shell cw-sheet inbox-shell">
   <Link href="/dashboard" className="back-link"><ArrowLeft size={14}/> Home</Link><div className="inbox-heading"><div><h1>Inbox</h1><p>{unread?`${unread} unread ${unread===1?'message':'messages'}`:'Your travel updates, in one place.'}</p></div><div className="cw-actions">{canReview&&<Button asChild variant="outline"><Link href="/dashboard/review">Requests to review <ArrowUpRight size={15}/></Link></Button>}<Button variant="outline" onClick={()=>void refresh()} disabled={busy||!p.engine} aria-label="Refresh inbox"><RefreshCw size={16}/><span>Refresh</span></Button></div></div>
   {error&&<p role="alert" className="inbox-error">{error} {selected?.status==='unread'&&<button disabled={busy} onClick={()=>void open(selected)}>Retry</button>}</p>}
   {p.sync.state==='offline'&&<p role="status" className="inbox-snapshot-note">Offline · showing messages saved on this device.</p>}
