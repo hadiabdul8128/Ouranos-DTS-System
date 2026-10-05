@@ -39,6 +39,17 @@
 :root .app-surface .cw-plan .trip-timeline li.is-current .trip-timeline-step{border-top-color:var(--ap-signal);color:var(--ap-ink);font-weight:600}
 :root .app-surface .cw-plan .trip-timeline li a:hover{color:var(--ap-ink)}
 
+/* Attention blocks: a full hairline frame instead of a thick side stripe. */
+:root .app-surface .cw-plan :is(.trip-timeline-next,.cw-banner,.amendment-banner,.demo-approve,.lodging-aea,.cw-issue,.cw-error,.cw-notice){border:1px solid var(--ap-rule);border-radius:4px;background:var(--ap-paper-2);padding:var(--ap-space-md) var(--ap-space-md)}
+:root .app-surface .cw-plan .demo-approve{border-style:dashed}
+:root .app-surface .cw-plan .cw-error{border-color:var(--ap-danger)}
+:root .app-surface .cw-plan .trip-timeline-next>div{flex-direction:row;flex-wrap:wrap;column-gap:var(--ap-space-xs);row-gap:var(--ap-space-2xs);align-items:baseline}
+:root .app-surface .cw-plan .trip-timeline-next span{font-size:16px;letter-spacing:0;text-transform:none;font-weight:600;color:var(--ap-signal)}
+:root .app-surface .cw-plan .trip-timeline-next span::after{content:':'}
+:root .app-surface .cw-plan .trip-timeline-next strong{font-size:16px;font-weight:600}
+:root .app-surface .cw-plan .trip-timeline-next p{flex-basis:100%;font-size:14px;color:var(--ap-ink-2)}
+:root .app-surface .cw-plan .dts-check.is-warning{border-left:0;padding-left:0}
+
 @media(max-width:600px){
  :root .app-surface .cw-plan .cw-heading{margin:var(--ap-space-lg) 0 var(--ap-space-md)}
  :root .app-surface .cw-plan .trip-timeline li a,
