@@ -101,6 +101,10 @@
 :root .app-surface .cw-sheet .cw-issue{border-color:var(--ap-signal-line);background:var(--ap-paper-2)}
 :root .app-surface .cw-sheet .cw-issue>p{color:var(--ap-signal)}
 
+/* Receipts: with none yet, the file hint sits right under the buttons instead of in an empty box. */
+:root .app-surface .cw-sheet .cw-section-heading+.cw-card.cw-receipt-list{margin:0 0 var(--ap-space-lg);padding-top:0}
+:root .app-surface .cw-sheet .cw-receipt-list>.cw-muted{margin:0;padding:0;font-size:14px;color:var(--ap-ink-3)}
+
 :root .app-surface .cw-sheet :is(.trip-timeline li a,.cw-icon-button,button):focus-visible{outline:2px solid var(--ap-accent);outline-offset:3px}
 
 @media(max-width:600px){
