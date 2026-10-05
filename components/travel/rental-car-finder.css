@@ -1,0 +1,23 @@
+.rental-finder-body{display:flex;flex-direction:column;gap:12px;padding:4px 0 14px}
+.rental-finder-note{margin:0;font-size:14px;line-height:1.6;color:var(--ap-ink-2,#a7afa3)}
+.rental-finder-status{margin:0;font-size:14px;line-height:1.6;color:var(--ap-ink-2,#a7afa3);display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.rental-finder-status p{margin:0}
+.rental-finder-list{list-style:none;margin:0;padding:0}
+.rental-finder-list li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--ap-rule-soft,#272e26)}
+.rental-finder-info{display:flex;flex-direction:column;gap:3px;min-width:0}
+.rental-finder-info strong{font-size:15px;font-weight:600;color:var(--ap-ink,#edf0e8);overflow-wrap:anywhere}
+.rental-finder-info>span{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:13px;line-height:1.5;color:var(--ap-ink-2,#a7afa3)}
+.rental-finder-actions{display:flex;align-items:center;gap:12px;flex:0 0 auto}
+.rental-finder-actions button{min-height:44px}
+.rental-finder-actions a{display:inline-flex;align-items:center;gap:4px;min-height:44px;font-size:14px;color:var(--ap-ink-2,#a7afa3);text-decoration:underline;text-underline-offset:3px}
+.rental-finder-actions a:hover{color:var(--ap-ink,#edf0e8)}
+.rental-finder-more{align-self:flex-start;min-height:44px;padding:0;background:none;border:0;font-size:14px;color:var(--ap-ink-2,#a7afa3);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.rental-finder-source{margin:0;font-size:13px;color:var(--ap-ink-3,#7f887c)}
+.rental-finder-source a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+.rental-finder :is(a,button):focus-visible{outline:2px solid var(--ap-accent,#a5b38a);outline-offset:3px}
+.rental-finder-filter{display:flex;gap:0;border:1px solid var(--ap-rule,#343c33);border-radius:4px;align-self:flex-start;overflow:hidden}
+.rental-finder-filter button{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;background:transparent;border:0;font-size:14px;color:var(--ap-ink-2,#a7afa3);cursor:pointer}
+.rental-finder-filter button+button{border-left:1px solid var(--ap-rule,#343c33)}
+.rental-finder-filter button[aria-pressed=true]{background:var(--ap-paper-3,#1b211c);color:var(--ap-ink,#edf0e8);font-weight:600}
+@media(max-width:480px){.rental-finder-list li{flex-direction:column;align-items:stretch;gap:8px}.rental-finder-actions{gap:20px}}
+.rental-finder-branch{font-weight:400;color:var(--ap-ink-2,#a7afa3)}
