@@ -76,6 +76,8 @@
 :root .app-surface .cw-sheet.inbox-shell .inbox-empty h2{font-family:var(--ap-font-display)}
 :root .app-surface .cw-sheet.inbox-shell .inbox-message-row:focus-visible{outline:2px solid var(--ap-accent);outline-offset:-2px}
 
+@media(prefers-reduced-motion:reduce){:root .app-surface .cw-sheet.inbox-shell :is(.inbox-message-row,.inbox-filter button,.inbox-open-plan){transition:none}}
+
 @media(max-width:650px){
  :root .app-surface .cw-sheet.inbox-shell .inbox-heading{margin-top:var(--ap-space-lg);display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start}
  :root .app-surface .cw-sheet.inbox-shell .inbox-heading .cw-actions{flex-direction:column;align-items:flex-end;gap:var(--ap-space-xs)}
