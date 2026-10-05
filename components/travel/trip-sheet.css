@@ -86,6 +86,16 @@
 :root .app-surface .cw-sheet .cw-approved-summary>div:last-child{border-top-color:var(--ap-rule-soft)}
 :root .app-surface .cw-sheet .voucher-docs h2{font-family:var(--ap-font-display);font-size:22px;font-weight:500;letter-spacing:-.01em}
 
+/* Voucher totals: the same ledger. The card and personal lines first, the actual total last with the double rule. */
+:root .app-surface .cw-sheet .cw-totals{display:flex;flex-direction:column;gap:0;margin:var(--ap-space-md) 0 var(--ap-space-lg);padding:0;border:0}
+:root .app-surface .cw-sheet .cw-totals>div{display:grid;grid-template-columns:auto minmax(var(--ap-space-md),1fr) auto;align-items:baseline;gap:var(--ap-space-xs);margin:var(--ap-space-sm) 0;padding:0;border:0}
+:root .app-surface .cw-sheet .cw-totals>div::after{content:'';grid-column:2;grid-row:1;align-self:end;margin-bottom:5px;border-bottom:1px dotted var(--ap-rule)}
+:root .app-surface .cw-sheet .cw-totals span{font-size:15px;color:var(--ap-ink-2)}
+:root .app-surface .cw-sheet .cw-totals strong{grid-column:3;grid-row:1;font-size:16px;font-weight:500;letter-spacing:0;color:var(--ap-ink);font-variant-numeric:tabular-nums}
+:root .app-surface .cw-sheet .cw-totals>div:first-child{order:3;margin-top:var(--ap-space-md);padding-top:var(--ap-space-md);border-top:1px solid var(--ap-rule)}
+:root .app-surface .cw-sheet .cw-totals>div:first-child span{font-size:16px;font-weight:600;color:var(--ap-ink)}
+:root .app-surface .cw-sheet .cw-totals>div:first-child strong{font-family:var(--ap-font-display);font-size:30px;padding-bottom:3px;border-bottom:4px double var(--ap-ink)}
+
 :root .app-surface .cw-sheet :is(.trip-timeline li a,.cw-icon-button,button):focus-visible{outline:2px solid var(--ap-accent);outline-offset:3px}
 
 @media(max-width:600px){
@@ -94,5 +104,6 @@
  :root .app-surface .cw-sheet .trip-timeline-step{font-size:12px}
  :root .app-surface .cw-sheet .trip-timeline ol{grid-template-columns:minmax(0,1.5fr) repeat(3,minmax(0,1fr))}
  :root .app-surface .cw-sheet .cw-section-heading{margin-top:var(--ap-space-xl)}
- :root .app-surface .cw-sheet .authorization-total .authorization-total-final>strong{font-size:26px}
+ :root .app-surface .cw-sheet .authorization-total .authorization-total-final>strong,
+ :root .app-surface .cw-sheet .cw-totals>div:first-child strong{font-size:26px}
 }
