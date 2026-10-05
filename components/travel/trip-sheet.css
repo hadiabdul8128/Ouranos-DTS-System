@@ -78,6 +78,14 @@
 :root .app-surface .cw-sheet .authorization-total .authorization-total-final>strong{font-family:var(--ap-font-display);font-size:30px;font-weight:500;padding-bottom:3px;border-bottom:4px double var(--ap-ink)}
 :root .app-surface .cw-sheet .authorization-total p{font-size:14px;color:var(--ap-ink-3)}
 
+/* Voucher: the approved plan as a framed reference block, plain-text labels. */
+:root .app-surface .cw-sheet .cw-approved-summary{border:1px solid var(--ap-rule);border-radius:4px;background:var(--ap-paper-2);padding:var(--ap-space-md);margin-bottom:var(--ap-space-xl)}
+:root .app-surface .cw-sheet .cw-summary-label,
+:root .app-surface .cw-sheet .cw-approved-summary .cw-muted{font-size:14px;font-weight:500;color:var(--ap-ink-2);margin:0}
+:root .app-surface .cw-sheet .cw-approved-summary strong{font-family:var(--ap-font-display);font-weight:500;color:var(--ap-ink);font-variant-numeric:tabular-nums}
+:root .app-surface .cw-sheet .cw-approved-summary>div:last-child{border-top-color:var(--ap-rule-soft)}
+:root .app-surface .cw-sheet .voucher-docs h2{font-family:var(--ap-font-display);font-size:22px;font-weight:500;letter-spacing:-.01em}
+
 :root .app-surface .cw-sheet :is(.trip-timeline li a,.cw-icon-button,button):focus-visible{outline:2px solid var(--ap-accent);outline-offset:3px}
 
 @media(max-width:600px){
