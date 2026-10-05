@@ -54,3 +54,6 @@ platform/.runtime/
 *.tsbuildinfo
 playwright-report/
 test-results/
+
+# Downloads kept by scripts/update-rental-car-catalog.py
+.rental-cache/
