@@ -68,6 +68,12 @@
 :root .app-surface .cw-plan .cw-cost-icon{flex:0 0 auto;width:auto;height:auto;background:none;color:var(--ap-ink-2);align-self:flex-start;padding-top:2px}
 :root .app-surface .cw-plan .cw-cost-amount{font-family:var(--ap-font-display);font-weight:500;font-variant-numeric:tabular-nums}
 
+/* Total: a ledger. Dotted leaders tie each label to its amount; the total gets the accountant's double rule. */
+:root .app-surface .cw-plan .authorization-total{margin:var(--ap-space-2xl) 0 var(--ap-space-lg);padding:0;border:0}
+:root .app-surface .cw-plan .authorization-total>div{display:grid;grid-template-columns:auto minmax(var(--ap-space-md),1fr) auto;align-items:baseline;gap:var(--ap-space-xs);margin:var(--ap-space-sm) 0;font-size:15px;color:var(--ap-ink-2)}
+:root .app-surface .cw-plan .authorization-total>div::after{content:'';grid-column:2;grid-row:1;align-self:end;margin-bottom:5px;border-bottom:1px dotted var(--ap-rule)}
+:root .app-surface .cw-plan .authorization-total>div>strong{grid-column:3;grid-row:1;font-size:16px;color:var(--ap-ink)}
+
 @media(max-width:600px){
  :root .app-surface .cw-plan .cw-heading{margin:var(--ap-space-lg) 0 var(--ap-space-md)}
  :root .app-surface .cw-plan .trip-timeline li a,
