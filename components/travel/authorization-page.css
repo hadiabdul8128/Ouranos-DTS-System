@@ -74,10 +74,15 @@
 :root .app-surface .cw-plan .authorization-total>div::after{content:'';grid-column:2;grid-row:1;align-self:end;margin-bottom:5px;border-bottom:1px dotted var(--ap-rule)}
 :root .app-surface .cw-plan .authorization-total>div>strong{grid-column:3;grid-row:1;font-size:16px;color:var(--ap-ink)}
 
+:root .app-surface .cw-plan .authorization-total .authorization-total-final{margin-top:var(--ap-space-lg);padding-top:var(--ap-space-md);border-top:1px solid var(--ap-rule);font-size:16px;font-weight:600;color:var(--ap-ink)}
+:root .app-surface .cw-plan .authorization-total .authorization-total-final>strong{font-family:var(--ap-font-display);font-size:30px;font-weight:500;padding-bottom:3px;border-bottom:4px double var(--ap-ink)}
+:root .app-surface .cw-plan .authorization-total p{font-size:14px;color:var(--ap-ink-3)}
+
 @media(max-width:600px){
  :root .app-surface .cw-plan .cw-heading{margin:var(--ap-space-lg) 0 var(--ap-space-md)}
  :root .app-surface .cw-plan .trip-timeline li a,
  :root .app-surface .cw-plan .trip-timeline-step{font-size:12px}
  :root .app-surface .cw-plan .trip-timeline ol{grid-template-columns:minmax(0,1.5fr) repeat(3,minmax(0,1fr))}
  :root .app-surface .cw-plan .cw-section-heading{margin-top:var(--ap-space-xl)}
+ :root .app-surface .cw-plan .authorization-total .authorization-total-final>strong{font-size:26px}
 }
