@@ -5,6 +5,7 @@
 /* A lit sphere: light from the top left falling off into shadow. */
 .companion-orb{position:relative;display:block;width:60px;height:60px;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 32% 26%,#f4f7ea 0%,#c6d2a6 9%,#93a76f 30%,#5b6d40 55%,#2c3720 78%,#11160c 100%);box-shadow:inset -8px -10px 18px #050704cc,inset 4px 5px 10px #ffffff1f,0 0 0 1px #0b0e0b,0 14px 24px -8px #000e,0 0 28px -6px #aebc9466}
 .companion-orb::before{content:'';position:absolute;left:20%;top:11%;width:34%;height:22%;border-radius:50%;background:radial-gradient(ellipse at center,#fffffff2 0%,#ffffff66 40%,#ffffff00 72%);transform:rotate(-28deg);z-index:1}
+.companion-orb::after{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 62% 96%,#cfe0a866 0%,#cfe0a800 30%),radial-gradient(circle at 50% 50%,#00000000 62%,#00000059 100%);z-index:1}
 .companion-panel{width:min(340px,calc(100vw - 32px));padding:18px;border:1px solid #343c33;border-radius:16px;background:#141815;color:#edf0e8;box-shadow:0 18px 60px #0007;max-height:calc(100dvh - 180px);overflow-y:auto;font-family:var(--font-sans)}
 .companion-panel header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .companion-panel h2{font-size:18px;font-weight:400;margin:0}
