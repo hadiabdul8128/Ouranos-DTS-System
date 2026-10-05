@@ -8,13 +8,14 @@ import {usePlatform,SyncIndicator} from '@/components/platform/provider';
 import {Button} from '@/components/ui/button';
 import {AuthorizationMessage} from '@/components/inbox/authorization-message';
 import {ApprovalUpdateMessage} from '@/components/inbox/approval-update-message';
-import {approvalUpdateNoticeSchema,approvalUpdateSummary} from '@/packages/contracts/approval-chain';
+import {approvalUpdateNoticeSchema} from '@/packages/contracts/approval-chain';
 import {authorizationNoticeSchema,inboxMessages} from '@/packages/contracts/authorization-notice';
 import type {LocalRecord} from '@/packages/offline/database';
 import type {Entity,Command} from '@/packages/contracts';
 import '@/components/inbox/inbox.css';
 import '@/components/travel/trip-sheet.css';
 import '@/components/inbox/inbox-sheet.css';
+import {MessageList} from '@/components/inbox/message-list';
 export default function Inbox(){const p=usePlatform();return <InboxContent key={`${p.organizationId}:${p.session?.user.id}`} />}
 function InboxContent(){
  const p=usePlatform(),[selectedId,setSelectedId]=useState<string|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
@@ -30,6 +31,7 @@ function InboxContent(){
  const parsed=selected?authorizationNoticeSchema.safeParse(selected.data):null,update=selected?approvalUpdateNoticeSchema.safeParse(selected.data):null;
  const canReview=p.approvalMode!=='preview'&&p.memberships.some(m=>m.organizationId===p.organizationId&&['reviewer','approver','admin','auditor'].includes(m.role));
  const unread=messages.filter(n=>n.status==='unread').length;
+ const [now]=useState(()=>new Date());
  async function open(message:Entity){
   setSelectedId(message.id);setError('');
   if(message.status==='read')return;
@@ -53,7 +55,7 @@ function InboxContent(){
   {error&&<p role="alert" className="inbox-error">{error} {selected?.status==='unread'&&<button disabled={busy} onClick={()=>void open(selected)}>Retry</button>}</p>}
   {p.sync.state==='offline'&&<p role="status" className="inbox-snapshot-note">Offline · showing messages saved on this device.</p>}
   {rows===undefined?<p role="status">Loading your messages…</p>:messages.length===0?<div className="inbox-empty"><InboxSprite size={28}/><h2>You’re all caught up.</h2><p>When you submit an authorization, your confirmation and each approval update will appear here.</p><Link href="/dashboard/travel">Open your trips <ArrowUpRight size={15}/></Link></div>:<div className={`inbox-layout ${selected?'inbox-has-selection':''}`}>
-   <nav className="inbox-list" aria-label="Inbox messages">{messages.map(message=>{const notice=authorizationNoticeSchema.safeParse(message.data),decision=approvalUpdateNoticeSchema.safeParse(message.data);return <button key={message.id} type="button" className={`inbox-message-row ${message.status==='unread'?'is-unread':''}`} aria-current={selectedId===message.id?'true':undefined} disabled={busy} onClick={()=>void open(message)}><span className="inbox-row-meta"><span>Ouranos · Travel</span><time dateTime={notice.success?notice.data.submittedAt:decision.success?decision.data.decidedAt:message.updatedAt}>{new Date(notice.success?notice.data.submittedAt:decision.success?decision.data.decidedAt:message.updatedAt).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</time></span><strong>{String(message.data.title||'Travel update')}{message.status==='unread'&&<span className="inbox-unread-dot" aria-label="Unread"/>}</strong><span className="inbox-preview">{notice.success?`${notice.data.submission.trip.destination} · Sent for review`:decision.success?`${decision.data.destination?`${decision.data.destination} · `:''}${approvalUpdateSummary(decision.data)}`:'An update about your travel request.'}</span></button>})}</nav>
+   <MessageList messages={messages} selectedId={selectedId} busy={busy} onOpen={message=>void open(message)} now={now}/>
    <div className="inbox-reader">{selected?<article aria-labelledby="message-title"><button className="back-link inbox-back" onClick={()=>{setSelectedId(null);setError('')}}><ArrowLeft size={14}/> All messages</button><div className="inbox-reader-header"><span>Ouranos · Travel</span><h2 id="message-title">{String(selected.data.title||'Travel update')}</h2><time dateTime={parsed?.success?parsed.data.submittedAt:update?.success?update.data.decidedAt:selected.updatedAt}>{new Date(parsed?.success?parsed.data.submittedAt:update?.success?update.data.decidedAt:selected.updatedAt).toLocaleString('en-US',{dateStyle:'medium',timeStyle:'short'})}</time></div>{parsed?.success?<AuthorizationMessage notice={parsed.data} request={requestFor(parsed.data.requestId,parsed.data.authorizationId)}/>:update?.success?<ApprovalUpdateMessage notice={update.data} request={requestFor(update.data.requestId)}/>:<><p className="inbox-snapshot-note">{selected.data.type==='authorization_submitted'?'The submitted details could not be read. Open the authorization to review this request.':'Open your travel workspace to see the details and current status of this request.'}</p>{selected.tripId&&<Link className="inbox-open-plan" href={`/dashboard/travel/planning?tripId=${selected.tripId}`}>View authorization <ArrowUpRight size={16}/></Link>}{p.memberships.some(m=>m.organizationId===p.organizationId&&['reviewer','approver','admin','auditor'].includes(m.role))&&<Link className="inbox-open-plan" href="/dashboard/review">Open review inbox <ArrowUpRight size={16}/></Link>}</>}</article>:<div className="inbox-reader-empty"><InboxSprite size={26}/><p>Select a message to see its details.</p></div>}</div>
   </div>}
  </section><footer className="cw-footer"><span/><SyncIndicator/></footer></main>;
