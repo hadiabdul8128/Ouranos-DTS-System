@@ -276,3 +276,19 @@ body{font-family:var(--font-body);font-size:16px;line-height:1.5;letter-spacing:
 .typing-animation-cursor{display:inline-block;margin-left:1px;animation:typing-cursor-blink 1s step-end infinite}
 @keyframes typing-cursor-blink{50%{opacity:0}}
 @media(prefers-reduced-motion:reduce){.typing-animation-cursor{animation:none}}
+
+/* Home: other systems as quiet text tiles under the request box. */
+.home-systems{margin:40px auto 0;text-align:left}
+:root .app-surface .prompt-page .home-systems h2{margin:0 0 12px;font-size:14px;font-weight:600;letter-spacing:0;color:#a7afa3}
+.home-systems ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.home-systems li{display:flex}
+.home-system{position:relative;flex:1;display:flex;flex-direction:column;gap:2px;min-height:64px;padding:12px 32px 12px 14px;border:1px solid #2b322a;border-radius:6px;background:#121611;color:#edf0e8;transition:border-color .15s ease,background-color .15s ease}
+.home-system:hover{border-color:#4a5448;background:#171c16}
+.home-system:focus-visible{outline:2px solid #a5b38a;outline-offset:2px}
+.home-system strong{font-size:15px;font-weight:600;line-height:1.3}
+.home-system span{font-size:13px;line-height:1.4;color:#a7afa3}
+.home-system svg{position:absolute;top:12px;right:10px;color:#7f887c}
+.home-system:hover svg{color:#edf0e8}
+@media(max-width:700px){.home-systems ul{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){.home-system{transition:none}}
+@media(max-width:700px){.prompt-page .intent-stage{padding-bottom:132px}}
