@@ -260,3 +260,7 @@ body{font-family:var(--font-body);font-size:16px;line-height:1.5;letter-spacing:
 :root .app-surface .cw-quick-add{margin-top:0}
 :root .app-surface .cw-cost{scroll-margin-top:24px}
 :root .app-surface .cw-cost .cw-disclosure{margin:0;padding:2px 0;border-top:1px solid #272e26}:root .app-surface .cw-cost .planning-hotel-finder{margin:4px 0 0}:root .app-surface .cw-cost .cw-grid{row-gap:12px}:root .app-surface .cw-cost .cw-item-hint{margin:-2px 0 4px!important}
+
+/* Navigation labels (Upcoming, Inbox, Settings, Travel system, Help) in the headline serif; counts stay in the reading face. */
+:root .app-surface :is(.quiet-header nav a,.quiet-header>a:not(.quiet-brand),.inbox-header-actions :is(a,button),.home-links a){font-family:var(--font-display);font-size:18px;font-weight:400;letter-spacing:.005em}
+:root .app-surface .inbox-count{font-family:var(--font-body)}
