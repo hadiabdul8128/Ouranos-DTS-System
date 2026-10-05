@@ -1,0 +1,22 @@
+/* Hallmark · macrostructure: Long Document (order sheet) · tone: utilitarian · anchor hue: olive 125
+ * theme: custom (vibe: "filled-in travel order, field-issue olive" · paper oklch(15.6% 0.007 145) · accent oklch(75% 0.06 125) olive · Lexend + Source Sans 3)
+ * scope: travel authorization page only (.cw-plan) · signature: accounting double rule under the total
+ * Hallmark · pre-emit critique: P4 H4 E4 S4 R5 V4
+ */
+
+/* Tokens. Values match the app palette; everything below reads from these. */
+:root .app-surface .cw-plan{
+ --ap-paper:oklch(15.6% 0.007 145);
+ --ap-paper-2:oklch(19.5% 0.009 145);
+ --ap-paper-3:oklch(23% 0.011 145);
+ --ap-rule:oklch(33% 0.017 145);
+ --ap-rule-soft:oklch(26% 0.012 145);
+ --ap-ink:oklch(95% 0.012 125);
+ --ap-ink-2:oklch(75% 0.015 130);
+ --ap-ink-3:oklch(66% 0.015 130);
+ --ap-accent:oklch(75% 0.06 125);
+ --ap-signal:oklch(81% 0.09 80);
+ --ap-danger:oklch(78% 0.11 25);
+ --ap-font-display:"Lexend",var(--font-body),sans-serif;
+ --ap-space-2xs:4px;--ap-space-xs:8px;--ap-space-sm:12px;--ap-space-md:16px;--ap-space-lg:24px;--ap-space-xl:40px;--ap-space-2xl:56px;
+}
