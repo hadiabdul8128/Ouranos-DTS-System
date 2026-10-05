@@ -26,6 +26,22 @@
 :root .app-surface .cw-plan .cw-heading h1{font-family:var(--ap-font-display);font-weight:500;font-style:normal;font-size:clamp(34px,7vw,48px);line-height:1.05;letter-spacing:-.02em;margin:0;color:var(--ap-ink);overflow-wrap:anywhere;min-width:0}
 :root .app-surface .cw-plan .cw-plan-subtitle{margin:var(--ap-space-xs) 0 var(--ap-space-md);font-size:16px;line-height:1.5;color:var(--ap-ink-2)}
 
+/* Stages: a ruled strip, not dots on a line. Each stage owns a bar; the current one is brass. */
+:root .app-surface .cw-plan .trip-timeline ol{gap:var(--ap-space-2xs)}
+:root .app-surface .cw-plan .trip-timeline ol::before{display:none}
+:root .app-surface .cw-plan .trip-timeline li{text-align:left}
+:root .app-surface .cw-plan .trip-timeline li a,
+:root .app-surface .cw-plan .trip-timeline-step{flex-direction:row;align-items:flex-start;gap:0;min-height:44px;padding-top:var(--ap-space-xs);border-top:3px solid var(--ap-rule);font-size:13px;color:var(--ap-ink-3)}
+:root .app-surface .cw-plan .trip-timeline-dot{display:none}
+:root .app-surface .cw-plan .trip-timeline li.is-done a,
+:root .app-surface .cw-plan .trip-timeline li.is-done .trip-timeline-step{border-top-color:var(--ap-accent);color:var(--ap-ink-2)}
+:root .app-surface .cw-plan .trip-timeline li.is-current a,
+:root .app-surface .cw-plan .trip-timeline li.is-current .trip-timeline-step{border-top-color:var(--ap-signal);color:var(--ap-ink);font-weight:600}
+:root .app-surface .cw-plan .trip-timeline li a:hover{color:var(--ap-ink)}
+
 @media(max-width:600px){
  :root .app-surface .cw-plan .cw-heading{margin:var(--ap-space-lg) 0 var(--ap-space-md)}
+ :root .app-surface .cw-plan .trip-timeline li a,
+ :root .app-surface .cw-plan .trip-timeline-step{font-size:12px}
+ :root .app-surface .cw-plan .trip-timeline ol{grid-template-columns:minmax(0,1.5fr) repeat(3,minmax(0,1fr))}
 }
