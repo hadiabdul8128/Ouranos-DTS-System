@@ -207,3 +207,10 @@ body{font-family:var(--font-body);font-size:16px;line-height:1.5;letter-spacing:
 :root .app-surface :is(small,.cw-expense-info span,.cw-expense-info small,.planned-costs-name span,.planned-costs-head span,.voucher-docs-head span,.voucher-docs-na,.voucher-docs-todo,.voucher-docs-ok,.voucher-docs li p,.cw-check span,.cw-check small,.cw-inline-document strong,.cw-receipt strong,.cw-receipt span,.platform-status,.cw-totals span,.cw-hub-status,.trip-timeline li a,.trip-timeline-step,.meals-estimate-note,.dts-check>p,.dts-check-reason,.dts-perdiem li,.cw-trip-list span,.cw-approved-summary p,.connected-review-meta,.review-record span,.platform-record p,.help-step-text p,.history-note,.team-person>header p,.cw-item-heading>span,.cw-field){font-size:13px}
 :root .app-surface :is(.cw-eyebrow,.cw-status,.travel-eyebrow,.voucher-docs-auto,.voucher-docs-note,.trip-timeline-next span,.home-next-label,.review-summary-who,.meals-estimate h3){font-size:12px}
 :root .app-surface :is(.cw-purpose>span,.travel-mode-estimate span,.inbox-row-meta span,.inbox-row-meta time){font-size:13px}
+
+/* Flat sections (GOV.UK Design System patterns + UI Pro Max "Flat Design": no shadows, corners ≤4px, structure from type and rules).
+   Sections are separated by a rule and a heading instead of each living in its own rounded box. */
+:root .app-surface :is(.cw-card,.meals-estimate,.planned-costs,.team-add,.team-compose,.change-trip,.help-ask,.platform-block){background:transparent;border:0;border-top:1px solid var(--card-line);border-radius:0;box-shadow:none;padding:24px 0 4px;margin:8px 0 28px}
+:root .app-surface .cw-card.cw-grid{padding-top:24px}
+:root .app-surface .cw-budget-list{display:flex;flex-direction:column}
+:root .app-surface .cw-budget-list .cw-budget-item{margin:0;padding:20px 0 8px}
