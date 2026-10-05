@@ -17,6 +17,7 @@
  --ap-accent:oklch(75% 0.06 125);
  --ap-signal:oklch(81% 0.09 80);
  --ap-danger:oklch(78% 0.11 25);
+ --ap-signal-line:oklch(48% 0.06 80);
  --ap-font-display:"Lexend",var(--font-body),sans-serif;
  --ap-space-2xs:4px;--ap-space-xs:8px;--ap-space-sm:12px;--ap-space-md:16px;--ap-space-lg:24px;--ap-space-xl:40px;--ap-space-2xl:56px;
 }
@@ -95,6 +96,10 @@
 :root .app-surface .cw-sheet .cw-totals>div:first-child{order:3;margin-top:var(--ap-space-md);padding-top:var(--ap-space-md);border-top:1px solid var(--ap-rule)}
 :root .app-surface .cw-sheet .cw-totals>div:first-child span{font-size:16px;font-weight:600;color:var(--ap-ink)}
 :root .app-surface .cw-sheet .cw-totals>div:first-child strong{font-family:var(--ap-font-display);font-size:30px;padding-bottom:3px;border-bottom:4px double var(--ap-ink)}
+
+/* Voucher issues: framed in brass, not striped. */
+:root .app-surface .cw-sheet .cw-issue{border-color:var(--ap-signal-line);background:var(--ap-paper-2)}
+:root .app-surface .cw-sheet .cw-issue>p{color:var(--ap-signal)}
 
 :root .app-surface .cw-sheet :is(.trip-timeline li a,.cw-icon-button,button):focus-visible{outline:2px solid var(--ap-accent);outline-offset:3px}
 
