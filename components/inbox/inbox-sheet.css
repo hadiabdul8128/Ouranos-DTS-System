@@ -39,6 +39,11 @@
 :root .app-surface .cw-sheet.inbox-shell .inbox-confirmation strong{font-size:16px;font-weight:600}
 :root .app-surface .cw-sheet.inbox-shell .inbox-confirmation p{font-size:14px;color:var(--ap-ink-2)}
 
+:root .app-surface .cw-sheet.inbox-shell :is(.inbox-trip-details,.inbox-expenses dl){display:block;margin:0}
+:root .app-surface .cw-sheet.inbox-shell :is(.inbox-trip-details,.inbox-expenses dl)>div{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:var(--ap-space-sm);align-items:baseline;padding:var(--ap-space-xs) 0;border-bottom:1px solid var(--ap-rule-soft)}
+:root .app-surface .cw-sheet.inbox-shell :is(.inbox-trip-details,.inbox-expenses) dt{margin:0;font-size:14px;color:var(--ap-ink-3)}
+:root .app-surface .cw-sheet.inbox-shell :is(.inbox-trip-details,.inbox-expenses) dd{font-size:15px;color:var(--ap-ink)}
+
 @media(max-width:650px){
  :root .app-surface .cw-sheet.inbox-shell .inbox-heading{margin-top:var(--ap-space-lg)}
  :root .app-surface .cw-sheet.inbox-shell .inbox-reader{padding:0}
