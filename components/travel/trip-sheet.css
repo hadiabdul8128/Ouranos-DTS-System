@@ -1,0 +1,90 @@
+/* Hallmark · macrostructure: Long Document (order sheet) · tone: utilitarian · anchor hue: olive 125
+ * theme: custom (vibe: "filled-in travel order, field-issue olive" · paper oklch(15.6% 0.007 145) · accent oklch(75% 0.06 125) olive · Lexend + Source Sans 3)
+ * scope: travel authorization page only (.cw-sheet) · signature: accounting double rule under the total
+ * Hallmark · pre-emit critique: P4 H4 E4 S4 R5 V4
+ */
+
+/* Tokens. Values match the app palette; everything below reads from these. */
+:root .app-surface .cw-sheet{
+ --ap-paper:oklch(15.6% 0.007 145);
+ --ap-paper-2:oklch(19.5% 0.009 145);
+ --ap-paper-3:oklch(23% 0.011 145);
+ --ap-rule:oklch(33% 0.017 145);
+ --ap-rule-soft:oklch(26% 0.012 145);
+ --ap-ink:oklch(95% 0.012 125);
+ --ap-ink-2:oklch(75% 0.015 130);
+ --ap-ink-3:oklch(66% 0.015 130);
+ --ap-accent:oklch(75% 0.06 125);
+ --ap-signal:oklch(81% 0.09 80);
+ --ap-danger:oklch(78% 0.11 25);
+ --ap-font-display:"Lexend",var(--font-body),sans-serif;
+ --ap-space-2xs:4px;--ap-space-xs:8px;--ap-space-sm:12px;--ap-space-md:16px;--ap-space-lg:24px;--ap-space-xl:40px;--ap-space-2xl:56px;
+}
+
+/* Heading: the destination is the title; the document type sits under it in plain text. */
+:root .app-surface .cw-sheet .cw-heading{margin:var(--ap-space-xl) 0 var(--ap-space-lg)}
+:root .app-surface .cw-sheet .cw-heading h1{font-family:var(--ap-font-display);font-weight:500;font-style:normal;font-size:clamp(34px,7vw,48px);line-height:1.05;letter-spacing:-.02em;margin:0;color:var(--ap-ink);overflow-wrap:anywhere;min-width:0}
+:root .app-surface .cw-sheet .cw-sheet-subtitle{margin:var(--ap-space-xs) 0 var(--ap-space-md);font-size:16px;line-height:1.5;color:var(--ap-ink-2)}
+
+/* Stages: a ruled strip, not dots on a line. Each stage owns a bar; the current one is brass. */
+:root .app-surface .cw-sheet .trip-timeline ol{gap:var(--ap-space-2xs)}
+:root .app-surface .cw-sheet .trip-timeline ol::before{display:none}
+:root .app-surface .cw-sheet .trip-timeline li{text-align:left}
+:root .app-surface .cw-sheet .trip-timeline li a,
+:root .app-surface .cw-sheet .trip-timeline-step{flex-direction:row;align-items:flex-start;gap:0;min-height:44px;padding-top:var(--ap-space-xs);border-top:3px solid var(--ap-rule);font-size:13px;color:var(--ap-ink-3)}
+:root .app-surface .cw-sheet .trip-timeline-dot{display:none}
+:root .app-surface .cw-sheet .trip-timeline li.is-done a,
+:root .app-surface .cw-sheet .trip-timeline li.is-done .trip-timeline-step{border-top-color:var(--ap-accent);color:var(--ap-ink-2)}
+:root .app-surface .cw-sheet .trip-timeline li.is-current a,
+:root .app-surface .cw-sheet .trip-timeline li.is-current .trip-timeline-step{border-top-color:var(--ap-signal);color:var(--ap-ink);font-weight:600}
+:root .app-surface .cw-sheet .trip-timeline li a:hover{color:var(--ap-ink)}
+
+/* Attention blocks: a full hairline frame instead of a thick side stripe. */
+:root .app-surface .cw-sheet :is(.trip-timeline-next,.cw-banner,.amendment-banner,.demo-approve,.lodging-aea,.cw-issue,.cw-error,.cw-notice){border:1px solid var(--ap-rule);border-radius:4px;background:var(--ap-paper-2);padding:var(--ap-space-md) var(--ap-space-md)}
+:root .app-surface .cw-sheet .demo-approve{border-style:dashed}
+:root .app-surface .cw-sheet .cw-error{border-color:var(--ap-danger)}
+:root .app-surface .cw-sheet .trip-timeline-next>div{flex-direction:row;flex-wrap:wrap;column-gap:var(--ap-space-xs);row-gap:var(--ap-space-2xs);align-items:baseline}
+:root .app-surface .cw-sheet .trip-timeline-next span{font-size:16px;letter-spacing:0;text-transform:none;font-weight:600;color:var(--ap-signal)}
+:root .app-surface .cw-sheet .trip-timeline-next span::after{content:':'}
+:root .app-surface .cw-sheet .trip-timeline-next strong{font-size:16px;font-weight:600}
+:root .app-surface .cw-sheet .trip-timeline-next p{flex-basis:100%;font-size:14px;color:var(--ap-ink-2)}
+:root .app-surface .cw-sheet .dts-check.is-warning{border-left:0;padding-left:0}
+
+/* Section heads: heading on a hairline, status as plain words after a small square. */
+:root .app-surface .cw-sheet .cw-section-heading{margin:var(--ap-space-2xl) 0 var(--ap-space-md);padding-bottom:var(--ap-space-sm);border-bottom:1px solid var(--ap-rule);align-items:baseline}
+:root .app-surface .cw-sheet .cw-section-heading h2{font-family:var(--ap-font-display);font-size:22px;font-weight:500;letter-spacing:-.01em}
+:root .app-surface .cw-sheet .cw-status{display:inline-flex;align-items:center;gap:var(--ap-space-xs);padding:0;background:none;border:0;text-transform:none;letter-spacing:0;font-size:14px;font-weight:500;color:var(--ap-ink-2)}
+:root .app-surface .cw-sheet .cw-status::before{content:'';width:8px;height:8px;background:var(--ap-ink-3)}
+:root .app-surface .cw-sheet :is(.cw-status-approved,.cw-status-ready)::before{background:var(--ap-accent)}
+:root .app-surface .cw-sheet :is(.cw-status-in_review,.cw-status-changes_requested,.cw-status-failed)::before{background:var(--ap-signal)}
+
+:root .app-surface .cw-sheet .cw-section-heading+form .cw-fieldset>.cw-card:first-child{border-top:0;padding-top:var(--ap-space-xs)}
+
+:root .app-surface .cw-sheet .cw-budget-total{font-family:var(--ap-font-display);font-variant-numeric:tabular-nums;color:var(--ap-ink)}
+:root .app-surface .cw-sheet .cw-budget-total small{font-family:var(--font-body);font-size:13px;letter-spacing:0;color:var(--ap-ink-3)}
+
+/* Planned costs: the icon sits inline with the name, no tile behind it. */
+:root .app-surface .cw-sheet .cw-budget-list .cw-budget-item.cw-cost{background:var(--ap-paper-2);border-color:var(--ap-rule)}
+:root .app-surface .cw-sheet .cw-cost-icon{flex:0 0 auto;width:auto;height:auto;background:none;color:var(--ap-ink-2);align-self:flex-start;padding-top:2px}
+:root .app-surface .cw-sheet .cw-cost-amount{font-family:var(--ap-font-display);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* Total: a ledger. Dotted leaders tie each label to its amount; the total gets the accountant's double rule. */
+:root .app-surface .cw-sheet .authorization-total{margin:var(--ap-space-2xl) 0 var(--ap-space-lg);padding:0;border:0}
+:root .app-surface .cw-sheet .authorization-total>div{display:grid;grid-template-columns:auto minmax(var(--ap-space-md),1fr) auto;align-items:baseline;gap:var(--ap-space-xs);margin:var(--ap-space-sm) 0;font-size:15px;color:var(--ap-ink-2)}
+:root .app-surface .cw-sheet .authorization-total>div::after{content:'';grid-column:2;grid-row:1;align-self:end;margin-bottom:5px;border-bottom:1px dotted var(--ap-rule)}
+:root .app-surface .cw-sheet .authorization-total>div>strong{grid-column:3;grid-row:1;font-size:16px;color:var(--ap-ink)}
+
+:root .app-surface .cw-sheet .authorization-total .authorization-total-final{margin-top:var(--ap-space-lg);padding-top:var(--ap-space-md);border-top:1px solid var(--ap-rule);font-size:16px;font-weight:600;color:var(--ap-ink)}
+:root .app-surface .cw-sheet .authorization-total .authorization-total-final>strong{font-family:var(--ap-font-display);font-size:30px;font-weight:500;padding-bottom:3px;border-bottom:4px double var(--ap-ink)}
+:root .app-surface .cw-sheet .authorization-total p{font-size:14px;color:var(--ap-ink-3)}
+
+:root .app-surface .cw-sheet :is(.trip-timeline li a,.cw-icon-button,button):focus-visible{outline:2px solid var(--ap-accent);outline-offset:3px}
+
+@media(max-width:600px){
+ :root .app-surface .cw-sheet .cw-heading{margin:var(--ap-space-lg) 0 var(--ap-space-md)}
+ :root .app-surface .cw-sheet .trip-timeline li a,
+ :root .app-surface .cw-sheet .trip-timeline-step{font-size:12px}
+ :root .app-surface .cw-sheet .trip-timeline ol{grid-template-columns:minmax(0,1.5fr) repeat(3,minmax(0,1fr))}
+ :root .app-surface .cw-sheet .cw-section-heading{margin-top:var(--ap-space-xl)}
+ :root .app-surface .cw-sheet .authorization-total .authorization-total-final>strong{font-size:26px}
+}
