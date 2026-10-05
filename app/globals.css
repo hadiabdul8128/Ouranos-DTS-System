@@ -221,3 +221,6 @@ body{font-family:var(--font-body);font-size:16px;line-height:1.5;letter-spacing:
 :root .app-surface .cw-issue{background:#1c1a12;border:0;border-left:4px solid #e0bf7a;border-radius:0}
 :root .app-surface .cw-error{border-radius:0;border:0;border-left:4px solid #f0a09a}
 :root .app-surface .cw-notice{border-radius:0;border:0;border-left:4px solid #a5b38a}
+/* Corners: square-ish, like the official systems. */
+:root .app-surface :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea){border-radius:4px}
+:root .app-surface :is(button,.cw-upload-button,.trip-timeline-action){border-radius:4px}
