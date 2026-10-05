@@ -34,7 +34,7 @@ export function AssignedChecklists(){
  return <main className="quiet-page cw-page"><header className="quiet-header"><Link className="quiet-brand" href="/dashboard">Ouranos</Link><nav className="inbox-header-actions" aria-label="Workspace"><InboxLink/><Link href="/dashboard/platform">Settings</Link></nav></header>
   <section className="cw-shell team-shell">
    <Link className="back-link" href="/dashboard/travel"><ArrowLeft size={14}/> Travel</Link>
-   <h1>Checklists.</h1><p className="team-sub">Sent by your leaders. Check off each step as you finish it; your leader sees your progress.</p>
+   <h1>Checklists</h1><p className="team-sub">Sent by your leaders. Check off each step as you finish it; your leader sees your progress.</p>
    {error&&<p role="alert" className="form-error">{error}</p>}
    {checklists===null?<p className="cw-muted" role="status">Loading…</p>:!checklists.length?<p className="team-empty">No checklists from your leaders right now.</p>:
    <ul className="team-people">{checklists.map(list=>{const done=list.doneStepIds.length,late=list.dueOn&&list.dueOn<today&&done<list.steps.length;return <li key={list.id} className="team-person">

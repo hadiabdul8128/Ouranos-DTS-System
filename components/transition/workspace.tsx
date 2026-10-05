@@ -46,7 +46,7 @@ function Journey({client,organizationId}:{client:OuranosClient;organizationId:st
  }
  const blocked=busy||uncertain||conflict;
  return <div className="transition-content" ref={content} tabIndex={-1}>
-  <p className="transition-eyebrow">Ouranos Transition</p><h1>Life after the military.</h1><p className="transition-intro">You do not need to have it all figured out. Find a direction, then take one step at a time.</p>
+  <p className="transition-eyebrow">Ouranos Transition</p><h1>Life after the military</h1><p className="transition-intro">You do not need to have it all figured out. Find a direction, then take one step at a time.</p>
   <TransitionSupport open={plan?.profile.housingSupport}/>
   {error&&<div className="transition-error" role="alert"><p>{error}</p>{uncertain&&<button className="transition-text-button" disabled={busy} onClick={()=>{const input=pending.current;if(input)void save(input)}}>Retry save</button>}<button className="transition-text-button" disabled={busy} onClick={()=>{setLoading(true);setLoadFailed(false);setError('');setReloadKey(k=>k+1)}}>Reload saved plan</button></div>}
   {loading?<p role="status">Opening your plan…</p>:loadFailed?null:!plan||editing?<TransitionIntake key={plan?.version||'new'} initial={plan?.profile} busy={blocked} onSave={profile=>change(profile,null,[])} onCancel={plan?()=>setEditing(false):undefined}/>:<TransitionOptions key={`${plan.id}:${plan.selectedPath||'options'}`} plan={plan} busy={blocked} onChoose={id=>change(plan.profile,id,[])} onComplete={ids=>change(plan.profile,plan.selectedPath,ids)} onEdit={()=>setEditing(true)}/>}

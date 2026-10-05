@@ -21,7 +21,7 @@ export function HelpPage(){
  return <main className="quiet-page cw-page"><header className="quiet-header"><Link className="quiet-brand" href="/dashboard">Ouranos</Link><nav className="inbox-header-actions" aria-label="Workspace"><InboxLink/><Link href="/dashboard/platform" aria-label="Settings"><Settings size={18}/></Link></nav></header>
   <section className="cw-shell help-shell">
    <Link className="back-link" href="/dashboard/travel"><ArrowLeft size={14}/> Travel</Link>
-   <h1>Help.</h1><p className="help-sub">Pick what you’re doing. Each guide is a few steps with a picture of the screen.</p>
+   <h1>Help</h1><p className="help-sub">Pick what you’re doing. Each guide is a few steps with a picture of the screen.</p>
    <nav className="help-picker" aria-label="Guides">{helpGuides.map(g=><a key={g.id} href={`#${g.id}`} aria-current={g.id===guide.id?'true':undefined} onClick={()=>setActive(g.id)}>{g.title}</a>)}</nav>
    <article className="help-guide" aria-labelledby="help-guide-title">
     <h2 id="help-guide-title">{guide.title}</h2><p className="help-summary">{guide.summary}</p>

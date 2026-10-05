@@ -49,13 +49,13 @@ export function TeamPage(){
   try{await p.client.request('/v1/team/members',{method:'DELETE',body:JSON.stringify({organizationId:p.organizationId,memberId:person.memberId,level:at})});setNotice(`${person.email} removed from your team.`);await load()}
   catch(err){setError(message(err))}
  }
- if(!levels.length)return <main className="quiet-page cw-page"><section className="cw-shell"><Link className="back-link" href="/dashboard/travel"><ArrowLeft size={14}/> Travel</Link><h1>My people.</h1><p className="cw-muted">Only S1 reviewers, command approvers and admins lead people in Ouranos.</p></section></main>;
+ if(!levels.length)return <main className="quiet-page cw-page"><section className="cw-shell"><Link className="back-link" href="/dashboard/travel"><ArrowLeft size={14}/> Travel</Link><h1>My people</h1><p className="cw-muted">Only S1 reviewers, command approvers and admins lead people in Ouranos.</p></section></main>;
  const list=people??[],waiting=list.reduce((n,x)=>n+x.waitingOnYou,0),late=list.filter(x=>x.overdue.length).length;
  const sum=(key:keyof TeamPerson['totals'])=>list.reduce((n,x)=>n+x.totals[key],0);
  return <main className="quiet-page cw-page"><header className="quiet-header"><Link className="quiet-brand" href="/dashboard">Ouranos</Link><nav className="inbox-header-actions" aria-label="Workspace"><InboxLink/><Link href="/dashboard/platform">Settings</Link></nav></header>
   <section className="cw-shell team-shell">
    <Link className="back-link" href="/dashboard/travel"><ArrowLeft size={14}/> Travel</Link>
-   <h1>My people.</h1>
+   <h1>My people</h1>
    <p className="team-sub">{people===null?'Loading your team…':`${list.length} ${list.length===1?'person':'people'} · ${waiting} waiting on you · ${late} with something overdue`}</p>
    {waiting>0&&<Link className="team-review" href="/dashboard/review">Review {waiting} {waiting===1?'request':'requests'} now <ArrowUpRight size={15}/></Link>}
    <form className="team-add" onSubmit={add}>

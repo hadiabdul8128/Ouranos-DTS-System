@@ -36,7 +36,7 @@ export function TripHistory(){
   <section className="cw-shell claims-shell">
    <Link className="back-link" href="/dashboard/travel"><ArrowLeft size={14}/> Travel</Link>
    <div className="claims-head">
-    <div><h1>Trip history.</h1><p>{totals.trips} {totals.trips===1?'trip':'trips'}{range?`, ${range}`:''} · {totals.nights} nights away</p></div>
+    <div><h1>Trip history</h1><p>{totals.trips} {totals.trips===1?'trip':'trips'}{range?`, ${range}`:''} · {totals.nights} nights away</p></div>
     <div className="claims-filters"><div className="claims-tabs" role="group" aria-label="Trips to show">{(['past','upcoming','all'] as View[]).map(v=><button key={v} type="button" aria-pressed={view===v} onClick={()=>setView(v)}>{v==='past'?'Past':v==='upcoming'?'Upcoming':'All'}</button>)}</div>
      <select aria-label="Year" value={year} onChange={e=>setYear(e.target.value)}><option value="all">All years</option>{years.map(y=><option key={y} value={y}>{y}</option>)}</select></div>
    </div>
