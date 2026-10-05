@@ -48,6 +48,11 @@
 :root .app-surface .cw-sheet.inbox-shell .inbox-section-heading h2{font-family:var(--ap-font-display);font-size:20px;font-weight:500}
 :root .app-surface .cw-sheet.inbox-shell .inbox-section-heading span{font-size:14px;color:var(--ap-ink-2)}
 :root .app-surface .cw-sheet.inbox-shell .inbox-section-heading strong{font-family:var(--ap-font-display);font-size:20px;font-weight:500;font-variant-numeric:tabular-nums;padding-bottom:2px;border-bottom:4px double var(--ap-ink)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-expenses article{border-top:0;padding:var(--ap-space-md) 0 var(--ap-space-xs)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-expenses header{margin-bottom:var(--ap-space-2xs);align-items:baseline}
+:root .app-surface .cw-sheet.inbox-shell .inbox-expenses header span{font-size:14px;color:var(--ap-ink-3)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-expenses h3{font-size:16px;font-weight:600}
+:root .app-surface .cw-sheet.inbox-shell .inbox-expenses header strong{font-size:16px;font-variant-numeric:tabular-nums}
 
 @media(max-width:650px){
  :root .app-surface .cw-sheet.inbox-shell .inbox-heading{margin-top:var(--ap-space-lg)}
