@@ -237,3 +237,8 @@ body{font-family:var(--font-body);font-size:16px;line-height:1.5;letter-spacing:
 :root .app-surface :is(.travel-mode-options,.dts-check-choice) button:hover:not(:disabled)::before{border-color:#fff}
 :root .app-surface :is(.travel-mode-options,.dts-check-choice) button:focus-visible{outline:3px solid #e0bf7a;outline-offset:2px}
 :root .app-surface .travel-mode-options button svg{order:3;color:#8f9a8b}
+/* Read-only facts as a label/value row. */
+:root .app-surface .cw-purpose{display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}
+:root .app-surface .cw-purpose>span{margin:12px 0 0;min-width:120px}
+:root .app-surface .travel-mode-label{font-family:var(--font-display);font-size:18px;font-weight:500;color:var(--ink);margin:8px 0 12px}
+:root .app-surface .cw-approved-summary{background:transparent;border:0;border-left:4px solid #a5b38a;border-radius:0;padding:4px 0 4px 18px}
