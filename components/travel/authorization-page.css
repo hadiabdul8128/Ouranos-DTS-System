@@ -60,6 +60,9 @@
 
 :root .app-surface .cw-plan .cw-section-heading+form .cw-fieldset>.cw-card:first-child{border-top:0;padding-top:var(--ap-space-xs)}
 
+:root .app-surface .cw-plan .cw-budget-total{font-family:var(--ap-font-display);font-variant-numeric:tabular-nums;color:var(--ap-ink)}
+:root .app-surface .cw-plan .cw-budget-total small{font-family:var(--font-body);font-size:13px;letter-spacing:0;color:var(--ap-ink-3)}
+
 @media(max-width:600px){
  :root .app-surface .cw-plan .cw-heading{margin:var(--ap-space-lg) 0 var(--ap-space-md)}
  :root .app-surface .cw-plan .trip-timeline li a,
