@@ -30,6 +30,14 @@
 :root .app-surface .cw-sheet.inbox-shell .inbox-reader-header>span{display:none}
 :root .app-surface .cw-sheet.inbox-shell .inbox-reader-header h2{font-family:var(--ap-font-display);font-size:28px;font-weight:500;letter-spacing:-.01em;margin:0 0 var(--ap-space-xs)}
 :root .app-surface .cw-sheet.inbox-shell .inbox-reader-header time{font-size:14px;color:var(--ap-ink-3)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-confirmation{background:var(--ap-paper-2);border:1px solid var(--ap-accent);border-radius:4px;padding:var(--ap-space-md);color:var(--ap-ink)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-decision.is-changes_requested{border-color:var(--ap-signal-line);background:var(--ap-paper-2);color:var(--ap-signal)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-decision.is-rejected{border-color:var(--ap-danger);background:var(--ap-paper-2);color:var(--ap-danger)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-confirmation{align-items:flex-start}
+:root .app-surface .cw-sheet.inbox-shell .inbox-check{width:auto;height:auto;padding-top:2px;background:none;border-radius:0;color:var(--ap-accent)}
+:root .app-surface .cw-sheet.inbox-shell .inbox-decision:is(.is-changes_requested,.is-rejected) .inbox-check{background:none;color:inherit}
+:root .app-surface .cw-sheet.inbox-shell .inbox-confirmation strong{font-size:16px;font-weight:600}
+:root .app-surface .cw-sheet.inbox-shell .inbox-confirmation p{font-size:14px;color:var(--ap-ink-2)}
 
 @media(max-width:650px){
  :root .app-surface .cw-sheet.inbox-shell .inbox-heading{margin-top:var(--ap-space-lg)}
