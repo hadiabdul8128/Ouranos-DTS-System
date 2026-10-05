@@ -224,3 +224,7 @@ body{font-family:var(--font-body);font-size:16px;line-height:1.5;letter-spacing:
 /* Corners: square-ish, like the official systems. */
 :root .app-surface :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea){border-radius:4px}
 :root .app-surface :is(button,.cw-upload-button,.trip-timeline-action){border-radius:4px}
+/* Status is a plain tag, not a pill. */
+:root .app-surface .cw-status{border:0;border-radius:2px;background:#262c25;color:#d6dcd0;text-transform:uppercase;letter-spacing:.06em;font-weight:600;padding:4px 8px}
+:root .app-surface .cw-status-approved,:root .app-surface .cw-status-ready{background:#24331f;color:#c9e0b8}
+:root .app-surface .cw-status-changes_requested,:root .app-surface .cw-status-failed{background:#3a2f17;color:#e0bf7a}
