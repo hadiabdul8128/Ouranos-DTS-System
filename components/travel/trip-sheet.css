@@ -1,10 +1,10 @@
 /* Hallmark · macrostructure: Long Document (order sheet) · tone: utilitarian · anchor hue: olive 125
  * theme: custom (vibe: "filled-in travel order, field-issue olive" · paper oklch(15.6% 0.007 145) · accent oklch(75% 0.06 125) olive · Lexend + Source Sans 3)
- * scope: travel authorization page only (.cw-sheet) · signature: accounting double rule under the total
+ * scope: authorization and voucher pages (.cw-sheet) · signature: accounting double rule under the total
  * Hallmark · pre-emit critique: P4 H4 E4 S4 R5 V4
  */
 
-/* Tokens. Values match the app palette; everything below reads from these. */
+/* Tokens for the trip pages. Values match the app palette; everything below reads from these. */
 :root .app-surface .cw-sheet{
  --ap-paper:oklch(15.6% 0.007 145);
  --ap-paper-2:oklch(19.5% 0.009 145);
