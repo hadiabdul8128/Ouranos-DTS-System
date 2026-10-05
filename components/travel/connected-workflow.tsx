@@ -20,6 +20,7 @@ import {receiptCurrencies,parseReceiptAmount,receiptAmountText,formatReceiptAmou
 import {validateExchangeRates,editPlanningAmount,changePlanningCurrency,type ExchangeRates} from '@/packages/domain/exchange-rates';
 import type {VerificationReport} from '@/packages/domain/voucher-verification';
 import {PlanningHotelFinder} from './planning-hotel-finder';
+import type {RentalLocation} from '@/packages/domain/rental-car';
 import {FlightSuggestions,type SelectedFlight} from './flight-suggestions';
 import {ApprovalTracker,WaitingForApprovers} from './approval-tracker';
 import {PlaceField} from './place-field';
@@ -216,6 +217,10 @@ function PlanningForm({trip,rows}:{trip:Entity;rows:LocalRecord[]}){
   setDirty(true);feedback.setError('');
  }
 
+ function selectRentalFor(itemId:string,location:RentalLocation){
+  setItems(current=>current.map(item=>item.id!==itemId?item:{...item,merchant:location.company,description:!item.description.trim()||item.description==='Rental car'?`${location.company} rental car`:item.description,startDate:item.startDate||text(trip.data.departure),endDate:item.endDate||text(trip.data.returnDate),hint:`Picked ${location.company}${location.branch?` · ${location.branch}`:''}. Enter the rate you’re quoted for a compact car for your dates.`}));
+  setDirty(true);feedback.setError('');
+ }
 
 /** Not flying: an untouched airfare row becomes the cost that fits how the traveler is getting there. */
  function chooseTravelMode(mode:TravelMode){
