@@ -73,7 +73,7 @@ export default function Workspace() {
         <Button type="submit" aria-label="Continue with your request" className="intent-submit" disabled={!request.trim() || opening}><ArrowRight size={20}/></Button>
       </form>
       <p className={`intent-hint ${message ? "has-message" : ""}`} role="status">{opening ? "Opening your workspace…" : message || ''}</p>
-      <div className="home-links"><Link href="/dashboard/travel" className="back-link">Travel system →</Link><Link href="/dashboard/help" className="back-link">Help →</Link></div>
+      <div className="home-links"><Link href="/dashboard/travel" className="back-link">Travel system <ArrowRight size={16} aria-hidden="true"/></Link><Link href="/dashboard/help" className="back-link">Help <ArrowRight size={16} aria-hidden="true"/></Link></div>
       <nav className="home-systems" aria-labelledby="home-systems-title">
         <h2 id="home-systems-title">Other systems</h2>
         <ul>{SYSTEMS.map(system=><li key={system.name}><a href="#" className="home-system" aria-disabled="true" onClick={event=>event.preventDefault()}><strong>{system.name}</strong><span>{system.detail}</span><ArrowUpRight size={15} aria-hidden="true"/></a></li>)}</ul>
