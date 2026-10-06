@@ -1,24 +1,9 @@
-/* New trip as sections with side labels: title and why on the left, fields on the right, hairlines between.
-   Layout from Ephraim Duncan's "Form sections with side labels" (blocks.so, MIT, via 21st.dev). */
-:root .app-surface .trip-form-stage{width:min(880px,calc(100% - 48px))}
-.trip-form-section{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);column-gap:40px;padding:28px 0;border-top:1px solid #232a22}
-.trip-form-section:first-of-type{border-top:0;padding-top:4px}
-.trip-form-label h2{margin:0 0 6px;font-family:var(--font-body);font-size:17px;font-weight:600;letter-spacing:0;color:#edf0e8}
-:root .app-surface .trip-form-label h2{font-family:var(--font-body);font-size:17px;font-weight:600}
-.trip-form-label p{margin:0;max-width:34ch;font-size:14px;line-height:1.55;color:#a7afa3;text-wrap:pretty}
-.trip-form-fields{display:flex;flex-direction:column;gap:22px;min-width:0}
-:root .app-surface .trip-form-fields :is(.travel-field,.place-field,.installation-field){margin:0}
-.trip-form-actions{display:flex;justify-content:flex-end;align-items:center;gap:12px;padding-top:24px;border-top:1px solid #232a22}
-:root .app-surface .trip-form .trip-form-actions>.continue-button{width:auto;min-width:180px;height:52px;margin:0;font-size:16px;font-weight:600;transition:transform 160ms cubic-bezier(.23,1,.32,1),background-color .15s ease}
-:root .app-surface .trip-form .trip-form-actions>.continue-button:active{transform:scale(.97)}
-@media(prefers-reduced-motion:reduce){:root .app-surface .trip-form .trip-form-actions>.continue-button{transition:none}:root .app-surface .trip-form .trip-form-actions>.continue-button:active{transform:none}}
-.trip-form-cancel{display:inline-flex;align-items:center;min-height:52px;padding:0 16px;border-radius:6px;font-size:15px;font-weight:500;color:#c9d0c3}
-@media(hover:hover) and (pointer:fine){.trip-form-cancel:hover{color:#edf0e8;background:#141913}}
-.trip-form-cancel:focus-visible{outline:2px solid #a5b38a;outline-offset:2px}
-@media(max-width:760px){
- .trip-form-section{grid-template-columns:minmax(0,1fr);row-gap:14px;padding:22px 0}
- .trip-form-label p{max-width:none}
- .trip-form-actions{flex-direction:column-reverse;align-items:stretch}
- :root .app-surface .trip-form .trip-form-actions>.continue-button{width:100%}
- .trip-form-cancel{justify-content:center}
-}
+/* New trip as label-beside-field rows (after Cnippet's "Horizontal Form Fields", via 21st.dev): one label per
+   question, no section titles or descriptions, and a bar that shows what you're creating next to the one action. */
+:root .app-surface .trip-form-stage{width:min(780px,calc(100% - 48px))}
+:root .app-surface .trip-form-stage h1{margin-bottom:28px}
+.trip-form-rows{border-top:1px solid #232a22}
+.trip-form-rows>*{display:grid;grid-template-columns:190px minmax(0,1fr);column-gap:32px;row-gap:8px;align-items:start;padding:20px 0;border-bottom:1px solid #1d231c}
+:root .app-surface .trip-form-rows>*{margin:0}
+.trip-form-rows>*>:first-child{grid-column:1;grid-row:1/span 4;padding-top:14px;margin:0}
+.trip-form-rows>*>:not(:first-child){grid-column:2;margin:0}
