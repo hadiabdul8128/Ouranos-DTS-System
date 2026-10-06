@@ -15,3 +15,10 @@
 .trip-form-cancel{display:inline-flex;align-items:center;min-height:52px;padding:0 16px;border-radius:6px;font-size:15px;font-weight:500;color:#c9d0c3}
 @media(hover:hover) and (pointer:fine){.trip-form-cancel:hover{color:#edf0e8;background:#141913}}
 .trip-form-cancel:focus-visible{outline:2px solid #a5b38a;outline-offset:2px}
+@media(max-width:760px){
+ .trip-form-section{grid-template-columns:minmax(0,1fr);row-gap:14px;padding:22px 0}
+ .trip-form-label p{max-width:none}
+ .trip-form-actions{flex-direction:column-reverse;align-items:stretch}
+ :root .app-surface .trip-form .trip-form-actions>.continue-button{width:100%}
+ .trip-form-cancel{justify-content:center}
+}
