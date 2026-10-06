@@ -44,3 +44,11 @@
 
 .travel-hub-empty{display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:24px;border:1px dashed #343c33;border-radius:8px;color:#c9d0c3;font-size:16px}
 .travel-hub-empty p{margin:0}
+
+/* Shortcuts: one slim row under the heading, like a tool's secondary bar. */
+.travel-hub-shortcuts ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;column-gap:22px;row-gap:2px;border-bottom:1px solid #1d231c}
+.travel-hub-shortcuts a{display:flex;align-items:center;gap:8px;min-height:44px;font-size:14px;color:#a7afa3;transition:color .15s ease}
+.travel-hub-shortcuts a svg{flex:0 0 auto;color:#7f887c}
+@media(hover:hover) and (pointer:fine){.travel-hub-shortcuts a:hover{color:#edf0e8}}
+.travel-hub-shortcuts a:focus-visible{outline:2px solid #a5b38a;outline-offset:2px;border-radius:4px}
+.travel-hub-count{padding:1px 8px;border-radius:999px;background:#2d2717;color:#e0bf7a;font-size:13px;font-weight:600}
