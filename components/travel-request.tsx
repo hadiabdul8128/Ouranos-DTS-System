@@ -21,6 +21,6 @@ export default function TravelRequest(){
  <section className="trip-form-section" aria-labelledby="trip-when"><div className="trip-form-label"><h2 id="trip-when">When</h2><p>{ORDERS_DATES_HINT}</p></div><div className="trip-form-fields"><TripDatesField departure={departure} returnDate={returnDate} today={today} onChange={(from,to)=>{setDeparture(from);setReturnDate(to);setError('')}}/></div></section>
  <section className="trip-form-section" aria-labelledby="trip-orders"><div className="trip-form-label"><h2 id="trip-orders">Orders</h2><p>Your approver sees these with the plan.</p></div><div className="trip-form-fields"><OrdersNumberField id="orders-number" value={ordersNumber} onChange={setOrdersNumber}/><PurposeField value={purpose} onChange={setPurpose}/></div></section>
  {error&&<p role="alert" className="form-error">{error}</p>}
- <div className="trip-form-actions"><Button type="submit" disabled={busy} className="continue-button">{busy?'Saving…':'Continue'}<ArrowRight size={16}/></Button></div>
+ <div className="trip-form-actions"><Link href="/dashboard/travel" className="trip-form-cancel">Cancel</Link><Button type="submit" disabled={busy} className="continue-button">{busy?'Saving…':'Continue'}<ArrowRight size={16}/></Button></div>
 </form></section><footer className="quiet-footer"><span/><SyncIndicator/></footer></main>;
 }
