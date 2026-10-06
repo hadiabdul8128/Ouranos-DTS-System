@@ -3,3 +3,8 @@
 :root .app-surface .trip-form-stage{width:min(880px,calc(100% - 48px))}
 .trip-form-section{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);column-gap:40px;padding:28px 0;border-top:1px solid #232a22}
 .trip-form-section:first-of-type{border-top:0;padding-top:4px}
+.trip-form-label h2{margin:0 0 6px;font-family:var(--font-body);font-size:17px;font-weight:600;letter-spacing:0;color:#edf0e8}
+:root .app-surface .trip-form-label h2{font-family:var(--font-body);font-size:17px;font-weight:600}
+.trip-form-label p{margin:0;max-width:34ch;font-size:14px;line-height:1.55;color:#a7afa3;text-wrap:pretty}
+.trip-form-fields{display:flex;flex-direction:column;gap:22px;min-width:0}
+:root .app-surface .trip-form-fields :is(.travel-field,.place-field,.installation-field){margin:0}
