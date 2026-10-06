@@ -34,3 +34,13 @@
 .trip-line-extra{display:flex;justify-content:flex-end;padding-right:8px}
 .trip-line-extra button{min-height:36px;padding:0 8px;font-size:13px;color:#8f988b;background:none;border:0}
 @media(hover:hover) and (pointer:fine){.trip-line-extra button:hover{color:#f0a09a}}
+
+.travel-hub-done{border-top:1px solid #232a22}
+.travel-hub-done>summary{cursor:pointer;list-style:none;height:40px}
+.travel-hub-done>summary::-webkit-details-marker{display:none}
+.travel-hub-done>summary::after{content:'Show';margin-left:auto;font-size:13px;font-weight:500;color:#8f988b}
+.travel-hub-done[open]>summary::after{content:'Hide'}
+.travel-hub-more{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 16px;font-size:14px;color:#c9d0c3}
+
+.travel-hub-empty{display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:24px;border:1px dashed #343c33;border-radius:8px;color:#c9d0c3;font-size:16px}
+.travel-hub-empty p{margin:0}
