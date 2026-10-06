@@ -25,3 +25,7 @@
  :root .app-surface .trip-form .trip-form-bar>.continue-button{width:100%}
 }
 @media(prefers-reduced-motion:reduce){:root .app-surface .trip-form .trip-form-bar>.continue-button{transition:none}:root .app-surface .trip-form .trip-form-bar>.continue-button:active{transform:none}}
+
+/* Fields as soft glass: a faint see-through fill and an olive-tinted edge (3:1 against the page) with generous corners.
+   Focus brightens the edge and adds a quiet halo so the active field is never ambiguous. */
+:root .app-surface .trip-form .trip-form-rows :is(input,select)[class][class],:root .app-surface .trip-form .trip-form-rows :is(.place-field,.travel-select) select:not([multiple]):not([size]),:root .app-surface .trip-form .trip-form-rows .trip-dates-trigger{border:1px solid #c9d3a873;border-radius:12px;background:#edf0e809;box-shadow:inset 0 1px 0 #edf0e80d;backdrop-filter:blur(6px);transition:border-color .15s ease,box-shadow .15s ease,background-color .15s ease}
