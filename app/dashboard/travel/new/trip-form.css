@@ -47,3 +47,4 @@
 :root .app-surface .trip-form-stage h1{font-weight:800;letter-spacing:-.02em}
 :root .app-surface .trip-form-stage .trip-form-rows>*>label,:root .app-surface .trip-form-stage .trip-dates-label{font-weight:700}
 :root .app-surface .trip-form-stage .trip-form-bar>.continue-button{font-weight:700}
+.trip-dates-popover.trip-dates-popover,.trip-dates-popover :is(p,button,span,div){font-family:"Nunito",ui-rounded,system-ui,sans-serif;font-variation-settings:normal}
