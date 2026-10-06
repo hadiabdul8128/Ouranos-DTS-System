@@ -52,3 +52,17 @@
 @media(hover:hover) and (pointer:fine){.travel-hub-shortcuts a:hover{color:#edf0e8}}
 .travel-hub-shortcuts a:focus-visible{outline:2px solid #a5b38a;outline-offset:2px;border-radius:4px}
 .travel-hub-count{padding:1px 8px;border-radius:999px;background:#2d2717;color:#e0bf7a;font-size:13px;font-weight:600}
+
+@media(max-width:700px){
+ .trip-table-head{display:none}
+ .trip-line-link{grid-template-columns:minmax(0,1fr) auto;row-gap:2px;padding:10px 0 10px 14px}
+ .trip-line-meta{display:block}
+ .trip-line-dates{display:none}
+ .trip-line-next{grid-column:1;grid-row:2;white-space:normal}
+ .trip-line-progress{grid-column:2;grid-row:1/span 2}
+ .trip-line{grid-template-columns:minmax(0,1fr)}
+ .trip-line-link{padding-right:14px}
+ .trip-line-extra{justify-content:flex-start;margin-top:-6px;padding:0 0 6px 6px}
+ .trip-line-extra:empty{display:none}
+}
+@media(prefers-reduced-motion:reduce){.trip-line,.travel-hub-shortcuts a{transition:none}}
