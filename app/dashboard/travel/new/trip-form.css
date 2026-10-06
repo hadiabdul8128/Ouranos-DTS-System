@@ -32,3 +32,4 @@
 :root .app-surface .trip-form .trip-form-rows :is(input,select)[class][class],:root .app-surface .trip-form .trip-form-rows :is(.place-field,.travel-select) select:not([multiple]):not([size]){height:48px;padding:0 16px;font-size:17px;color:#edf0e8}
 :root .app-surface .trip-form .trip-form-rows :is(.place-field,.travel-select) select:not([multiple]):not([size]){padding-right:40px}
 :root .app-surface .trip-form .trip-form-rows input[class][class]::placeholder{color:#8a9386}
+:root .app-surface .trip-form .trip-form-rows .trip-dates-trigger{padding:10px 16px}
