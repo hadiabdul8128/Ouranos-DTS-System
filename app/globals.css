@@ -311,3 +311,5 @@ body{font-family:var(--font-body);font-size:16px;line-height:1.5;letter-spacing:
 :is(.home-links a,.intent-submit,.home-header .inbox-header-actions :is(a,button)):active{transform:scale(.97)}
 .home-system:active{transform:scale(.98)}
 @media(prefers-reduced-motion:reduce){:is(.home-system,.home-links a,.intent-submit,.home-header .inbox-header-actions :is(a,button)){transition:none}:is(.home-system,.home-links a,.intent-submit,.home-header .inbox-header-actions :is(a,button)):active{transform:none}}
+.prompt-page::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.05;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.prompt-page>*{position:relative;z-index:1}
