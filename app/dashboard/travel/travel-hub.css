@@ -1,0 +1,6 @@
+/* Travel hub: trips grouped by who has to act, each with its stage strip and next step; shortcuts beside them. */
+.travel-hub-layout{margin-top:20px}
+.travel-hub-group{display:flex;align-items:center;gap:8px;margin:28px 0 10px;font-size:15px;font-weight:600;letter-spacing:0;color:#a7afa3}
+:root .app-surface .travel-hub h2.travel-hub-group{font-family:var(--font-body);font-size:15px;font-weight:600}
+.travel-hub-group span{min-width:22px;padding:1px 7px;border-radius:999px;background:#1d231c;font-size:13px;color:#c9d0c3;text-align:center;font-variant-numeric:tabular-nums}
+.travel-hub-trips>section:first-child .travel-hub-group{margin-top:8px}
