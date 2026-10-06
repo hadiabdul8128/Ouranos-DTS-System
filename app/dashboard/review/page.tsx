@@ -7,7 +7,7 @@ import {usePlatform} from '@/components/platform/provider';
 import {Button} from '@/components/ui/button';
 import {Textarea} from '@/components/ui/textarea';
 import type {Entity, Role} from '@/packages/contracts';
-import {approvalLevelName, approvalWait} from '@/packages/contracts/approval-chain';
+import {approvalLevelName} from '@/packages/contracts/approval-chain';
 import {authorizationBudget} from '@/packages/domain/authorization-budget';
 import {travelModeSummary} from '@/packages/domain/travel-mode';
 import {preAuditFlags} from '@/packages/domain/pre-audit';
@@ -16,6 +16,7 @@ import {planningModuleSchema, PLANNING_SCHEMA_VERSION, type PlanningModuleInput}
 import {voucherModuleSchema, VOUCHER_MODULE_SCHEMA_VERSION, type VoucherModuleInput} from '@/packages/contracts/voucher-module';
 import {AllowanceDetails} from '@/components/travel/allowance';
 import {TravelPackagePanel} from '@/components/travel/package-panel';
+import {RequestTable} from '@/components/review/request-table';
 import type {Allowance} from '@/packages/domain/voucher-adapter';
 import type {OuranosClient} from '@/packages/sdk';
 
@@ -332,7 +333,7 @@ function ReviewInbox({client, organizationId, actorId, role}: {client: OuranosCl
     {error && <p className="connected-review-error" role="alert">{error}</p>}
     {!selected ? <div aria-busy={loading}>
       {loading && <p role="status" className="platform-muted">Loading review requests…</p>}
-      {[...requests].sort((a, b) => Number(b.status === 'in_review') - Number(a.status === 'in_review')).map(request => <button type="button" className="platform-record review-record" key={request.id} disabled={busy || loading} onClick={() => void open(request)}>{(() => { const wait = approvalWait(request, now); return <div><strong>{kindText(request.data.kind)}{typeof request.data.destination === 'string' ? ` · ${request.data.destination}` : ''}</strong><p className="connected-review-meta">Updated {timestamp(request.updatedAt)}</p>{wait?.late && <p className="review-late">Waiting {wait.days} days · past the 72-hour mark</p>}</div>; })()}<span>{statusText(request.status)} <ArrowUpRight size={14} aria-hidden="true"/></span></button>)}
+      {!loading && requests.length > 0 && <RequestTable requests={requests} now={now} busy={busy} onOpen={request => void open(request)} kindText={kindText} statusText={statusText}/>}
       {!loading && !requests.length && !error && <div className="platform-block"><h2>Nothing to review</h2><p className="platform-muted">When someone on your team sends a plan or expenses, it shows up here.</p></div>}
     </div> : <div className="platform-block">
       <Button variant="ghost" disabled={busy} onClick={close}><ArrowLeft size={16} aria-hidden="true"/>Back to requests</Button>
