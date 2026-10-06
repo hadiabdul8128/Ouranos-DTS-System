@@ -40,3 +40,6 @@
 :root .app-surface .trip-form .trip-form-bar{border-color:#c9d3a83d;border-radius:14px;background:#edf0e806}
 :root .app-surface .trip-form .trip-form-bar>.continue-button{border-radius:10px}
 @media(prefers-reduced-motion:reduce){:root .app-surface .trip-form .trip-form-rows :is(input,select)[class][class],:root .app-surface .trip-form .trip-form-rows :is(.place-field,.travel-select) select:not([multiple]):not([size]),:root .app-surface .trip-form .trip-form-rows .trip-dates-trigger{transition:none}}
+
+/* Nunito's fully rounded terminals soften the page to match the rounded fields. */
+:root .app-surface .trip-form-stage{--font-body:"Nunito",ui-rounded,system-ui,sans-serif;--font-display:"Nunito",ui-rounded,system-ui,sans-serif;font-family:var(--font-body);font-variation-settings:normal}
