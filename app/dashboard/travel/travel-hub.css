@@ -4,3 +4,33 @@
 :root .app-surface .travel-hub h2.travel-hub-group{font-family:var(--font-body);font-size:15px;font-weight:600}
 .travel-hub-group span{min-width:22px;padding:1px 7px;border-radius:999px;background:#1d231c;font-size:13px;color:#c9d0c3;text-align:center;font-variant-numeric:tabular-nums}
 .travel-hub-trips>section:first-child .travel-hub-group{margin-top:8px}
+
+/* Trip list: a column header, tinted group bands, one quiet line per trip. Pattern from the Circle projects list. */
+.trip-table{border:1px solid #232a22;border-radius:8px;overflow:hidden;background:#0f130e}
+.trip-table-head,.trip-line-link{display:grid;grid-template-columns:minmax(0,1fr) 210px 118px 84px;align-items:center;column-gap:16px}
+.trip-table-head{padding:8px 92px 8px 16px;border-bottom:1px solid #232a22;font-size:13px;font-weight:500;color:#8f988b}
+.trip-band{display:flex;align-items:center;gap:8px;margin:0;padding:0 16px;height:36px;background:#151a14;border-bottom:1px solid #232a22;font-family:var(--font-body);font-size:14px;font-weight:600;letter-spacing:0;color:#c9d0c3}
+:root .app-surface .travel-hub h2.trip-band{font-family:var(--font-body);font-size:14px;font-weight:600}
+.trip-band span{font-size:13px;font-weight:500;color:#8f988b;font-variant-numeric:tabular-nums}
+.trip-lines{list-style:none;margin:0;padding:0}
+.trip-line{display:grid;grid-template-columns:minmax(0,1fr) 92px;align-items:center;border-bottom:1px solid #1d231c;transition:background-color .12s ease}
+.trip-lines>.trip-line:last-child{border-bottom:0}
+@media(hover:hover) and (pointer:fine){.trip-line:hover{background:#141913}}
+.trip-line-link{min-height:52px;padding:8px 0 8px 16px;color:#edf0e8;font-size:15px}
+.trip-line-link:focus-visible{outline:2px solid #a5b38a;outline-offset:-2px}
+.trip-line-name{display:flex;flex-direction:column;min-width:0}
+.trip-line-name strong{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(hover:hover) and (pointer:fine){.trip-line-link:hover .trip-line-name strong{text-decoration:underline;text-underline-offset:3px}}
+.trip-line-meta{display:none;font-size:13px;color:#8f988b}
+.trip-line-next{display:inline-flex;align-items:center;gap:6px;min-width:0;font-size:14px;color:#a7afa3;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.trip-line-next.is-action{color:#e3d39f;font-weight:500}
+.trip-line-dates{font-size:14px;color:#a7afa3;font-variant-numeric:tabular-nums;white-space:nowrap}
+.trip-line-progress{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:#a7afa3;font-variant-numeric:tabular-nums;white-space:nowrap}
+.trip-ring circle{fill:none;stroke-width:2.2}
+.trip-ring-track{stroke:#343c33}
+.trip-ring-fill{stroke:#a5b38a}
+.trip-ring-active{stroke:#e0bf7a}
+.trip-ring-done{stroke:#a5b38a}
+.trip-line-extra{display:flex;justify-content:flex-end;padding-right:8px}
+.trip-line-extra button{min-height:36px;padding:0 8px;font-size:13px;color:#8f988b;background:none;border:0}
+@media(hover:hover) and (pointer:fine){.trip-line-extra button:hover{color:#f0a09a}}
