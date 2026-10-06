@@ -69,7 +69,7 @@ export default function Workspace() {
       <ServiceCloud />
       <h1 id="intent-heading">What do you want to do?</h1>
       <form className="intent-input" onSubmit={submit}>
-        <span className="intent-field">{!request&&<TypingAnimation className="intent-examples" words={EXAMPLES} delay={900}/>}<Input aria-label="What do you want to do?" placeholder="" value={request} onChange={event => {setRequest(event.target.value); setMessage("");}} autoComplete="off" maxLength={500} disabled={opening}/></span>
+        <span className="intent-field">{!request&&<span aria-hidden="true"><TypingAnimation className="intent-examples" words={EXAMPLES} delay={900}/></span>}<span id="intent-examples-help" className="sr-only">For example: {EXAMPLES.join("; ")}.</span><Input aria-label="What do you want to do?" aria-describedby="intent-examples-help" placeholder="" value={request} onChange={event => {setRequest(event.target.value); setMessage("");}} autoComplete="off" maxLength={500} disabled={opening}/></span>
         <Button type="submit" aria-label="Continue with your request" className="intent-submit" disabled={!request.trim() || opening}><ArrowRight size={20}/></Button>
       </form>
       <p className={`intent-hint ${message ? "has-message" : ""}`} role="status">{opening ? "Opening your workspace…" : message || ''}</p>
