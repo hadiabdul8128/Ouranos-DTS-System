@@ -301,3 +301,8 @@ body{font-family:var(--font-body);font-size:16px;line-height:1.5;letter-spacing:
 :root .app-surface .quiet-brand{display:inline-flex;align-items:center;min-height:44px}
 :root .app-surface .quiet-footer .platform-status{display:inline-flex;align-items:center;min-height:44px;padding:0 4px;font-size:13px}
 @media(max-width:420px){:root .app-surface .home-header .inbox-header-actions{gap:10px}:root .app-surface .home-upcoming-button{min-width:44px;min-height:44px;justify-content:center}:root .app-surface .home-upcoming-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}}
+
+/* Taste pass (Home): balanced heading lines, a press-down on everything you tap, and a faint grain so the
+   background isn't a flat digital fill. */
+.intent-stage h1{text-wrap:balance}
+.home-system span{text-wrap:pretty}
