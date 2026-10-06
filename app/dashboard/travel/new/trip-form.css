@@ -8,3 +8,7 @@
 .trip-form-label p{margin:0;max-width:34ch;font-size:14px;line-height:1.55;color:#a7afa3;text-wrap:pretty}
 .trip-form-fields{display:flex;flex-direction:column;gap:22px;min-width:0}
 :root .app-surface .trip-form-fields :is(.travel-field,.place-field,.installation-field){margin:0}
+.trip-form-actions{display:flex;justify-content:flex-end;align-items:center;gap:12px;padding-top:24px;border-top:1px solid #232a22}
+:root .app-surface .trip-form .trip-form-actions>.continue-button{width:auto;min-width:180px;height:52px;margin:0;font-size:16px;font-weight:600;transition:transform 160ms cubic-bezier(.23,1,.32,1),background-color .15s ease}
+:root .app-surface .trip-form .trip-form-actions>.continue-button:active{transform:scale(.97)}
+@media(prefers-reduced-motion:reduce){:root .app-surface .trip-form .trip-form-actions>.continue-button{transition:none}:root .app-surface .trip-form .trip-form-actions>.continue-button:active{transform:none}}
