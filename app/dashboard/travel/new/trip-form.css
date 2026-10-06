@@ -2,6 +2,7 @@
    question, no section titles or descriptions, and a bar that shows what you're creating next to the one action. */
 :root .app-surface .trip-form-stage{width:min(780px,calc(100% - 48px))}
 :root .app-surface .trip-form-stage h1{margin-bottom:28px}
+:root .app-surface .trip-form-stage{padding-bottom:96px}
 .trip-form-rows{border-top:1px solid #232a22}
 .trip-form-rows>*{display:grid;grid-template-columns:190px minmax(0,1fr);column-gap:32px;row-gap:8px;align-items:start;padding:20px 0;border-bottom:1px solid #1d231c}
 :root .app-surface .trip-form-rows>*{margin:0}
