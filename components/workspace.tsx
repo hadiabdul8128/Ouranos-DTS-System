@@ -76,7 +76,7 @@ export default function Workspace() {
       <div className="home-links"><Link href="/dashboard/travel" className="back-link">Travel system →</Link><Link href="/dashboard/help" className="back-link">Help →</Link></div>
       <nav className="home-systems" aria-labelledby="home-systems-title">
         <h2 id="home-systems-title">Other systems</h2>
-        <ul>{SYSTEMS.map(system=><li key={system.name}><a href="#" className="home-system" onClick={event=>event.preventDefault()}><strong>{system.name}</strong><span>{system.detail}</span><ArrowUpRight size={15} aria-hidden="true"/></a></li>)}</ul>
+        <ul>{SYSTEMS.map(system=><li key={system.name}><a href="#" className="home-system" aria-disabled="true" onClick={event=>event.preventDefault()}><strong>{system.name}</strong><span>{system.detail}</span><ArrowUpRight size={15} aria-hidden="true"/></a></li>)}</ul>
       </nav>
     </section>
     <footer className="quiet-footer"><span/><SyncIndicator/></footer>
