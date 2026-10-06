@@ -44,6 +44,6 @@ export function TripDatesField({departure,returnDate,today,onChange}:{departure:
     </div>
    </PopoverContent>
   </Popover>
-  <span className="trip-dates-summary" id="trip-dates-value" aria-live="polite">{summary}</span>
+  <span className="trip-dates-summary" id="trip-dates-value" aria-live="polite" hidden={!summary}>{summary}</span>
  </div>;
 }

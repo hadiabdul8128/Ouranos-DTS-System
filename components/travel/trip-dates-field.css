@@ -1,7 +1,8 @@
 .trip-dates{display:flex;flex-direction:column;gap:8px}
 .trip-dates-label{font-size:15px;font-weight:600;color:var(--ink,#edf0e8)}
-.trip-dates-trigger{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto;align-items:center;gap:12px;width:100%;min-height:64px;padding:10px 14px;border:1px solid #3a4338;border-radius:6px;background:#1a1f1a;color:#edf0e8;text-align:left;cursor:pointer;transition:border-color .15s ease}
-.trip-dates-trigger:hover{border-color:#5a6557}
+.trip-dates-trigger{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto;align-items:center;gap:12px;width:100%;min-height:64px;padding:10px 14px;border:1px solid #3a4338;border-radius:6px;background:#1a1f1a;color:#edf0e8;text-align:left;cursor:pointer;transition:border-color .15s ease,transform 160ms cubic-bezier(.23,1,.32,1)}
+@media(hover:hover) and (pointer:fine){.trip-dates-trigger:hover{border-color:#5a6557}}
+.trip-dates-trigger:active{transform:scale(.99)}
 .trip-dates-trigger:focus-visible,.trip-dates-trigger[data-state=open]{outline:none;border-color:#a5b38a;box-shadow:0 0 0 3px #a5b38a33}
 .trip-dates-part{display:flex;flex-direction:column;gap:2px;min-width:0}
 .trip-dates-part small{font-size:13px;color:#a7afa3}
@@ -9,7 +10,7 @@
 .trip-dates-part strong.is-empty{font-weight:400;color:#a7afa3}
 .trip-dates-arrow{color:#7f887c}
 .trip-dates-icon{color:#a7afa3}
-.trip-dates-summary{min-height:20px;font-size:14px;font-weight:600;color:#c9d3b4;font-variant-numeric:tabular-nums}
+.trip-dates-summary{font-size:14px;font-weight:600;color:#c9d3b4;font-variant-numeric:tabular-nums}
 
 .trip-dates-popover.trip-dates-popover{width:auto;max-width:calc(100vw - 24px);padding:12px;border:1px solid #343c33;border-radius:8px;background:#141815;color:#edf0e8;box-shadow:0 18px 50px #000a}
 .trip-dates-step{margin:2px 4px 6px;font-size:14px;font-weight:600;color:#c9d3b4}
