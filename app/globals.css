@@ -306,3 +306,8 @@ body{font-family:var(--font-body);font-size:16px;line-height:1.5;letter-spacing:
    background isn't a flat digital fill. */
 .intent-stage h1{text-wrap:balance}
 .home-system span{text-wrap:pretty}
+:root{--ease-out-strong:cubic-bezier(.23,1,.32,1)}
+:is(.home-system,.home-links a,.intent-submit,.home-header .inbox-header-actions :is(a,button)){transition:transform 160ms var(--ease-out-strong)}
+:is(.home-links a,.intent-submit,.home-header .inbox-header-actions :is(a,button)):active{transform:scale(.97)}
+.home-system:active{transform:scale(.98)}
+@media(prefers-reduced-motion:reduce){:is(.home-system,.home-links a,.intent-submit,.home-header .inbox-header-actions :is(a,button)){transition:none}:is(.home-system,.home-links a,.intent-submit,.home-header .inbox-header-actions :is(a,button)):active{transform:none}}
