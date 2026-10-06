@@ -7,3 +7,5 @@
 :root .app-surface .trip-form-rows>*{margin:0}
 .trip-form-rows>*>:first-child{grid-column:1;grid-row:1/span 4;padding-top:14px;margin:0}
 .trip-form-rows>*>:not(:first-child){grid-column:2;margin:0}
+:root .app-surface .trip-form-rows>*>label,.trip-form-rows .trip-dates-label{font-family:var(--font-body);font-size:15px;font-weight:600;color:#edf0e8}
+:root .app-surface .trip-form-rows .place-hint{margin:0;font-size:13px;color:#8f988b}
