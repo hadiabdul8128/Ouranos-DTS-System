@@ -39,3 +39,4 @@
 /* The bar picks up the same material so the page reads as one set. */
 :root .app-surface .trip-form .trip-form-bar{border-color:#c9d3a83d;border-radius:14px;background:#edf0e806}
 :root .app-surface .trip-form .trip-form-bar>.continue-button{border-radius:10px}
+@media(prefers-reduced-motion:reduce){:root .app-surface .trip-form .trip-form-rows :is(input,select)[class][class],:root .app-surface .trip-form .trip-form-rows :is(.place-field,.travel-select) select:not([multiple]):not([size]),:root .app-surface .trip-form .trip-form-rows .trip-dates-trigger{transition:none}}
