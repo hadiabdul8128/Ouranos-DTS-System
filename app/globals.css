@@ -320,3 +320,5 @@ body{font-family:var(--font-body);font-size:16px;line-height:1.5;letter-spacing:
 :root .app-surface .travel-page .travel-subtitle{margin:-12px 0 28px;font-size:15px;color:var(--ink-muted)}
 :root .app-surface .travel-form .travel-form-break{height:0;margin:30px 0 26px;border:0;border-top:1px solid #262d25}
 :root .app-surface .travel-form :is(input,select):focus-visible{outline:none;border-color:#a5b38a;box-shadow:0 0 0 3px #a5b38a33}
+:root .app-surface .travel-form .dates-hint{display:block;margin-top:8px;max-width:60ch;text-wrap:pretty}
+:root .app-surface .travel-form .place-hint{text-wrap:pretty}
