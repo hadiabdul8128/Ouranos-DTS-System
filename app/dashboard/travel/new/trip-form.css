@@ -43,3 +43,4 @@
 
 /* Nunito's fully rounded terminals soften the page to match the rounded fields. */
 :root .app-surface .trip-form-stage{--font-body:"Nunito",ui-rounded,system-ui,sans-serif;--font-display:"Nunito",ui-rounded,system-ui,sans-serif;font-family:var(--font-body);font-variation-settings:normal}
+:root .app-surface .trip-form-stage :is(h1,label,input,select,button,p,small,span,strong,a){font-family:var(--font-body)}
