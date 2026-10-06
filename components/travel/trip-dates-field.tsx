@@ -12,7 +12,7 @@ const show=(value:string)=>new Date(`${value}T12:00:00`).toLocaleDateString('en-
 const nightsBetween=(from:string,to:string)=>Math.round((new Date(`${to}T12:00:00`).getTime()-new Date(`${from}T12:00:00`).getTime())/86_400_000);
 
 /** Departure and return as one range: pick both on a calendar and see the nights and per diem days. */
-export function TripDatesField({departure,returnDate,today,onChange}:{departure:string;returnDate:string;today:string;onChange:(departure:string,returnDate:string)=>void}){
+export function TripDatesField({departure,returnDate,today,onChange,hint}:{departure:string;returnDate:string;today:string;onChange:(departure:string,returnDate:string)=>void;hint?:string}){
  const [open,setOpen]=useState(false),[months,setMonths]=useState(2),field=useRef<HTMLDivElement>(null);
  // Opening scrolls the field near the top so the calendar fits underneath it.
  function toggle(next:boolean){if(next)field.current?.scrollIntoView({block:'start',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});setOpen(next)}
@@ -45,5 +45,6 @@ export function TripDatesField({departure,returnDate,today,onChange}:{departure:
    </PopoverContent>
   </Popover>
   <span className="trip-dates-summary" id="trip-dates-value" aria-live="polite" hidden={!summary}>{summary}</span>
+  {hint&&<small className="place-hint trip-dates-hint">{hint}</small>}
  </div>;
 }
