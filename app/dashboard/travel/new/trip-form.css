@@ -1,0 +1,5 @@
+/* New trip as sections with side labels: title and why on the left, fields on the right, hairlines between.
+   Layout from Ephraim Duncan's "Form sections with side labels" (blocks.so, MIT, via 21st.dev). */
+:root .app-surface .trip-form-stage{width:min(880px,calc(100% - 48px))}
+.trip-form-section{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);column-gap:40px;padding:28px 0;border-top:1px solid #232a22}
+.trip-form-section:first-of-type{border-top:0;padding-top:4px}
