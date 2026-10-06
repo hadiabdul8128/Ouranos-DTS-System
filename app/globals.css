@@ -292,3 +292,7 @@ body{font-family:var(--font-body);font-size:16px;line-height:1.5;letter-spacing:
 @media(max-width:700px){.home-systems ul{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){.home-system{transition:none}}
 @media(max-width:700px){.prompt-page .intent-stage{padding-bottom:132px}}
+
+/* Impeccable audit fixes (Home): a visible focus state on the request box, the app's caret, and 44px targets
+   for the wordmark and the save status. */
+.intent-input:focus-within{border-color:#a5b38a;box-shadow:0 0 0 3px #a5b38a33}
