@@ -12,3 +12,6 @@
 :root .app-surface .trip-form .trip-form-actions>.continue-button{width:auto;min-width:180px;height:52px;margin:0;font-size:16px;font-weight:600;transition:transform 160ms cubic-bezier(.23,1,.32,1),background-color .15s ease}
 :root .app-surface .trip-form .trip-form-actions>.continue-button:active{transform:scale(.97)}
 @media(prefers-reduced-motion:reduce){:root .app-surface .trip-form .trip-form-actions>.continue-button{transition:none}:root .app-surface .trip-form .trip-form-actions>.continue-button:active{transform:none}}
+.trip-form-cancel{display:inline-flex;align-items:center;min-height:52px;padding:0 16px;border-radius:6px;font-size:15px;font-weight:500;color:#c9d0c3}
+@media(hover:hover) and (pointer:fine){.trip-form-cancel:hover{color:#edf0e8;background:#141913}}
+.trip-form-cancel:focus-visible{outline:2px solid #a5b38a;outline-offset:2px}
