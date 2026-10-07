@@ -44,8 +44,8 @@ export function FlightSuggestions({from,to,departure,returnDate,selected:chosen,
 /** Fare selection, separate from the search request lifecycle. */
 export function FlightChoices({results,selected,onSelect:select,disabled}:{results:FlightResults;selected:FlightOption|null;onSelect:(option:FlightOption|null)=>void;disabled?:boolean}){
  const [open,setOpen]=useState(false);
- const cheapest=cheapestFlight(results.options),trip=results.options[0]!.roundTrip?'round trip':'one way';
- return <div className="flight-field"><label id="flight-label">Suggested flights <span>{trip} · via Google Flights</span></label>
+ const cheapest=cheapestFlight(results.options),trip=results.options[0]!.roundTrip?'Round trip':'One way';
+ return <div className="flight-field"><label id="flight-label">Airfare estimate <span>{trip} · Google Flights</span></label>
   <Popover open={open} onOpenChange={setOpen}><PopoverTrigger asChild><button type="button" className="flight-trigger" aria-labelledby="flight-label" disabled={disabled}>
    {selected?<FlightSummary option={selected} best={sameFlight(results.options[0]!,selected)} cheapest={sameFlight(cheapest,selected)}/>:<span className="flight-none">Choose a flight <span>Best: {results.options[0]!.airline}, {money(results.options[0]!.price)}</span></span>}<ChevronDown size={16}/></button></PopoverTrigger>
    <PopoverContent align="start" className="flight-menu"><ul role="listbox" aria-labelledby="flight-label">{results.options.map((option,index)=><li key={index} role="option" aria-selected={sameFlight(selected,option)}><button type="button" onClick={()=>{select(option);setOpen(false)}}><FlightSummary option={option} best={index===0} cheapest={option===cheapest}/>{sameFlight(selected,option)&&<Check size={15}/>}</button></li>)}
