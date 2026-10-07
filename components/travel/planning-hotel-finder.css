@@ -22,3 +22,9 @@
 :root .app-surface .planning-hotel-finder .hotel-results-heading h2{font-size:17px;font-weight:700;letter-spacing:0;margin:0 0 6px;color:var(--hotel-ink)}
 :root .app-surface .planning-hotel-finder .hotel-results-heading p{font-size:13px;line-height:1.5;color:var(--hotel-muted)}
 .hotel-booking-note{font-size:14px;line-height:1.6;color:var(--hotel-muted);margin:0 0 16px}
+:root .app-surface .planning-hotel-finder .hotel-list{display:block}
+:root .app-surface .planning-hotel-finder .hotel-card{display:block;padding:20px 0;border:0;border-top:1px solid var(--hotel-line);border-radius:0;background:none}
+:root .app-surface .planning-hotel-finder .hotel-card-main{flex-direction:row;flex-wrap:wrap;gap:8px}
+:root .app-surface .planning-hotel-finder .hotel-card h3{font-size:16px;font-weight:700;line-height:1.5;margin:0;color:var(--hotel-ink)}
+:root .app-surface .planning-hotel-finder .hotel-card p{font-size:14px;line-height:1.6;color:var(--hotel-muted);margin:4px 0 12px}
+:root .app-surface .planning-hotel-finder .hotel-zip-match{background:none;padding:0;border-radius:0;color:var(--hotel-accent);font-size:13px;white-space:normal}
