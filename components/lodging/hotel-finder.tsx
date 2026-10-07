@@ -2,7 +2,7 @@
 import {useEffect,useState} from 'react';
 import Link from 'next/link';
 import {useLiveQuery} from 'dexie-react-hooks';
-import {ArrowLeft,ArrowRight} from 'lucide-react';
+import {ArrowLeft,ArrowRight,ArrowUpRight} from 'lucide-react';
 import {usePlatform,SyncIndicator} from '@/components/platform/provider';
 import type {LocalRecord} from '@/packages/offline/database';
 import {hotelTripContext,type HotelTripContext} from '@/packages/domain/hotel-trip';
@@ -21,12 +21,12 @@ export function HotelTripSearch({trip,catalog,catalogError,catalogLoading,retry,
  function changeWorkZip(value:string){setWorkZip(value);setLimit(12)}
  function changeHotelName(value:string){setHotelName(value);setLimit(12)}
  return <>
-  {!embedded&&<><p className="cw-eyebrow">Travel · hotel finder</p><h1>Find a place to stay</h1></>}<p className="hotel-lead">Start with real FedRooms properties near your destination. Book through your travel office, and check room availability and the final rate with the hotel.</p>
-  <div className="hotel-trip"><div><span>Saved trip</span><strong>{trip.destination}</strong><small>{date(trip.departure)} – {date(trip.returnDate)}</small></div>{trip.lodgingBudgetMinor!==null&&<div><span>{trip.budgetLabel}</span><strong>{money(trip.lodgingBudgetMinor)}</strong><small>Total in your travel plan · not a hotel quote</small></div>}</div>
-  <HotelSearchFields destination={destination} onDestination={changeDestination} workZip={workZip} onWorkZip={changeWorkZip} hotelName={hotelName} onHotelName={changeHotelName}/>
-  <HotelBookingGuidance/>
-  {catalogLoading?<p className="hotel-empty" role="status">Loading real hotel properties…</p>:catalogError?<div className="hotel-empty" role="alert"><p>{catalogError}</p><button type="button" onClick={retry}>Try loading again</button></div>:catalog&&<HotelResults catalog={catalog} destination={destination} workZip={workZip} hotelName={hotelName} limit={limit} onMore={()=>setLimit(value=>value+12)} onSelectLocation={changeDestination} onSelectHotel={onSelectHotel}/>}
-  <p className="hotel-source-note">Property information: <a href={catalog?.source||'https://www.gsa.gov/travel/plan-a-trip/lodging/fedrooms'} target="_blank" rel="noopener noreferrer">GSA FedRooms accepted properties ↗</a>. Listings may change. Ouranos does not check booking inventory or reserve rooms.</p>
+  {!embedded&&<><p className="cw-eyebrow">Travel · hotel finder</p><h1>Find a place to stay</h1><p className="hotel-lead">Start with real FedRooms properties near your destination. Book through your travel office, and check room availability and the final rate with the hotel.</p>
+  <div className="hotel-trip"><div><span>Saved trip</span><strong>{trip.destination}</strong><small>{date(trip.departure)} – {date(trip.returnDate)}</small></div>{trip.lodgingBudgetMinor!==null&&<div><span>{trip.budgetLabel}</span><strong>{money(trip.lodgingBudgetMinor)}</strong><small>Total in your travel plan · not a hotel quote</small></div>}</div></>}
+  <HotelSearchFields compact={embedded} destination={destination} onDestination={changeDestination} workZip={workZip} onWorkZip={changeWorkZip} hotelName={hotelName} onHotelName={changeHotelName}/>
+  <HotelBookingGuidance compact={embedded}/>
+  {catalogLoading?<p className="hotel-empty" role="status">Loading real hotel properties…</p>:catalogError?<div className="hotel-empty" role="alert"><p>{catalogError}</p><button type="button" onClick={retry}>Try loading again</button></div>:catalog&&<HotelResults compact={embedded} catalog={catalog} destination={destination} workZip={workZip} hotelName={hotelName} limit={limit} onMore={()=>setLimit(value=>value+12)} onSelectLocation={changeDestination} onSelectHotel={onSelectHotel}/>}
+  <p className="hotel-source-note">Property information: <a href={catalog?.source||'https://www.gsa.gov/travel/plan-a-trip/lodging/fedrooms'} target="_blank" rel="noopener noreferrer">GSA FedRooms accepted properties <ArrowUpRight size={14} aria-hidden="true"/></a>. Listings may change. Ouranos does not check booking inventory or reserve rooms.</p>
  </>;
 }
 
