@@ -5,6 +5,7 @@ import {useHotelCatalog} from '@/components/lodging/use-hotel-catalog';
 import type {HotelTripContext} from '@/packages/domain/hotel-trip';
 import type {HotelProperty} from '@/packages/domain/hotel-discovery';
 import '@/app/dashboard/travel/hotels/hotels.css';
+import './planning-hotel-finder.css';
 
 function Search({trip,onSelectHotel}:{trip:HotelTripContext;onSelectHotel?:(property:HotelProperty)=>void}){
  const {catalog,error,loading,retry}=useHotelCatalog();
