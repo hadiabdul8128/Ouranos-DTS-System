@@ -5,3 +5,10 @@
 :root .app-surface .planning-hotel-finder .hotel-field{gap:8px;font-size:14px;font-weight:600;color:var(--hotel-ink)}
 :root .app-surface .planning-hotel-finder .hotel-field input{width:100%;min-height:44px;font-size:16px}
 :root .app-surface .planning-hotel-finder .hotel-field small{font-size:13px;color:var(--hotel-muted);line-height:1.5}
+.hotel-filters{margin-top:12px}
+:root .app-surface .planning-hotel-finder :is(.hotel-filters,.hotel-booking-details)>summary{display:flex;align-items:center;gap:12px;min-height:44px;font-size:14px;color:var(--hotel-muted);font-weight:500;cursor:pointer;list-style:none}
+.hotel-filters>summary::-webkit-details-marker,.hotel-booking-details>summary::-webkit-details-marker{display:none}
+.hotel-filters>summary::after,.hotel-booking-details>summary::after{content:'+';margin-left:auto}
+.hotel-filters[open]>summary::after,.hotel-booking-details[open]>summary::after{content:'−'}
+.hotel-filters>summary span{font-size:12px;color:var(--hotel-accent)}
+.hotel-filter-fields{display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;padding:8px 0 16px}
