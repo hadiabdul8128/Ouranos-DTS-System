@@ -37,3 +37,6 @@
 :root .app-surface .planning-hotel-finder .hotel-empty h2{font-size:16px}
 :root .app-surface .planning-hotel-finder .hotel-source-note{padding-top:16px;border-top:1px solid var(--hotel-line);margin:8px 0 0;font-size:13px;color:var(--hotel-muted);line-height:1.6}
 .hotel-source-note a svg{display:inline;vertical-align:middle}
+:root .app-surface .planning-hotel-finder :is(a,button,summary,input):focus-visible{outline:2px solid var(--hotel-accent);outline-offset:3px}
+@media(hover:hover) and (pointer:fine){:root .app-surface .planning-hotel-finder .hotel-card-actions :is(a,button):hover{color:var(--hotel-ink)}:root .app-surface .planning-hotel-finder .hotel-card-actions button:first-child:not(:has(svg)):hover{background:var(--ap-ink,#edf0e8);color:var(--ap-paper,#141815)}}
+@media(max-width:400px){.hotel-filter-fields{grid-template-columns:minmax(0,1fr)}:root .app-surface .planning-hotel-finder .hotel-card-actions{column-gap:12px}}
