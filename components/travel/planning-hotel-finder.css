@@ -18,3 +18,7 @@
 :root .app-surface .planning-hotel-finder .hotel-guidance p{font-size:14px;line-height:1.6;color:var(--hotel-muted);margin:8px 0}
 :root .app-surface .planning-hotel-finder .hotel-guidance-links{min-width:0;gap:0}
 :root .app-surface .planning-hotel-finder .hotel-guidance-links a{font-size:14px;min-height:44px;color:var(--hotel-accent)}
+:root .app-surface .planning-hotel-finder .hotel-results-heading{margin:0 0 8px}
+:root .app-surface .planning-hotel-finder .hotel-results-heading h2{font-size:17px;font-weight:700;letter-spacing:0;margin:0 0 6px;color:var(--hotel-ink)}
+:root .app-surface .planning-hotel-finder .hotel-results-heading p{font-size:13px;line-height:1.5;color:var(--hotel-muted)}
+.hotel-booking-note{font-size:14px;line-height:1.6;color:var(--hotel-muted);margin:0 0 16px}
