@@ -16,7 +16,7 @@ export function FlightSuggestions({from,to,departure,returnDate,selected:chosen,
  const [today]=useState(localToday),past=Boolean(departure)&&departure<today;
  const ready=!past&&from.trim().length>=2&&to.trim().length>=2&&Boolean(departure)&&(!returnDate||returnDate>=departure);
  const key=flightSearchKey(from,to,departure,returnDate);
- const [attempt,setAttempt]=useState(0),[open,setOpen]=useState(false),requestKey=`${key}#${attempt}`;
+ const [attempt,setAttempt]=useState(0),requestKey=`${key}#${attempt}`;
  const [state,setState]=useState<{requestKey:string;results:FlightResults|null;error:string}>({requestKey:'',results:null,error:''});
  const loading=ready&&state.requestKey!==requestKey,{results,error}=state,selected=chosen?.key===key?chosen.option:null;
  const select=(option:FlightOption|null)=>onSelect(option?{key,option}:null);
@@ -38,6 +38,12 @@ export function FlightSuggestions({from,to,departure,returnDate,selected:chosen,
  if(error)return <p className="flight-hint flight-error" role="alert">{error} <button type="button" onClick={()=>setAttempt(n=>n+1)}><RotateCw size={12}/> Retry</button></p>;
  if(!results)return null;
  if(!results.options.length)return <p className="flight-hint">No flights found for this route. Check the city and state, or use the nearest city with an airport. <a href={results.searchUrl} target="_blank" rel="noreferrer">Search Google Flights <ExternalLink size={11}/></a></p>;
+ return <FlightChoices results={results} selected={selected} onSelect={select} disabled={disabled}/>;
+}
+
+/** Fare selection, separate from the search request lifecycle. */
+export function FlightChoices({results,selected,onSelect:select,disabled}:{results:FlightResults;selected:FlightOption|null;onSelect:(option:FlightOption|null)=>void;disabled?:boolean}){
+ const [open,setOpen]=useState(false);
  const cheapest=cheapestFlight(results.options),trip=results.options[0]!.roundTrip?'round trip':'one way';
  return <div className="flight-field"><label id="flight-label">Suggested flights <span>{trip} · via Google Flights</span></label>
   <Popover open={open} onOpenChange={setOpen}><PopoverTrigger asChild><button type="button" className="flight-trigger" aria-labelledby="flight-label" disabled={disabled}>
