@@ -34,7 +34,7 @@ export function FlightSuggestions({from,to,departure,returnDate,selected:chosen,
 
  if(past)return <p className="flight-hint"><Plane size={14}/> These trip dates have passed, so there are no flights to suggest.</p>;
  if(!ready)return <p className="flight-hint"><Plane size={14}/> Add your starting location to see suggested flights.</p>;
- if(loading)return <p className="flight-hint" role="status"><span className="flight-spinner"/> Finding the best flights from {from.trim()} to {to.trim()}…</p>;
+ if(loading)return <p className="flight-hint" role="status"><span className="flight-spinner"/> Checking fares…</p>;
  if(error)return <p className="flight-hint flight-error" role="alert">{error} <button type="button" onClick={()=>setAttempt(n=>n+1)}><RotateCw size={12}/> Retry</button></p>;
  if(!results)return null;
  if(!results.options.length)return <p className="flight-hint">No flights found for this route. Check the city and state, or use the nearest city with an airport. <a href={results.searchUrl} target="_blank" rel="noreferrer">Search Google Flights <ExternalLink size={11}/></a></p>;
