@@ -31,3 +31,12 @@
 :root .app-surface .cw-authorization .meals-estimate-check input:focus-visible{outline:2px solid var(--ap-accent);outline-offset:4px}
 :root .app-surface .cw-authorization .meals-estimate-note{font-size:14px;color:var(--ap-ink-2);line-height:1.6}
 :root .app-surface .cw-authorization .meals-estimate-warning{font-size:14px;color:var(--ap-signal)}
+:root .app-surface .cw-authorization .meals-estimate-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;margin:8px 0 0;padding:0;border-top:1px solid var(--ap-rule-soft);font-size:14px;text-align:left;text-decoration:none;color:var(--ap-ink-2)}
+.meals-estimate-toggle svg{flex-shrink:0;transition:transform .15s}
+.meals-estimate-toggle[aria-expanded=true] svg{transform:rotate(180deg)}
+:root .app-surface .cw-authorization .meals-estimate-toggle:hover{color:var(--ap-ink)}
+:root .app-surface .cw-authorization .meals-estimate-assumptions{padding-top:4px}
+:root .app-surface .cw-authorization .meals-estimate-day{grid-template-columns:1fr auto;gap:6px;padding:12px 0}
+:root .app-surface .cw-authorization .meals-estimate-day>div{grid-column:1/-1;grid-row:2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+:root .app-surface .cw-authorization .meals-estimate-day button{min-height:44px!important;padding:0 6px;border-radius:5px;font-size:13px}
+:root .app-surface .cw-authorization .meals-estimate-day small{grid-column:2;grid-row:1;font-size:14px}
