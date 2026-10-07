@@ -1,0 +1,7 @@
+/* An inline hotel directory inside the existing expense form. No duplicated trip or budget block. */
+:root .app-surface .planning-hotel-finder{--hotel-ink:var(--ap-ink,#edf0e8);--hotel-muted:var(--ap-ink-2,#c9d0c3);--hotel-line:var(--ap-rule-soft,#2a3129);--hotel-accent:var(--ap-accent,#b0bd95);margin:8px 0 0;padding:8px 0 0;font-family:var(--font-body)}
+:root .app-surface .planning-hotel-finder :is(h2,h3,button,summary){font-family:var(--font-body);font-variation-settings:normal}
+:root .app-surface .planning-hotel-finder>.hotel-search{margin:16px 0 0;display:block}
+:root .app-surface .planning-hotel-finder .hotel-field{gap:8px;font-size:14px;font-weight:600;color:var(--hotel-ink)}
+:root .app-surface .planning-hotel-finder .hotel-field input{width:100%;min-height:44px;font-size:16px}
+:root .app-surface .planning-hotel-finder .hotel-field small{font-size:13px;color:var(--hotel-muted);line-height:1.5}
