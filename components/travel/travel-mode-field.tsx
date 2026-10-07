@@ -17,7 +17,7 @@ export function TravelModeField({mode,onMode,miles,rate,onMileage,onAddMileage,o
  return <section className="travel-mode" aria-labelledby="travel-mode-label">
   <p id="travel-mode-label" className="travel-mode-label">How are you getting there?</p>
   <div className="travel-mode-options" role="radiogroup" aria-labelledby="travel-mode-label">{travelModes.map(option=>{const Icon=icons[option];return <button key={option} type="button" role="radio" aria-checked={mode===option} disabled={disabled} onClick={()=>onMode(option)}><Icon size={17} aria-hidden="true"/>{travelModeNames[option]}</button>})}</div>
-  {mode&&<p className="travel-mode-hint">{travelModeHints[mode]}</p>}
+  {mode&&mode!=='air'&&<p className="travel-mode-hint">{travelModeHints[mode]}</p>}
   {mode==='pov'&&<div className="travel-mode-mileage">
    <label>Round-trip miles<Input inputMode="decimal" value={miles} onChange={e=>onMileage({miles:e.target.value})} placeholder="420" disabled={disabled}/></label>
    <label>Rate per mile<Input inputMode="decimal" value={rate} onChange={e=>onMileage({rate:e.target.value})} placeholder="0.70" disabled={disabled}/></label>
