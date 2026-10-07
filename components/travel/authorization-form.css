@@ -21,3 +21,13 @@
 :root .app-surface .cw-authorization .cw-quick-add button{font-size:14px;font-weight:600;min-height:44px;padding:0 14px;border-radius:6px;background:transparent;border-color:var(--ap-rule);color:var(--ap-ink)}
 :root .app-surface .cw-authorization .cw-quick-add button:hover:not(:disabled){background:var(--ap-paper-3);border-color:var(--ap-accent)}
 .authorization-budget{min-width:0;border-left:1px solid var(--ap-rule-soft);padding-left:24px}
+:root .app-surface .cw-authorization .meals-estimate{border:0;background:none;padding:0;margin:0 0 28px}
+:root .app-surface .cw-authorization .meals-estimate-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+:root .app-surface .cw-authorization .meals-estimate h3{margin:0;color:var(--ap-ink);font-size:16px;font-weight:700}
+.meals-estimate-amount{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ap-ink);white-space:nowrap}
+.meals-estimate-location{margin:6px 0 12px;font-size:14px;line-height:1.5;color:var(--ap-ink-2)}
+:root .app-surface .cw-authorization .meals-estimate-check{margin:0;min-height:44px;font-size:15px;cursor:pointer}
+:root .app-surface .cw-authorization .meals-estimate-check input{width:18px;height:18px;margin:0;flex-shrink:0;accent-color:var(--ap-accent)}
+:root .app-surface .cw-authorization .meals-estimate-check input:focus-visible{outline:2px solid var(--ap-accent);outline-offset:4px}
+:root .app-surface .cw-authorization .meals-estimate-note{font-size:14px;color:var(--ap-ink-2);line-height:1.6}
+:root .app-surface .cw-authorization .meals-estimate-warning{font-size:14px;color:var(--ap-signal)}
