@@ -33,3 +33,7 @@
 :root .app-surface .planning-hotel-finder .hotel-card-actions button:first-child:not(:has(svg)){background:var(--hotel-accent);color:var(--ap-paper,#141815);font-weight:700;border-radius:6px;padding:0 12px}
 :root .app-surface .planning-hotel-finder .hotel-card-actions a{margin-left:0}
 :root .app-surface .planning-hotel-finder .hotel-more{margin:8px 0 0;font-size:14px;width:100%;min-height:44px}
+:root .app-surface .planning-hotel-finder .hotel-empty{padding:20px 0;border:0;border-radius:0;font-size:14px;margin:0}
+:root .app-surface .planning-hotel-finder .hotel-empty h2{font-size:16px}
+:root .app-surface .planning-hotel-finder .hotel-source-note{padding-top:16px;border-top:1px solid var(--hotel-line);margin:8px 0 0;font-size:13px;color:var(--hotel-muted);line-height:1.6}
+.hotel-source-note a svg{display:inline;vertical-align:middle}
