@@ -12,3 +12,9 @@
 .hotel-filters[open]>summary::after,.hotel-booking-details[open]>summary::after{content:'−'}
 .hotel-filters>summary span{font-size:12px;color:var(--hotel-accent)}
 .hotel-filter-fields{display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;padding:8px 0 16px}
+.hotel-booking-details{border-bottom:1px solid var(--hotel-line);padding-bottom:8px;margin-bottom:20px}
+:root .app-surface .planning-hotel-finder .hotel-guidance{display:block;border:0;border-radius:0;padding:0;margin:0 0 12px;background:none}
+:root .app-surface .planning-hotel-finder .hotel-guidance h2{font-size:15px;font-weight:600;margin:12px 0 8px}
+:root .app-surface .planning-hotel-finder .hotel-guidance p{font-size:14px;line-height:1.6;color:var(--hotel-muted);margin:8px 0}
+:root .app-surface .planning-hotel-finder .hotel-guidance-links{min-width:0;gap:0}
+:root .app-surface .planning-hotel-finder .hotel-guidance-links a{font-size:14px;min-height:44px;color:var(--hotel-accent)}
