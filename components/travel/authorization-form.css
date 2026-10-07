@@ -51,3 +51,6 @@
 .authorization-summary p{margin:16px 0 0;font-size:14px;line-height:1.6;color:var(--ap-ink-2)}
 :root .app-surface .cw-authorization .cw-action-bar{margin-top:32px;padding:20px 0;border-color:var(--ap-rule-soft)}
 :root .app-surface .cw-authorization .cw-actions button{font-size:15px;font-weight:700}
+@media(max-width:900px){.authorization-expense-layout{grid-template-columns:minmax(0,1fr) 290px;gap:24px}.authorization-budget{padding-left:20px}}
+@media(max-width:700px){.authorization-expense-layout{grid-template-columns:minmax(0,1fr);gap:8px}.authorization-budget{border-left:0;border-top:1px solid var(--ap-rule);padding:24px 0 0}:root .app-surface .cw-authorization .cw-quick-add{margin-bottom:16px}:root .app-surface .cw-authorization .authorization-expenses>.cw-section-heading{margin-top:32px}.authorization-summary-total dd{font-size:26px}}
+@media(prefers-reduced-motion:reduce){.meals-estimate-toggle svg{transition:none}}
