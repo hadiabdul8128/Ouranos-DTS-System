@@ -55,5 +55,5 @@ export function FlightChoices({results,selected,onSelect:select,disabled}:{resul
 }
 
 function FlightSummary({option,best,cheapest}:{option:FlightOption;best:boolean;cheapest:boolean}){
- return <span className="flight-summary"><span className="flight-line"><strong>{option.airline}</strong>{best&&<em>Best</em>}{cheapest&&<em className="cheap">Lowest</em>}<b>{money(option.price)}</b></span><span className="flight-meta">{option.departTime} – {option.arriveTime} · {stops(option.stops)} · {option.duration}</span></span>;
+ return <span className="flight-summary"><span className="flight-line"><strong>{option.airline}</strong>{best&&<em>Google pick</em>}{cheapest&&<em className="cheap">Lowest fare</em>}<b>{money(option.price)}</b></span><span className="flight-meta">{option.departTime} – {option.arriveTime} · {stops(option.stops)} · {option.duration}</span></span>;
 }
