@@ -13,3 +13,11 @@
 :root .app-surface .cw-authorization .authorization-expense-count{font-size:14px;color:var(--ap-ink-2)}
 .authorization-expense-layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:40px;align-items:start}
 .authorization-expense-main{min-width:0}
+:root .app-surface .cw-authorization .cw-budget-list{margin:0}
+:root .app-surface .cw-authorization .cw-budget-list .cw-cost{margin:0 0 20px;padding:20px;border-radius:8px;background:var(--ap-paper-2);border:1px solid var(--ap-rule-soft)}
+:root .app-surface .cw-authorization .cw-cost-amount{font-weight:700;font-size:18px}
+:root .app-surface .cw-authorization .cw-quick-add-label{margin:0 0 12px;font-size:16px;font-weight:600;color:var(--ap-ink)}
+:root .app-surface .cw-authorization .cw-quick-add{gap:8px;margin:0 0 24px}
+:root .app-surface .cw-authorization .cw-quick-add button{font-size:14px;font-weight:600;min-height:44px;padding:0 14px;border-radius:6px;background:transparent;border-color:var(--ap-rule);color:var(--ap-ink)}
+:root .app-surface .cw-authorization .cw-quick-add button:hover:not(:disabled){background:var(--ap-paper-3);border-color:var(--ap-accent)}
+.authorization-budget{min-width:0;border-left:1px solid var(--ap-rule-soft);padding-left:24px}
