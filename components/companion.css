@@ -10,7 +10,7 @@
 .companion-launcher[data-state=open] .companion-orb{box-shadow:inset -7px -9px 16px #0b0e0b99,inset 5px 6px 12px #ffffff26,0 0 0 1px #0b0e0b,0 0 0 4px #aebc9455,0 12px 22px -6px #000c}
 .companion-chat-mark{position:absolute;right:0;top:2px;z-index:2;display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:#aebc94;color:#10150e;border:2px solid #0b0e0b}
 @keyframes companion-orb-turn{to{transform:rotate(360deg)}}
-.companion-panel{width:min(340px,calc(100vw - 32px));padding:18px;border:1px solid #343c33;border-radius:16px;background:#141815;color:#edf0e8;box-shadow:0 18px 60px #0007;max-height:calc(100dvh - 180px);overflow-y:auto;font-family:var(--font-sans)}
+.companion-panel{width:min(340px,calc(100vw - 32px));padding:22px;border:1px solid #343c33;border-radius:28px;background:#141815;color:#edf0e8;box-shadow:0 18px 60px #0007;max-height:calc(100dvh - 180px);overflow-y:auto;font-family:var(--font-sans)}
 .companion-panel header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .companion-panel h2{font-size:18px;font-weight:400;margin:0}
 .companion-panel header button{display:grid;place-items:center;min-width:44px;min-height:44px;border-radius:8px;color:#a7afa3;background:transparent;border:0}
