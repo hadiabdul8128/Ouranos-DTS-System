@@ -37,7 +37,7 @@
 .companion-chat-form{display:flex;align-items:center;gap:8px;border:1px solid #343c33;border-radius:999px;background:#181e18;padding:5px 6px 5px 12px;margin-top:18px;min-height:56px;transition:border-color 180ms ease}
 .companion-chat-form:focus-within{border-color:#81916a}
 .companion-chat-form input{width:100%;min-width:0;background:transparent;border:0;color:#edf0e8;font:inherit;font-size:15px;height:44px;padding:8px;outline:none}
-.companion-chat-form button{display:grid;place-items:center;min-width:44px;min-height:44px;border:0;border-radius:8px;background:#aebc94;color:#10150e}
+.companion-chat-form button{display:grid;place-items:center;min-width:44px;min-height:44px;border:0;border-radius:50%;background:#aebc94;color:#10150e}
 .companion-chat-form button:disabled{opacity:.4}
 .companion-panel .companion-disclosure{font-size:10px;margin-bottom:0}
 .companion-panel .companion-error{color:#f0a09a;font-size:12px}
