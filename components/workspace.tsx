@@ -1,4 +1,6 @@
 "use client";
+import "./workspace-header.css";
+import {MeetingsLink} from '@/components/meetings/meetings-link';
 import {InboxLink} from '@/components/inbox/inbox-link';
 import {useRouter} from 'next/navigation';
 import {workspaceIntent} from '@/packages/domain/workspace-intent';
@@ -27,7 +29,7 @@ const SYSTEMS=[
   {name:"Army 365",detail:"Email and Teams"},
   {name:"Military OneSource",detail:"Support, 24/7"},
 ];
-const EXAMPLES=["Plan a trip to Fort Liberty","Book a flight to San Diego","File my travel voucher","Start a TDY to Norfolk","How do I file a voucher?"];
+const EXAMPLES=["Plan a trip to Fort Liberty","Book a flight to San Diego","File my travel voucher","Start a TDY to Norfolk","How do I file a voucher?","Schedule a meeting","Start a video call"];
 
 export default function Workspace() {
   const router=useRouter();
@@ -61,10 +63,10 @@ export default function Workspace() {
     if (!text) return;
     const destination=workspaceIntent(text);
     if(destination){setOpening(true);router.push(destination)}
-    else setMessage("Try a trip, a flight or a voucher, like the examples in the box.");
+    else setMessage("Try a trip, a flight, a voucher, or a meeting.");
   }
   return <main className="quiet-page prompt-page">
-    <header className="quiet-header home-header"><Link href="/dashboard" className="quiet-brand">Ouranos</Link><nav className="inbox-header-actions" aria-label="Workspace"><Sheet><SheetTrigger className="home-upcoming-button" aria-label={`Upcoming${upcoming.soon?`, ${upcoming.soon} this week`:""}`}><CalendarDays size={16}/> <span className="home-upcoming-label">Upcoming</span>{upcoming.soon>0&&<span>{upcoming.soon}</span>}</SheetTrigger><SheetContent side="right" className="home-upcoming-sheet"><SheetTitle className="sr-only">Upcoming</SheetTitle><UpcomingPanel/></SheetContent></Sheet><InboxLink/><Link href="/dashboard/platform" className="exit-link" aria-label="Settings" title="Settings"><Settings size={18} aria-hidden="true"/></Link><button onClick={() => void platform.signOut()} className="exit-link" aria-label="Sign out"><LogOut size={17}/></button></nav></header>
+    <header className="quiet-header home-header"><Link href="/dashboard" className="quiet-brand">Ouranos</Link><nav className="inbox-header-actions" aria-label="Workspace"><Sheet><SheetTrigger className="home-upcoming-button" aria-label={`Upcoming${upcoming.soon?`, ${upcoming.soon} this week`:""}`}><CalendarDays size={16}/> <span className="home-upcoming-label">Upcoming</span>{upcoming.soon>0&&<span>{upcoming.soon}</span>}</SheetTrigger><SheetContent side="right" className="home-upcoming-sheet"><SheetTitle className="sr-only">Upcoming</SheetTitle><UpcomingPanel/></SheetContent></Sheet><MeetingsLink/><InboxLink/><Link href="/dashboard/platform" className="exit-link" aria-label="Settings" title="Settings"><Settings size={16} aria-hidden="true"/></Link><button onClick={() => void platform.signOut()} className="exit-link" aria-label="Sign out"><LogOut size={16} aria-hidden="true"/></button></nav></header>
     <section className="intent-stage" aria-labelledby="intent-heading">
       <ServiceCloud />
       <h1 id="intent-heading">What do you want to do?</h1>
