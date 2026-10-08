@@ -90,9 +90,11 @@
 }
 @media (prefers-reduced-motion: reduce) { :root .app-surface .workspace-search { transition: none; } }
 
-/* Keep the field under the pointer while the supplied shortcut animation runs. */
-.spotlight-inline { padding-bottom: 76px; }
+/* The input contracts while shortcut circles emerge on the same baseline. */
+.spotlight-inline { padding-bottom: 38px; }
 .spotlight-row { position: relative; }
-.spotlight-shortcuts { position: absolute; top: calc(100% + 12px); right: 0; display: flex; align-items: center; gap: 12px; }
+.spotlight-shortcuts { display: flex; align-items: center; gap: 16px; flex: 0 0 auto; }
+.spotlight-shortcuts:empty { display: none; }
+.spotlight-row { gap: 16px; }
 .apple-spotlight > .intent-hint { position: absolute; left: 0; bottom: 8px; margin: 0; pointer-events: none; }
-@media (max-width: 600px) { .spotlight-inline { padding-bottom: 38px; } }
+@media (max-width: 600px) { .spotlight-shortcuts { display: none; } }
