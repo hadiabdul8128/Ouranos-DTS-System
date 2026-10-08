@@ -11,6 +11,7 @@ const environment=z.object({
  ALLOWED_ORIGINS:z.string().default('http://localhost:5173,http://127.0.0.1:5173'),
  OCR_PROVIDER:z.enum(['disabled','http']).default('disabled'),OCR_URL:z.string().url().optional(),OCR_TOKEN:z.string().optional(),
  SCAN_PROVIDER:z.enum(['disabled','http']).default('disabled'),SCAN_URL:z.string().url().optional(),SCAN_TOKEN:z.string().optional(),
+ LIVEKIT_URL:z.string().regex(/^wss?:\/\//).optional(),LIVEKIT_API_KEY:z.string().min(1).optional(),LIVEKIT_API_SECRET:z.string().min(1).optional(),
  DTS_PROVIDER:z.enum(['disabled','mock']).default('disabled'),
  APPROVAL_MODE:z.enum(['required','preview','automatic']).default('required'),
  WORKER_POLL_MS:z.coerce.number().min(100).default(2000),
