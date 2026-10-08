@@ -3,7 +3,8 @@
 import { browserAuth, platformConfigured } from "@/lib/platform/browser";
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
-import { HyperText } from "@/components/ui/hyper-text";
+import { TargetingUI } from "@/components/ui/animated-hud-targeting-ui";
+import { AnimatePresence, motion } from "framer-motion";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,12 +25,21 @@ export default function Home() {
   useEffect(() => {
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
     setReduceMotion(preference.matches);
-    const timer = window.setTimeout(() => setRevealed(true), preference.matches ? 0 : 1300);
+    const timer = window.setTimeout(() => setRevealed(true), preference.matches ? 0 : 3000);
     return () => window.clearTimeout(timer);
   }, []);
   return <main className={`quiet-page login-page ${revealed ? "is-revealed" : "is-intro"}`}>
+    <header style={{position:"absolute",top:32,left:"clamp(24px, 4vw, 48px)",zIndex:3}}>
+      <a href="/" className="quiet-brand" aria-label="Ouranos home">Ouranos</a>
+    </header>
+    <AnimatePresence>
+      {!revealed && !reduceMotion && <motion.div key="hud-intro" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0,scale:1.04}} transition={{duration:.35}} style={{position:"absolute",inset:0,display:"grid",placeItems:"center",pointerEvents:"none"}}>
+        <TargetingUI className="opening-hud" />
+      </motion.div>}
+    </AnimatePresence>
+    {!revealed && <button type="button" onClick={()=>setRevealed(true)} style={{position:"absolute",bottom:72,background:"transparent",border:0,color:"#aaa",fontSize:12,padding:12}}>Skip intro</button>}
     <section className="gateway" aria-label="Ouranos sign in">
-      <h1 className="gateway-wordmark" aria-label="Ouranos"><span aria-hidden="true">{reduceMotion ? <span className="static-wordmark">Ouranos</span> : <HyperText className="hyper-wordmark" duration={1000} animateOnHover={false}>Ouranos</HyperText>}</span></h1>
+      <h1 className="sr-only">Sign in to Ouranos</h1>
       <div className="login-reveal" inert={!revealed} aria-hidden={!revealed}>
         <div className="email-card">
           <form onSubmit={signIn}>
@@ -38,7 +48,7 @@ export default function Home() {
             <Button type="submit" className="continue-button" disabled={busy}>{busy ? "Sending link…" : "Continue"} <ArrowRight size={16}/></Button>
             {message && <p className="auth-message" role="status">{message}</p>}
           </form>
-          {!reduceMotion && <div className="beam-wrapper"><BorderBeam duration={12} size={75} colorFrom="#ccd5e2" colorTo="#7c97c2" borderWidth={1}/></div>}
+          {!reduceMotion && <div className="beam-wrapper"><BorderBeam duration={12} size={75} colorFrom="#ffffff" colorTo="#666666" borderWidth={1}/></div>}
         </div>
       </div>
     </section>

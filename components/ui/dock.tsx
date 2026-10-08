@@ -3,6 +3,8 @@ import {createContext,useContext,useId,useRef,useState,type ReactNode} from 'rea
 import {AnimatePresence,motion,useMotionValue,useReducedMotion,useSpring,useTransform,type MotionValue} from 'framer-motion';
 
 const DockContext=createContext<MotionValue<number>|null>(null);
+const DockActiveContext=createContext(false);
+export function useDockActive(){return useContext(DockActiveContext)}
 /** Compact dock adaptation: native links and buttons retain focus and activation. */
 export function Dock({children,className}:{children:ReactNode;className?:string}) {
  const mouseX=useMotionValue(Infinity);
@@ -23,7 +25,7 @@ function DockItemMotion({children,label,mouseX}:{children:ReactNode;label:string
  const scale=useSpring(targetScale,{mass:.1,stiffness:150,damping:12});
  const y=useSpring(targetY,{mass:.1,stiffness:150,damping:12});
  return <motion.div ref={ref} className="workspace-dock-item" style={{scale,y}} onHoverStart={()=>setHovered(true)} onHoverEnd={()=>setHovered(false)} onFocusCapture={()=>setFocused(true)} onBlurCapture={event=>{if(!event.currentTarget.contains(event.relatedTarget))setFocused(false)}}>
-  {children}
+  <DockActiveContext.Provider value={hovered||focused}>{children}</DockActiveContext.Provider>
   <AnimatePresence>{(hovered||focused)&&<motion.span id={id} role="tooltip" className="workspace-dock-label" style={{x:'-50%'}} initial={{opacity:0,y:reduced?0:4}} animate={{opacity:1,y:0}} exit={{opacity:0,y:reduced?0:4}} transition={{duration:reduced?0:.18}}>{label}</motion.span>}</AnimatePresence>
  </motion.div>;
 }

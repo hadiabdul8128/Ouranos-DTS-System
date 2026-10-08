@@ -12,7 +12,7 @@ import { useEffect } from "react";
 import { CircleHelp, PanelLeft, LogOut, Settings } from "lucide-react";
 import { SyncIndicator, usePlatform } from "@/components/platform/provider";
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { CalendarDays } from "lucide-react";
+import { CalendarSearchIcon as CalendarDays } from "@/components/ui/calendar-search-icon";
 import { UpcomingPanel, useUpcoming } from "@/components/planner/upcoming-panel";
 
 // Other systems service members use alongside Ouranos. Shown as links for now; they don't open anything yet.

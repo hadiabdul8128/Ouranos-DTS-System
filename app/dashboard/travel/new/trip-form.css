@@ -3,17 +3,17 @@
 :root .app-surface .trip-form-stage{width:min(780px,calc(100% - 48px))}
 :root .app-surface .trip-form-stage h1{margin-bottom:28px}
 :root .app-surface .trip-form-stage{padding-bottom:96px}
-.trip-form-rows{border-top:1px solid #232a22}
-.trip-form-rows>*{display:grid;grid-template-columns:190px minmax(0,1fr);column-gap:32px;row-gap:8px;align-items:start;padding:20px 0;border-bottom:1px solid #1d231c}
+.trip-form-rows{border-top:1px solid #282828}
+.trip-form-rows>*{display:grid;grid-template-columns:190px minmax(0,1fr);column-gap:32px;row-gap:8px;align-items:start;padding:20px 0;border-bottom:1px solid #212121}
 :root .app-surface .trip-form-rows>*{margin:0}
 .trip-form-rows>*>:first-child{grid-column:1;grid-row:1/span 4;padding-top:14px;margin:0}
 .trip-form-rows>*>:not(:first-child){grid-column:2;margin:0}
-:root .app-surface .trip-form-rows>*>label,.trip-form-rows .trip-dates-label{font-family:var(--font-body);font-size:15px;font-weight:600;color:#edf0e8}
-:root .app-surface .trip-form-rows .place-hint{margin:0;font-size:13px;color:#8f988b}
+:root .app-surface .trip-form-rows>*>label,.trip-form-rows .trip-dates-label{font-family:var(--font-body);font-size:15px;font-weight:600;color:#ffffff}
+:root .app-surface .trip-form-rows .place-hint{margin:0;font-size:13px;color:#959595}
 
 /* The bar: what's been filled in, then the single action that names what it does. */
-.trip-form-bar{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-top:24px;padding:14px 14px 14px 18px;border:1px solid #2b322a;border-radius:8px;background:#121611}
-.trip-form-summary{margin:0;min-width:0;font-size:15px;color:#c9d0c3;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.trip-form-bar{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-top:24px;padding:14px 14px 14px 18px;border:1px solid #303030;border-radius:8px;background:#151515}
+.trip-form-summary{margin:0;min-width:0;font-size:15px;color:#cecece;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 :root .app-surface .trip-form .trip-form-bar>.continue-button{flex:0 0 auto;width:auto;min-width:150px;height:48px;margin:0;justify-content:center;border-radius:6px;font-size:16px;font-weight:600;transition:transform 160ms cubic-bezier(.23,1,.32,1),background-color .15s ease}
 :root .app-surface .trip-form .trip-form-bar>.continue-button:active{transform:scale(.97)}
 
@@ -28,16 +28,16 @@
 
 /* Fields as soft glass: a faint see-through fill and an olive-tinted edge (3:1 against the page) with generous corners.
    Focus brightens the edge and adds a quiet halo so the active field is never ambiguous. */
-:root .app-surface .trip-form .trip-form-rows :is(input,select)[class][class],:root .app-surface .trip-form .trip-form-rows :is(.place-field,.travel-select) select:not([multiple]):not([size]),:root .app-surface .trip-form .trip-form-rows .trip-dates-trigger{border:1px solid #c9d3a873;border-radius:12px;background:#edf0e809;box-shadow:inset 0 1px 0 #edf0e80d;backdrop-filter:blur(6px);transition:border-color .15s ease,box-shadow .15s ease,background-color .15s ease}
-:root .app-surface .trip-form .trip-form-rows :is(input,select)[class][class],:root .app-surface .trip-form .trip-form-rows :is(.place-field,.travel-select) select:not([multiple]):not([size]){height:48px;padding:0 16px;font-size:17px;color:#edf0e8}
+:root .app-surface .trip-form .trip-form-rows :is(input,select)[class][class],:root .app-surface .trip-form .trip-form-rows :is(.place-field,.travel-select) select:not([multiple]):not([size]),:root .app-surface .trip-form .trip-form-rows .trip-dates-trigger{border:1px solid #cecece73;border-radius:12px;background:#ffffff09;box-shadow:inset 0 1px 0 #ffffff0d;backdrop-filter:blur(6px);transition:border-color .15s ease,box-shadow .15s ease,background-color .15s ease}
+:root .app-surface .trip-form .trip-form-rows :is(input,select)[class][class],:root .app-surface .trip-form .trip-form-rows :is(.place-field,.travel-select) select:not([multiple]):not([size]){height:48px;padding:0 16px;font-size:17px;color:#ffffff}
 :root .app-surface .trip-form .trip-form-rows :is(.place-field,.travel-select) select:not([multiple]):not([size]){padding-right:40px}
-:root .app-surface .trip-form .trip-form-rows input[class][class]::placeholder{color:#8a9386}
+:root .app-surface .trip-form .trip-form-rows input[class][class]::placeholder{color:#909090}
 :root .app-surface .trip-form .trip-form-rows .trip-dates-trigger{padding:10px 16px}
-@media(hover:hover) and (pointer:fine){:root .app-surface .trip-form .trip-form-rows :is(input,select)[class][class]:hover:not(:focus-visible),:root .app-surface .trip-form .trip-form-rows :is(.place-field,.travel-select) select:not([multiple]):not([size]):hover:not(:focus-visible),:root .app-surface .trip-form .trip-form-rows .trip-dates-trigger:hover:not([data-state=open]){border-color:#c9d3a8a6;background:#edf0e80d}}
-:root .app-surface .trip-form .trip-form-rows :is(input,select)[class][class]:focus-visible,:root .app-surface .trip-form .trip-form-rows :is(.place-field,.travel-select) select:not([multiple]):not([size]):focus-visible,:root .app-surface .trip-form .trip-form-rows .trip-dates-trigger:focus-visible,:root .app-surface .trip-form .trip-form-rows .trip-dates-trigger[data-state=open]{outline:none;border-color:#c9d3a8;background:#edf0e810;box-shadow:0 0 0 3px #c9d3a82e,inset 0 1px 0 #edf0e80d}
-:root .app-surface .trip-form .trip-form-rows :is(.place-field,.travel-select) select option{background:#141815;color:#edf0e8}
+@media(hover:hover) and (pointer:fine){:root .app-surface .trip-form .trip-form-rows :is(input,select)[class][class]:hover:not(:focus-visible),:root .app-surface .trip-form .trip-form-rows :is(.place-field,.travel-select) select:not([multiple]):not([size]):hover:not(:focus-visible),:root .app-surface .trip-form .trip-form-rows .trip-dates-trigger:hover:not([data-state=open]){border-color:#cececea6;background:#ffffff0d}}
+:root .app-surface .trip-form .trip-form-rows :is(input,select)[class][class]:focus-visible,:root .app-surface .trip-form .trip-form-rows :is(.place-field,.travel-select) select:not([multiple]):not([size]):focus-visible,:root .app-surface .trip-form .trip-form-rows .trip-dates-trigger:focus-visible,:root .app-surface .trip-form .trip-form-rows .trip-dates-trigger[data-state=open]{outline:none;border-color:#cecece;background:#ffffff10;box-shadow:0 0 0 3px #cecece2e,inset 0 1px 0 #ffffff0d}
+:root .app-surface .trip-form .trip-form-rows :is(.place-field,.travel-select) select option{background:#171717;color:#ffffff}
 /* The bar picks up the same material so the page reads as one set. */
-:root .app-surface .trip-form .trip-form-bar{border-color:#c9d3a83d;border-radius:14px;background:#edf0e806}
+:root .app-surface .trip-form .trip-form-bar{border-color:#cecece3d;border-radius:14px;background:#ffffff06}
 :root .app-surface .trip-form .trip-form-bar>.continue-button{border-radius:10px}
 @media(prefers-reduced-motion:reduce){:root .app-surface .trip-form .trip-form-rows :is(input,select)[class][class],:root .app-surface .trip-form .trip-form-rows :is(.place-field,.travel-select) select:not([multiple]):not([size]),:root .app-surface .trip-form .trip-form-rows .trip-dates-trigger{transition:none}}
 

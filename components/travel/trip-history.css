@@ -1,10 +1,10 @@
 /* Trip history as a stack of travel claim slips: form boxes with corner labels, and a finance-office ink stamp. */
-.claims-shell{--paper:#171c16;--rule:#343c33;--label:#848d80;--ink:#edf0e8;--paid:#a5b38a;--owed:#d6a85a;--unfiled:#c9675c;--quiet:#6c7569;max-width:820px}
+.claims-shell{--paper:#1b1b1b;--rule:#3a3a3a;--label:#8a8a8a;--ink:#ffffff;--paid:#ffffff;--owed:#acacac;--unfiled:#7b7b7b;--quiet:#727272;max-width:820px}
 .claims-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin:10px 0 26px}
-.claims-head h1{margin:0}.claims-head p{margin:10px 0 0;font-size:14px;color:#a7afa3}
+.claims-head h1{margin:0}.claims-head p{margin:10px 0 0;font-size:14px;color:#acacac}
 .claims-filters{display:flex;align-items:center;gap:10px}
-.claims-tabs{display:flex;border:1px solid var(--rule)}.claims-tabs button{font-size:12px;padding:7px 12px;color:#a7afa3;letter-spacing:.3px}.claims-tabs button+button{border-left:1px solid var(--rule)}.claims-tabs button[aria-pressed=true]{background:var(--ink);color:#141815}.claims-tabs button:focus-visible{outline:2px solid var(--paid);outline-offset:2px}
-.claims-filters select{appearance:none;background:transparent;border:1px solid var(--rule);border-radius:0;color:#c9cfc4;font:inherit;font-size:12px;padding:7px 12px;cursor:pointer;color-scheme:dark}.claims-filters select:focus-visible{outline:2px solid var(--paid);outline-offset:2px}
+.claims-tabs{display:flex;border:1px solid var(--rule)}.claims-tabs button{font-size:12px;padding:7px 12px;color:#acacac;letter-spacing:.3px}.claims-tabs button+button{border-left:1px solid var(--rule)}.claims-tabs button[aria-pressed=true]{background:var(--ink);color:#171717}.claims-tabs button:focus-visible{outline:2px solid var(--paid);outline-offset:2px}
+.claims-filters select{appearance:none;background:transparent;border:1px solid var(--rule);border-radius:0;color:#cdcdcd;font:inherit;font-size:12px;padding:7px 12px;cursor:pointer;color-scheme:dark}.claims-filters select:focus-visible{outline:2px solid var(--paid);outline-offset:2px}
 
 .claims-totals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:0 0 36px;border:1px solid var(--rule);background:var(--paper)}
 .claims-totals div{padding:10px 14px 14px}.claims-totals div+div{border-left:1px solid var(--rule)}
@@ -18,8 +18,8 @@
 .box strong{display:block;margin-top:7px;font-size:15px;font-weight:400;color:var(--ink);overflow-wrap:anywhere}
 .box-wide strong{font-size:19px;letter-spacing:-.3px}
 .slip-grid .box:nth-child(4){border-right:0}.slip-grid .box:nth-child(7){border-right:0;grid-column:span 2}
-.slip-foot{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 14px;font-size:12px;color:#a7afa3}.slip-foot p{margin:0}
-.slip-foot nav{display:flex;gap:16px;flex-wrap:wrap}.slip-foot a,.slip-foot button{display:inline-flex;align-items:center;gap:3px;color:#c9d3b4;text-decoration:underline;text-decoration-color:#4a5448;text-underline-offset:3px}.slip-foot a:hover,.slip-foot button:hover{color:var(--ink);text-decoration-color:var(--paid)}
+.slip-foot{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 14px;font-size:12px;color:#acacac}.slip-foot p{margin:0}
+.slip-foot nav{display:flex;gap:16px;flex-wrap:wrap}.slip-foot a,.slip-foot button{display:inline-flex;align-items:center;gap:3px;color:#cfcfcf;text-decoration:underline;text-decoration-color:#515151;text-underline-offset:3px}.slip-foot a:hover,.slip-foot button:hover{color:var(--ink);text-decoration-color:var(--paid)}
 .slip-foot a:focus-visible,.slip-foot button:focus-visible,.slip-items summary:focus-visible{outline:2px solid var(--paid);outline-offset:2px}
 
 /* The stamp: the one loud thing on the page. */
@@ -28,10 +28,10 @@
 .stamp.is-paid{color:var(--paid)}.stamp.is-awaiting{color:var(--owed)}.stamp.is-not_filed{color:var(--unfiled)}.stamp.is-not_due{color:var(--quiet);opacity:.6}
 
 .slip-items{border-top:1px dashed var(--rule);padding:8px 14px 12px}.slip-items summary{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--label);cursor:pointer;width:max-content}
-.slip-items table{width:100%;max-width:440px;border-collapse:collapse;font-size:12px;margin-top:8px}.slip-items th,.slip-items td{text-align:left;padding:5px 0;border-bottom:1px dotted #2c342b;font-weight:400}.slip-items td{text-align:right;color:var(--ink)}.slip-items thead th{font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--label)}.slip-items thead th+th{text-align:right}
-.slip-pay{display:grid;grid-template-columns:140px 170px auto;gap:12px;align-items:end;border-top:1px dashed var(--rule);padding:12px 14px 14px}.slip-pay label{display:flex;flex-direction:column;gap:6px;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--label)}.slip-pay input{height:38px;border-radius:0;background:#0f120f;border:1px solid var(--rule);color:var(--ink);color-scheme:dark;letter-spacing:0;text-transform:none}.slip-pay>div{display:flex;gap:8px}.slip-pay button{border-radius:0}.slip-pay button[type=submit]{background:var(--paid);color:#141815}.slip-pay button[type=submit]:hover{background:#c1cea6}.slip-pay .form-error{grid-column:1/-1;margin:0}
+.slip-items table{width:100%;max-width:440px;border-collapse:collapse;font-size:12px;margin-top:8px}.slip-items th,.slip-items td{text-align:left;padding:5px 0;border-bottom:1px dotted #323232;font-weight:400}.slip-items td{text-align:right;color:var(--ink)}.slip-items thead th{font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--label)}.slip-items thead th+th{text-align:right}
+.slip-pay{display:grid;grid-template-columns:140px 170px auto;gap:12px;align-items:end;border-top:1px dashed var(--rule);padding:12px 14px 14px}.slip-pay label{display:flex;flex-direction:column;gap:6px;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--label)}.slip-pay input{height:38px;border-radius:0;background:#111111;border:1px solid var(--rule);color:var(--ink);color-scheme:dark;letter-spacing:0;text-transform:none}.slip-pay>div{display:flex;gap:8px}.slip-pay button{border-radius:0}.slip-pay button[type=submit]{background:var(--paid);color:#171717}.slip-pay button[type=submit]:hover{background:#ffffff}.slip-pay .form-error{grid-column:1/-1;margin:0}
 
-.claims-empty{font-size:14px;color:#a7afa3;border:1px dashed var(--rule);padding:26px 18px;margin:0}
+.claims-empty{font-size:14px;color:#acacac;border:1px dashed var(--rule);padding:26px 18px;margin:0}
 .history-note{font-size:11px;color:var(--quiet);line-height:1.6;margin:26px 0 0}
 
 @media(max-width:700px){

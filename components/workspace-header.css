@@ -17,7 +17,7 @@
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #edf0e8;
+  color: #ffffff;
   font-family: var(--font-display);
   font-size: 11px;
   font-weight: 600;
@@ -26,8 +26,8 @@
   white-space: nowrap;
 }
 :root .app-surface .home-header .inbox-header-actions .workspace-dock-item > :is(a, button):hover {
-  background: #1b211c;
-  color: #edf0e8;
+  background: #1f1f1f;
+  color: #ffffff;
 }
 :root .app-surface .home-header .inbox-header-actions .workspace-dock-item > :is(a, button) > svg {
   width: 16px;
@@ -52,10 +52,10 @@
   height: 20px;
   padding: 0 5px;
   margin-left: -4px;
-  border: 1px solid #424e34;
+  border: 1px solid #4a4a4a;
   border-radius: 10px;
-  background: #2a3322;
-  color: #d4e0bb;
+  background: #303030;
+  color: #dbdbdb;
   font-size: 11px;
   font-variant-numeric: tabular-nums;
 }
@@ -75,20 +75,32 @@
 }
 
 .home-brand-actions { display: flex; align-items: center; gap: 8px; }
-:root .app-surface .home-systems-toggle { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #edf0e8; flex-shrink: 0; }
-:root .app-surface .home-systems-toggle:hover { background: #1b211c; }
-.home-systems-sidebar { width: min(360px, 100vw); max-width: 360px; padding: 56px 24px 24px; background: #141815; color: #edf0e8; border-color: #343c33; overflow-y: auto; gap: 12px; }
+:root .app-surface .home-systems-toggle { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #ffffff; flex-shrink: 0; }
+:root .app-surface .home-systems-toggle:hover { background: #1f1f1f; }
+.home-systems-sidebar { width: min(360px, 100vw); max-width: 360px; padding: 56px 24px 24px; background: #171717; color: #ffffff; border-color: #3a3a3a; overflow-y: auto; gap: 12px; }
 .home-systems-sidebar [data-slot=sheet-title] { font-size: 24px; font-weight: 600; }
-.home-systems-sidebar [data-slot=sheet-description] { color: #a7afa3; font-size: 13px; line-height: 1.6; }
+.home-systems-sidebar [data-slot=sheet-description] { color: #acacac; font-size: 13px; line-height: 1.6; }
 .home-systems-sidebar ul { list-style: none; padding: 0; margin: 12px 0 0; }
-.home-sidebar-system { display: flex; flex-direction: column; gap: 4px; padding: 16px 0; border-bottom: 1px solid #343c33; }
+.home-sidebar-system { display: flex; flex-direction: column; gap: 4px; padding: 16px 0; border-bottom: 1px solid #3a3a3a; }
 .home-sidebar-system strong { font-size: 15px; font-weight: 600; }
-.home-sidebar-system span { font-size: 13px; color: #a7afa3; }
+.home-sidebar-system span { font-size: 13px; color: #acacac; }
 .home-systems-sidebar > button { min-width: 44px; min-height: 44px; top: 8px; right: 12px; display: grid; place-items: center; }
 
 /* Spring magnification from the supplied dock, kept compact for labeled navigation. */
 :root .app-surface .home-header .inbox-header-actions { gap: 6px; }
 .workspace-dock-item { position: relative; display: flex; align-items: center; flex-shrink: 0; transform-origin: center bottom; }
 .workspace-dock-item:hover, .workspace-dock-item:focus-within { z-index: 20; }
-.workspace-dock-label { position: absolute; bottom: calc(100% + 4px); left: 50%; pointer-events: none; white-space: nowrap; padding: 3px 8px; border: 1px solid #424e34; border-radius: 6px; background: #20271d; color: #edf0e8; font-family: var(--font-body); font-size: 11px; line-height: 1.25; font-weight: 500; }
+.workspace-dock-label { position: absolute; bottom: calc(100% + 4px); left: 50%; pointer-events: none; white-space: nowrap; padding: 3px 8px; border: 1px solid #4a4a4a; border-radius: 6px; background: #252525; color: #ffffff; font-family: var(--font-body); font-size: 11px; line-height: 1.25; font-weight: 500; }
 @media (max-width: 650px) { :root .app-surface .home-header .inbox-header-actions { gap: 2px; } }
+.workspace-dock-item:is(:hover,:focus-within) > :is(a,button):not(.home-upcoming-button) > svg {
+  animation: workspace-icon-greet 600ms ease-out;
+  transform-origin:center;
+}
+@keyframes workspace-icon-greet {
+  0%,100% { transform:rotate(0); }
+  30% { transform:rotate(-10deg); }
+  65% { transform:rotate(8deg); }
+}
+@media(prefers-reduced-motion:reduce) {
+  .workspace-dock-item:is(:hover,:focus-within) > :is(a,button):not(.home-upcoming-button) > svg { animation:none; }
+}
