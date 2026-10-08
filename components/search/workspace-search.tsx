@@ -1,5 +1,4 @@
 'use client';
-import {useState} from 'react';
 import {BriefcaseBusiness, CircleHelp, Inbox, Plane, Settings, Video} from 'lucide-react';
 import {workspaceIntent} from '@/packages/domain/workspace-intent';
 import {AppleSpotlight} from '@/components/ui/apple-spotlight';
@@ -14,11 +13,7 @@ const actions = [
 ] as const;
 
 export function WorkspaceSearch({onNavigate}:{onNavigate:(href:string)=>void}) {
- const [query,setQuery]=useState('');
- const words=query.trim().toLowerCase().split(/\s+/).filter(Boolean);
- const intent=workspaceIntent(query);
- const matches=actions.filter(action=>!words.length||intent===action.href||words.every(word=>`${action.name} ${action.description} ${action.keywords}`.toLowerCase().includes(word)));
- return <AppleSpotlight inline onNavigate={onNavigate} onSearchValueChange={setQuery}
+ return <AppleSpotlight inline showResults={false} resolveRequest={workspaceIntent} onNavigate={onNavigate}
   shortcuts={actions.slice(0,4).map(({name,href,Icon})=>({label:name,link:href,icon:<Icon aria-hidden="true"/>}))}
-  searchResults={matches.map(({name,description,href,Icon})=>({label:name,description,link:href,icon:<Icon aria-hidden="true"/>}))}/>;
+ />;
 }
