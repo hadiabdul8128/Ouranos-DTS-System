@@ -1,6 +1,13 @@
 .approval-status{display:flex;flex-direction:column;gap:4px;border:1px solid #343c33;border-left:3px solid #d4e0bb;background:#141815;border-radius:10px;padding:16px 18px;margin:16px 0}
 .approval-status strong{font-size:15px;font-weight:500;color:#edf0e8}.approval-status span{font-size:12px;color:#a7afa3}
 .approval-status.is-done{border-left-color:#a5b38a}.approval-status.is-returned{border-left-color:#e0bf7a}.approval-status.is-returned strong{color:#e0bf7a}.approval-status.is-rejected{border-left-color:#f0a09a}.approval-status.is-rejected strong{color:#f0a09a}
-.approval-steps{display:flex;gap:6px;margin-top:10px;max-width:220px}.approval-steps i{flex:1;height:4px;border-radius:2px;background:#343c33}.approval-steps i.is-done{background:#a5b38a}.approval-steps i.is-current{background:#d4e0bb66}
+
 .approval-status blockquote{margin:8px 0 0;padding:8px 12px;border-left:2px solid #4a5448;font-size:12px;color:#c9cfc4;line-height:1.6;overflow-wrap:anywhere}
 .approval-status.is-late{border-left-color:#e0bf7a}.approval-late{margin:8px 0 0;font-size:12px;line-height:1.6;color:#e0bf7a}
+
+/* Vertical milestones use the supplied 21st.dev component inside the existing status section. */
+:root .app-surface .approval-tracking{margin-top:16px;max-width:100%;font-family:var(--font-body)}
+:root .app-surface .approval-tracking p{margin:0;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+:root .app-surface .approval-tracking p+p{margin-top:4px;font-size:13px;color:#a7afa3}
+.approval-tracking>div>div:last-child>.ml-3{padding-bottom:0}
+.approval-tracking .ml-3{min-width:0}
