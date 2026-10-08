@@ -4,7 +4,7 @@
   align-items: center;
   gap: 2px;
 }
-:root .app-surface .home-header .inbox-header-actions > :is(a, button) {
+:root .app-surface .home-header .inbox-header-actions .workspace-dock-item > :is(a, button) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -25,11 +25,11 @@
   letter-spacing: 0;
   white-space: nowrap;
 }
-:root .app-surface .home-header .inbox-header-actions > :is(a, button):hover {
+:root .app-surface .home-header .inbox-header-actions .workspace-dock-item > :is(a, button):hover {
   background: #1b211c;
   color: #edf0e8;
 }
-:root .app-surface .home-header .inbox-header-actions > :is(a, button) > svg {
+:root .app-surface .home-header .inbox-header-actions .workspace-dock-item > :is(a, button) > svg {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
@@ -86,3 +86,9 @@
 .home-sidebar-system span { font-size: 13px; color: #a7afa3; }
 .home-systems-sidebar > button { min-width: 44px; min-height: 44px; top: 8px; right: 12px; display: grid; place-items: center; }
 
+/* Spring magnification from the supplied dock, kept compact for labeled navigation. */
+:root .app-surface .home-header .inbox-header-actions { gap: 6px; }
+.workspace-dock-item { position: relative; display: flex; align-items: center; flex-shrink: 0; transform-origin: center bottom; }
+.workspace-dock-item:hover, .workspace-dock-item:focus-within { z-index: 20; }
+.workspace-dock-label { position: absolute; bottom: calc(100% + 4px); left: 50%; pointer-events: none; white-space: nowrap; padding: 3px 8px; border: 1px solid #424e34; border-radius: 6px; background: #20271d; color: #edf0e8; font-family: var(--font-body); font-size: 11px; line-height: 1.25; font-weight: 500; }
+@media (max-width: 650px) { :root .app-surface .home-header .inbox-header-actions { gap: 2px; } }
