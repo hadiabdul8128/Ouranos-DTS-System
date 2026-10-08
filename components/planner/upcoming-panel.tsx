@@ -1,4 +1,5 @@
 'use client';
+import {useMeetings} from '@/components/meetings/store';
 import {useState} from 'react';
 import {useLiveQuery} from 'dexie-react-hooks';
 import Link from 'next/link';
@@ -14,7 +15,7 @@ import {usePlanner} from './store';
 import {useAssignedChecklists} from '@/components/team/assigned-checklists';
 import './planner.css';
 
-const kindNames:Record<UpcomingEntry['kind'],string>={appointment:'Appointment',deadline:'Deadline',deployment:'Deployment',other:'Reminder',trip:'Travel',voucher:'Voucher',checklist:'Checklist'};
+const kindNames:Record<UpcomingEntry['kind'],string>={appointment:'Appointment',deadline:'Deadline',deployment:'Deployment',other:'Reminder',trip:'Travel',voucher:'Voucher',checklist:'Checklist',meeting:'Meeting'};
 const text=(value:unknown)=>typeof value==='string'?value:'';
 const daysBetween=(from:string,to:string)=>Math.round((Date.parse(`${to}T12:00:00Z`)-Date.parse(`${from}T12:00:00Z`))/86400000);
 function when(date:string,today:string){const d=daysBetween(today,date);return d<0?`${-d} day${d===-1?'':'s'} overdue`:d===0?'Today':d===1?'Tomorrow':d<14?`In ${d} days`:d<60?`In ${Math.round(d/7)} weeks`:`In ${Math.round(d/30)} months`}
@@ -27,7 +28,9 @@ export function useUpcoming(){
  const trips=(rows||[]).map(r=>({id:r.id,destination:text(r.local.data.destination),departure:text(r.local.data.departure),returnDate:text(r.local.data.returnDate)})).filter(t=>t.destination&&t.departure&&t.returnDate);
  // Checklists from leaders appear once, on their due date, until every step is done.
  const assigned:Checklist[]=(useAssignedChecklists().checklists??[]).filter(c=>c.dueOn).map(c=>({id:c.id,title:'From your leader',source:'instructions',instructions:'',createdAt:c.createdAt,steps:[{id:c.id,title:c.title,due:c.dueOn!,done:c.doneStepIds.length>=c.steps.length}]}));
- const entries=upcomingEntries(state.items,assigned,trips,today,{vouchers:false}).filter(e=>e.date<=addDays(today,365));
+ const {meetings,now}=useMeetings();
+ const meetingEntries:UpcomingEntry[]=meetings.filter(m=>m.status==='scheduled'&&Date.parse(m.endsAt)>now).map(m=>{const d=new Date(m.startsAt);return {key:`meeting:${m.id}`,kind:'meeting',title:m.title,date:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,time:d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit',hour12:false}),href:`/dashboard/meetings?meeting=${m.id}`}});
+ const entries=[...meetingEntries,...upcomingEntries(state.items,assigned,trips,today,{vouchers:false})].filter(e=>e.date<=addDays(today,365)).sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''));
  return {entries,trips,today,update,error,soon:entries.filter(e=>daysBetween(today,e.date)<7).length};
 }
 const toDate=(value:string)=>new Date(`${value}T12:00:00`);
