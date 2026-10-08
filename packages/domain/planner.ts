@@ -5,7 +5,7 @@ export type Checklist={id:string;title:string;source:'instructions'|'guide'|'ai'
 export const plannerKinds=['appointment','deadline','deployment','other'] as const;
 export type PlannerKind=typeof plannerKinds[number];
 export type PlannerItem={id:string;kind:PlannerKind;title:string;date:string;time?:string;notes?:string;done?:boolean};
-export type UpcomingEntry={key:string;date:string;time?:string;title:string;kind:PlannerKind|'trip'|'voucher'|'checklist';detail?:string;href?:string;itemId?:string;checklist?:{id:string;stepId:string}};
+export type UpcomingEntry={key:string;date:string;time?:string;title:string;kind:PlannerKind|'trip'|'voucher'|'checklist'|'meeting';detail?:string;href?:string;itemId?:string;checklist?:{id:string;stepId:string}};
 
 const MONTHS=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
 const pad=(n:number)=>String(n).padStart(2,'0');
