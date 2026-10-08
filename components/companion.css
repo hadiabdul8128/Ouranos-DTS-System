@@ -27,6 +27,8 @@
 .companion-action:is(:hover,:focus-visible) .companion-action-icon,.companion-action:is(:hover,:focus-visible) .companion-action-arrow{color:#e0e9cd}
 .companion-panel small{display:block;font-size:11px;line-height:1.6;color:#a7afa3;margin-top:4px}
 .companion-panel .companion-trips{margin-top:12px;min-height:52px;font-weight:500}
+.companion-panel .companion-trips:focus-visible{transform:scale(1.06)}
+@media(hover:hover) and (pointer:fine){.companion-panel .companion-trips:hover{transform:scale(1.06);background:#435536;border-color:#aebc94}}
 .companion-chat-preview{display:flex;align-items:flex-start;gap:10px;border-top:1px solid #343c33;padding-top:16px;margin-top:8px;color:#a7afa3}
 .companion-chat-preview p{margin:0;color:#edf0e8}
 .companion-messages{max-height:220px;overflow-y:auto;overscroll-behavior:contain}
