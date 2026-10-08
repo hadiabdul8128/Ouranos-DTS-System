@@ -8,8 +8,8 @@
 .spotlight-input-wrap { position: relative; flex: 1; min-width: 0; }
 .spotlight-search-icon { display: flex; color: #c3cbbb; flex-shrink: 0; }
 .spotlight-placeholder { position: absolute; inset: 0; display: flex; align-items: center; pointer-events: none; color: #a7afa3; font-size: 24px; }
-.spotlight-shortcut-shell { flex: 0 0 52px; }
-:root .app-surface .spotlight-shortcut { display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; background: #181e18; border: 1px solid #343c33; color: #a7afa3; }
+.spotlight-shortcut-shell { flex: 0 0 64px; }
+:root .app-surface .spotlight-shortcut { display: flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 50%; background: #181e18; border: 1px solid #343c33; color: #a7afa3; }
 .spotlight-shortcut svg { width: 27px; height: 27px; stroke-width: 1.4; }
 :root .app-surface .spotlight-shortcut:hover, :root .app-surface .spotlight-shortcut:focus-visible { color: #edf0e8; background: #293322; }
 .spotlight-result-icon { display: grid; place-items: center; width: 32px; flex: 0 0 32px!important; }
