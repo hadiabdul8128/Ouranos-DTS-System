@@ -19,12 +19,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <head>
-        {/* Fraunces with its softness axis at full: a soft, Cooper Black style serif for the whole app. */}
-        <link rel="preconnect" href="https://fonts.googleapis.com"/>
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous"/>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..900,0..100,0..1&family=Nunito:wght@400..800&display=swap"/>
-      </head>
       <body className="antialiased">
         <div className="ambient-dots" aria-hidden="true"><DotPattern width={24} height={24} cr={0.8} glow={false} /></div>
         <div className="app-surface"><PlatformProvider>{children}</PlatformProvider></div>

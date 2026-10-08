@@ -42,9 +42,9 @@
 @media(prefers-reduced-motion:reduce){:root .app-surface .trip-form .trip-form-rows :is(input,select)[class][class],:root .app-surface .trip-form .trip-form-rows :is(.place-field,.travel-select) select:not([multiple]):not([size]),:root .app-surface .trip-form .trip-form-rows .trip-dates-trigger{transition:none}}
 
 /* Nunito's fully rounded terminals soften the page to match the rounded fields. */
-:root .app-surface .trip-form-stage{--font-body:"Nunito",ui-rounded,system-ui,sans-serif;--font-display:"Nunito",ui-rounded,system-ui,sans-serif;font-family:var(--font-body);font-variation-settings:normal}
+:root .app-surface .trip-form-stage{--font-body:"IBM Plex Sans",Arial,sans-serif;--font-display:"IBM Plex Sans",Arial,sans-serif;font-family:var(--font-body);font-variation-settings:normal}
 :root .app-surface .trip-form-stage :is(h1,label,input,select,button,p,small,span,strong,a){font-family:var(--font-body)}
 :root .app-surface .trip-form-stage h1{font-weight:800;letter-spacing:-.02em}
 :root .app-surface .trip-form-stage .trip-form-rows>*>label,:root .app-surface .trip-form-stage .trip-dates-label{font-weight:700}
 :root .app-surface .trip-form-stage .trip-form-bar>.continue-button{font-weight:700}
-.trip-dates-popover.trip-dates-popover,.trip-dates-popover :is(p,button,span,div){font-family:"Nunito",ui-rounded,system-ui,sans-serif;font-variation-settings:normal}
+.trip-dates-popover.trip-dates-popover,.trip-dates-popover :is(p,button,span,div){font-family:"IBM Plex Sans",Arial,sans-serif;font-variation-settings:normal}

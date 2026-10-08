@@ -1,12 +1,12 @@
 /* Authorization is a working form: serif for the destination, Nunito for reading and editing. */
 :root .app-surface .cw-authorization{
- --font-body:"Nunito",sans-serif;
- --font-display:"Nunito",sans-serif;
- --ap-font-display:"Nunito",sans-serif;
+ --font-body:"IBM Plex Sans",Arial,sans-serif;
+ --font-display:"IBM Plex Sans",Arial,sans-serif;
+ --ap-font-display:"IBM Plex Sans",Arial,sans-serif;
  font-family:var(--font-body);
  font-variation-settings:normal;
 }
-:root .app-surface .cw-authorization .cw-heading h1{font-family:"Fraunces",Georgia,serif}
+:root .app-surface .cw-authorization .cw-heading h1{font-family:"IBM Plex Sans",Arial,sans-serif}
 :root .app-surface .cw-authorization :is(input,select,textarea,button,h2,h3,h4){font-family:var(--font-body);font-variation-settings:normal}
 :root .app-surface .cw-authorization .cw-section-heading h2{font-size:22px;font-weight:700;letter-spacing:-.02em}
 :root .app-surface .cw-authorization .authorization-expenses>.cw-section-heading{margin-top:40px;margin-bottom:24px;padding-bottom:16px}

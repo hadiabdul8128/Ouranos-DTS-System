@@ -44,7 +44,7 @@ export function AppleSpotlight({shortcuts=[],searchResults=[],isOpen=true,handle
  const reduced=Boolean(useReducedMotion());
  const expanded=showResults&&focused&&Boolean(searchValue);
  const shortcutsVisible=hovered&&!searchValue&&shortcuts.length>0;
- const shortcutWidth=shortcuts.length*64+Math.max(0,shortcuts.length-1)*16;
+ const shortcutWidth=shortcuts.length*(inline?44:64)+Math.max(0,shortcuts.length-1)*16;
  useEffect(()=>{
   function shortcut(event:KeyboardEvent){if(isOpen&&(event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='k'){event.preventDefault();input.current?.focus();setFocused(true)}}
   window.addEventListener('keydown',shortcut);
@@ -61,7 +61,7 @@ export function AppleSpotlight({shortcuts=[],searchResults=[],isOpen=true,handle
       <div className="workspace-search-field">
        <motion.div layoutId="search-icon" className="spotlight-search-icon"><Search size={27} strokeWidth={1.4} aria-hidden="true"/></motion.div>
        <div className="spotlight-input-wrap">
-        {(!searchValue||hoveredResult)&&<SpotlightPlaceholder text={hoveredShortcut??hoveredResult??'Search'} reduced={reduced}/>}
+        {(!searchValue||hoveredResult)&&<SpotlightPlaceholder text={hoveredShortcut??hoveredResult??'Enter a task'} reduced={reduced}/>}
         {showResults?<Command.Input asChild ref={input} value={searchValue} onValueChange={change} onFocus={()=>setFocused(true)} autoComplete="off" maxLength={500} disabled={opening}><motion.input className="spotlight-text-input" layout="position" style={{opacity:hoveredResult?0:1}} role="combobox" aria-expanded={expanded}/></Command.Input>:<motion.input className="spotlight-text-input" ref={input} layout="position" type="text" aria-label="What do you want to do?" value={searchValue} onChange={event=>change(event.target.value)} onFocus={()=>setFocused(true)} autoComplete="off" maxLength={500} disabled={opening}/>}
 
        </div>

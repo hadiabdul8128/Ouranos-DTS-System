@@ -27,7 +27,7 @@ export function ServiceCloud() {
     {reducedMotion ? <div className="service-cloud-static">
       {services.map(service => <Image key={service.name} src={service.image} alt={service.name} width={56} height={56} unoptimized />)}
     </div> : <>
-      <IconCloud images={images} />
+      <IconCloud images={images} showControl={false} />
       <span className="sr-only">U.S. service branches: {services.map(service => service.name).join(", ")}.</span>
     </>}
   </div>;

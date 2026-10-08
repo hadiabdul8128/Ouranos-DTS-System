@@ -1,5 +1,5 @@
 /* Spotlight's continuous search/results surface, in the workspace palette. */
- .apple-spotlight { position: relative; text-align: left; font-family: "Nunito", Arial, sans-serif; }
+ .apple-spotlight { position: relative; text-align: left; font-family:"IBM Plex Sans",Arial,sans-serif; }
 .spotlight-inline { width: 100%; }
 .spotlight-overlay { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
 .spotlight-filter { position: absolute; pointer-events: none; }
@@ -26,7 +26,7 @@
  background: #181e18;
  color: #edf0e8;
  box-shadow: 0 6px 12px #00000024;
- font-family: "Nunito", Arial, sans-serif;
+ font-family:"IBM Plex Sans",Arial,sans-serif;
  font-variation-settings: normal;
  transition: border-color 160ms ease, border-radius 160ms ease;
 }
