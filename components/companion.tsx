@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { ArrowUpRight, MessageCircle, Send, X } from "lucide-react";
+import { ArrowUpRight, ClipboardList, MessageCircle, Plane, ReceiptText, Send, X } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { usePlatform } from "@/components/platform/provider";
 import "./companion.css";
@@ -60,9 +60,10 @@ function CompanionPanel() {
             const trip = rows.find(row => row.kind === "trip" && row.id === task.tripId);
             const destination = typeof trip?.data.destination === "string" ? trip.data.destination : "Your trip";
             const label = task.kind === "authorization" ? (task.status === "changes_requested" ? "Update travel plan" : "Finish travel plan") : (task.status === "needs_action" || task.status === "changes_requested" ? "Review voucher" : "Finish voucher");
-            return <li key={task.id}><Link href={`/dashboard/travel/${task.kind === "authorization" ? "planning" : "vouchers"}?tripId=${encodeURIComponent(task.tripId ?? "")}`} onClick={() => setOpen(false)}><span>{label}<small>{destination}</small></span><ArrowUpRight size={16}/></Link></li>;
+            const TaskIcon = task.kind === "authorization" ? ClipboardList : ReceiptText;
+            return <li key={task.id}><Link className="companion-action" href={`/dashboard/travel/${task.kind === "authorization" ? "planning" : "vouchers"}?tripId=${encodeURIComponent(task.tripId ?? "")}`} onClick={() => setOpen(false)}><TaskIcon className="companion-action-icon" size={18} aria-hidden="true"/><span className="companion-action-copy">{label}<small>{destination}</small></span><ArrowUpRight className="companion-action-arrow" size={16} aria-hidden="true"/></Link></li>;
           })}</ul> : <p>No pending drafts or changes.</p>}
-          <Link className="companion-trips" href="/dashboard/travel" onClick={() => setOpen(false)}>View travel <ArrowUpRight size={14}/></Link>
+          <Link className="companion-action companion-trips" href="/dashboard/travel" onClick={() => setOpen(false)}><Plane className="companion-action-icon" size={18} aria-hidden="true"/><span className="companion-action-copy">View travel</span><ArrowUpRight className="companion-action-arrow" size={16} aria-hidden="true"/></Link>
         </section>
         <div className="companion-messages" ref={log} role="log" aria-label="Chat messages" aria-live="polite">
           {messages.map((message,index)=><p key={index} className={`companion-message ${message.role}`}><span className="sr-only">{message.role==='user'?'You':'Companion'}: </span>{message.content}</p>)}
