@@ -1,38 +1,38 @@
 .companion{position:fixed;right:24px;bottom:52px;z-index:40}
 .companion-launcher{position:relative;display:grid;place-items:center;width:72px;height:72px;padding:0;border:0;background:transparent;cursor:pointer;transition:transform 200ms cubic-bezier(.23,1,.32,1)}
 @media(hover:hover) and (pointer:fine){.companion-launcher:hover{transform:translateY(-3px) scale(1.04)}}
-.companion-launcher:focus-visible{outline:2px solid #edf0e8;outline-offset:4px}
+.companion-launcher:focus-visible{outline:2px solid #ffffff;outline-offset:4px}
 /* A lit sphere: a light falloff from the top left, a slowly turning glow inside, a glossy highlight and a soft floor shadow. */
-.companion-orb{position:relative;display:block;width:60px;height:60px;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 32% 26%,#f4f7ea 0%,#c6d2a6 9%,#93a76f 30%,#5b6d40 55%,#2c3720 78%,#11160c 100%);box-shadow:inset -8px -10px 18px #050704cc,inset 4px 5px 10px #ffffff1f,0 0 0 1px #0b0e0b,0 14px 24px -8px #000e,0 0 28px -6px #aebc9466}
-.companion-orb-core{position:absolute;inset:-25%;border-radius:50%;background:conic-gradient(from 0deg,#aebc9400 0deg,#e0c98a55 60deg,#aebc9400 130deg,#cfdcab40 230deg,#aebc9400 310deg);filter:blur(8px);mix-blend-mode:soft-light;animation:companion-orb-turn 10s linear infinite}
+.companion-orb{position:relative;display:block;width:60px;height:60px;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 32% 26%,#f5f5f5 0%,#cccccc 9%,#9f9f9f 30%,#666666 55%,#333333 78%,#141414 100%);box-shadow:inset -8px -10px 18px #060606cc,inset 4px 5px 10px #ffffff1f,0 0 0 1px #0d0d0d,0 14px 24px -8px #000e,0 0 28px -6px #b6b6b666}
+.companion-orb-core{position:absolute;inset:-25%;border-radius:50%;background:conic-gradient(from 0deg,#b6b6b600 0deg,#c9c9c955 60deg,#b6b6b600 130deg,#d6d6d640 230deg,#b6b6b600 310deg);filter:blur(8px);mix-blend-mode:soft-light;animation:companion-orb-turn 10s linear infinite}
 .companion-orb::before{content:'';position:absolute;left:20%;top:11%;width:34%;height:22%;border-radius:50%;background:radial-gradient(ellipse at center,#fffffff2 0%,#ffffff66 40%,#ffffff00 72%);transform:rotate(-28deg);z-index:1}
-.companion-orb::after{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 62% 96%,#cfe0a866 0%,#cfe0a800 30%),radial-gradient(circle at 50% 50%,#00000000 62%,#00000059 100%);z-index:1}
-.companion-launcher[data-state=open] .companion-orb{box-shadow:inset -7px -9px 16px #0b0e0b99,inset 5px 6px 12px #ffffff26,0 0 0 1px #0b0e0b,0 0 0 4px #aebc9455,0 12px 22px -6px #000c}
-.companion-chat-mark{position:absolute;right:0;top:2px;z-index:2;display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:#aebc94;color:#10150e;border:2px solid #0b0e0b}
+.companion-orb::after{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 62% 96%,#d8d8d866 0%,#d8d8d800 30%),radial-gradient(circle at 50% 50%,#00000000 62%,#00000059 100%);z-index:1}
+.companion-launcher[data-state=open] .companion-orb{box-shadow:inset -7px -9px 16px #0d0d0d99,inset 5px 6px 12px #ffffff26,0 0 0 1px #0d0d0d,0 0 0 4px #b6b6b655,0 12px 22px -6px #000c}
+.companion-chat-mark{position:absolute;right:0;top:2px;z-index:2;display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:#b6b6b6;color:#131313;border:2px solid #0d0d0d}
 @keyframes companion-orb-turn{to{transform:rotate(360deg)}}
-.companion-panel{width:min(340px,calc(100vw - 32px));padding:18px;border:1px solid #343c33;border-radius:16px;background:#141815;color:#edf0e8;box-shadow:0 18px 60px #0007;max-height:calc(100dvh - 180px);overflow-y:auto;font-family:var(--font-sans)}
+.companion-panel{width:min(340px,calc(100vw - 32px));padding:18px;border:1px solid #3a3a3a;border-radius:16px;background:#171717;color:#ffffff;box-shadow:0 18px 60px #0007;max-height:calc(100dvh - 180px);overflow-y:auto;font-family:var(--font-sans)}
 .companion-panel header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .companion-panel h2{font-size:18px;font-weight:400;margin:0}
-.companion-panel header button{display:grid;place-items:center;min-width:44px;min-height:44px;border-radius:8px;color:#a7afa3;background:transparent;border:0}
-.companion-panel header button:hover{background:#252d24;color:#edf0e8}
-.companion-panel h3{font-size:13px;font-weight:400;color:#aebc94;margin:16px 0 12px}
-.companion-panel p{font-size:13px;line-height:1.6;color:#a7afa3}
+.companion-panel header button{display:grid;place-items:center;min-width:44px;min-height:44px;border-radius:8px;color:#acacac;background:transparent;border:0}
+.companion-panel header button:hover{background:#2b2b2b;color:#ffffff}
+.companion-panel h3{font-size:13px;font-weight:400;color:#b6b6b6;margin:16px 0 12px}
+.companion-panel p{font-size:13px;line-height:1.6;color:#acacac}
 .companion-panel ul{list-style:none;padding:0;margin:0}
-.companion-panel li a{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid #2b322b;font-size:13px;min-height:48px}
-.companion-panel li a:hover{color:#bfcca7}
-.companion-panel small{display:block;font-size:11px;line-height:1.6;color:#a7afa3;margin-top:4px}
-.companion-trips{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-size:12px;color:#bfcca7}
-.companion-chat-preview{display:flex;align-items:flex-start;gap:10px;border-top:1px solid #343c33;padding-top:16px;margin-top:8px;color:#a7afa3}
-.companion-chat-preview p{margin:0;color:#edf0e8}
+.companion-panel li a{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid #303030;font-size:13px;min-height:48px}
+.companion-panel li a:hover{color:#c7c7c7}
+.companion-panel small{display:block;font-size:11px;line-height:1.6;color:#acacac;margin-top:4px}
+.companion-trips{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-size:12px;color:#c7c7c7}
+.companion-chat-preview{display:flex;align-items:flex-start;gap:10px;border-top:1px solid #3a3a3a;padding-top:16px;margin-top:8px;color:#acacac}
+.companion-chat-preview p{margin:0;color:#ffffff}
 .companion-messages{max-height:220px;overflow-y:auto;overscroll-behavior:contain}
-.companion-message{white-space:pre-wrap;overflow-wrap:anywhere;padding:10px 12px;border-radius:10px;background:#20271f}
-.companion-message.user{margin-left:24px;background:#303b2b;color:#edf0e8}
-.companion-chat-form{display:flex;align-items:center;gap:8px;border:1px solid #47513f;border-radius:10px;padding:4px 6px;margin-top:12px}
-.companion-chat-form input{width:100%;min-width:0;background:transparent;border:0;color:#edf0e8;font:inherit;font-size:14px;height:44px;padding:8px}
-.companion-chat-form button{display:grid;place-items:center;min-width:44px;min-height:44px;border:0;border-radius:8px;background:#aebc94;color:#10150e}
+.companion-message{white-space:pre-wrap;overflow-wrap:anywhere;padding:10px 12px;border-radius:10px;background:#252525}
+.companion-message.user{margin-left:24px;background:#383838;color:#ffffff}
+.companion-chat-form{display:flex;align-items:center;gap:8px;border:1px solid #4e4e4e;border-radius:10px;padding:4px 6px;margin-top:12px}
+.companion-chat-form input{width:100%;min-width:0;background:transparent;border:0;color:#ffffff;font:inherit;font-size:14px;height:44px;padding:8px}
+.companion-chat-form button{display:grid;place-items:center;min-width:44px;min-height:44px;border:0;border-radius:8px;background:#b6b6b6;color:#131313}
 .companion-chat-form button:disabled{opacity:.4}
 .companion-panel .companion-disclosure{font-size:10px;margin-bottom:0}
-.companion-panel .companion-error{color:#f0a09a;font-size:12px}
+.companion-panel .companion-error{color:#b1b1b1;font-size:12px}
 @media(max-width:600px){.companion{right:16px;bottom:max(48px,env(safe-area-inset-bottom))}.companion-launcher{width:64px;height:64px}.companion-orb{width:54px;height:54px}.companion-panel{max-height:calc(100dvh - 155px)}}
 @media(prefers-reduced-motion:reduce){.companion-launcher{transition:none}.companion-launcher:hover{transform:none}.companion-orb-core{animation:none}}
 /* Keeps the launcher clear of the app-wide 4px button corners and fills. */

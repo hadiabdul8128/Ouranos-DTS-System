@@ -1,5 +1,5 @@
 /* An inline hotel directory inside the existing expense form. No duplicated trip or budget block. */
-:root .app-surface .planning-hotel-finder{--hotel-ink:var(--ap-ink,#edf0e8);--hotel-muted:var(--ap-ink-2,#c9d0c3);--hotel-line:var(--ap-rule-soft,#2a3129);--hotel-accent:var(--ap-accent,#b0bd95);margin:8px 0 0;padding:8px 0 0;font-family:var(--font-body)}
+:root .app-surface .planning-hotel-finder{--hotel-ink:var(--ap-ink,#ffffff);--hotel-muted:var(--ap-ink-2,#cecece);--hotel-line:var(--ap-rule-soft,#2f2f2f);--hotel-accent:var(--ap-accent,#ffffff);margin:8px 0 0;padding:8px 0 0;font-family:var(--font-body)}
 :root .app-surface .planning-hotel-finder :is(h2,h3,button,summary){font-family:var(--font-body);font-variation-settings:normal}
 :root .app-surface .planning-hotel-finder>.hotel-search{margin:16px 0 0;display:block}
 :root .app-surface .planning-hotel-finder .hotel-field{gap:8px;font-size:14px;font-weight:600;color:var(--hotel-ink)}
@@ -30,7 +30,7 @@
 :root .app-surface .planning-hotel-finder .hotel-zip-match{background:none;padding:0;border-radius:0;color:var(--hotel-accent);font-size:13px;white-space:normal}
 :root .app-surface .planning-hotel-finder .hotel-card-actions{gap:8px 16px;padding:0;border:0;align-items:center}
 :root .app-surface .planning-hotel-finder .hotel-card-actions :is(a,button){font-size:14px;min-height:44px;padding:0;color:var(--hotel-muted)}
-:root .app-surface .planning-hotel-finder .hotel-card-actions button:first-child:not(:has(svg)){background:var(--hotel-accent);color:var(--ap-paper,#141815);font-weight:700;border-radius:6px;padding:0 12px}
+:root .app-surface .planning-hotel-finder .hotel-card-actions button:first-child:not(:has(svg)){background:var(--hotel-accent);color:var(--ap-paper,#171717);font-weight:700;border-radius:6px;padding:0 12px}
 :root .app-surface .planning-hotel-finder .hotel-card-actions a{margin-left:0}
 :root .app-surface .planning-hotel-finder .hotel-more{margin:8px 0 0;font-size:14px;width:100%;min-height:44px}
 :root .app-surface .planning-hotel-finder .hotel-empty{padding:20px 0;border:0;border-radius:0;font-size:14px;margin:0}
@@ -38,5 +38,5 @@
 :root .app-surface .planning-hotel-finder .hotel-source-note{padding-top:16px;border-top:1px solid var(--hotel-line);margin:8px 0 0;font-size:13px;color:var(--hotel-muted);line-height:1.6}
 .hotel-source-note a svg{display:inline;vertical-align:middle}
 :root .app-surface .planning-hotel-finder :is(a,button,summary,input):focus-visible{outline:2px solid var(--hotel-accent);outline-offset:3px}
-@media(hover:hover) and (pointer:fine){:root .app-surface .planning-hotel-finder .hotel-card-actions :is(a,button):hover{color:var(--hotel-ink)}:root .app-surface .planning-hotel-finder .hotel-card-actions button:first-child:not(:has(svg)):hover{background:var(--ap-ink,#edf0e8);color:var(--ap-paper,#141815)}}
+@media(hover:hover) and (pointer:fine){:root .app-surface .planning-hotel-finder .hotel-card-actions :is(a,button):hover{color:var(--hotel-ink)}:root .app-surface .planning-hotel-finder .hotel-card-actions button:first-child:not(:has(svg)):hover{background:var(--ap-ink,#ffffff);color:var(--ap-paper,#171717)}}
 @media(max-width:400px){.hotel-filter-fields{grid-template-columns:minmax(0,1fr)}:root .app-surface .planning-hotel-finder .hotel-card-actions{column-gap:12px}}

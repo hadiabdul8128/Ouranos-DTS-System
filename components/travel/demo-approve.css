@@ -1,6 +1,6 @@
-.demo-approve{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:-4px 0 18px;padding:12px 16px;border:1px dashed #4a5448;border-radius:10px;background:#11140f}
+.demo-approve{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:-4px 0 18px;padding:12px 16px;border:1px dashed #515151;border-radius:10px;background:#131313}
 .demo-approve>div{display:flex;flex-direction:column;gap:3px}
-.demo-approve strong{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:#a5b38a;font-weight:500}
-.demo-approve span{font-size:12px;color:#a7afa3;line-height:1.5}
+.demo-approve strong{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:#ffffff;font-weight:500}
+.demo-approve span{font-size:12px;color:#acacac;line-height:1.5}
 .demo-approve button{gap:8px}
-.demo-approve p{flex-basis:100%;margin:0;font-size:12px;color:#f0a09a}
+.demo-approve p{flex-basis:100%;margin:0;font-size:12px;color:#b1b1b1}
