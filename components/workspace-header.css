@@ -63,7 +63,7 @@
   :root .app-surface .home-header .inbox-header-actions { gap: 2px; }
 }
 @media (max-width: 600px) {
-  :root .app-surface .home-header :is(.home-upcoming-label, .home-meetings-link > span, .inbox-link > span:not(.inbox-count)) {
+  :root .app-surface .home-header :is(.home-upcoming-label, .home-help-link > span, .home-meetings-link > span, .inbox-link > span:not(.inbox-count)) {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -73,3 +73,16 @@
     white-space: nowrap;
   }
 }
+
+.home-brand-actions { display: flex; align-items: center; gap: 8px; }
+:root .app-surface .home-systems-toggle { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #edf0e8; flex-shrink: 0; }
+:root .app-surface .home-systems-toggle:hover { background: #1b211c; }
+.home-systems-sidebar { width: min(360px, 100vw); max-width: 360px; padding: 56px 24px 24px; background: #141815; color: #edf0e8; border-color: #343c33; overflow-y: auto; gap: 12px; }
+.home-systems-sidebar [data-slot=sheet-title] { font-size: 24px; font-weight: 600; }
+.home-systems-sidebar [data-slot=sheet-description] { color: #a7afa3; font-size: 13px; line-height: 1.6; }
+.home-systems-sidebar ul { list-style: none; padding: 0; margin: 12px 0 0; }
+.home-sidebar-system { display: flex; flex-direction: column; gap: 4px; padding: 16px 0; border-bottom: 1px solid #343c33; }
+.home-sidebar-system strong { font-size: 15px; font-weight: 600; }
+.home-sidebar-system span { font-size: 13px; color: #a7afa3; }
+.home-systems-sidebar > button { min-width: 44px; min-height: 44px; top: 8px; right: 12px; display: grid; place-items: center; }
+
