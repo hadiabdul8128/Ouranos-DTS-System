@@ -16,6 +16,7 @@ import '@/components/inbox/inbox.css';
 import '@/components/travel/trip-sheet.css';
 import '@/components/inbox/inbox-sheet.css';
 import {MessageList} from '@/components/inbox/message-list';
+import {inboxFocus} from '@/components/inbox/inbox-focus';
 export default function Inbox(){const p=usePlatform();return <InboxContent key={`${p.organizationId}:${p.session?.user.id}`} />}
 function InboxContent(){
  const p=usePlatform(),[selectedId,setSelectedId]=useState<string|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
@@ -25,8 +26,8 @@ function InboxContent(){
  const requestFor=(requestId:unknown,authorizationId?:unknown)=>(approvals?.find(r=>r.id===requestId)??approvals?.filter(r=>authorizationId&&r.local.data.entityId===authorizationId).sort((a,b)=>b.local.updatedAt.localeCompare(a.local.updatedAt))[0])?.local;
  const messages=inboxMessages((rows||[]).map(r=>r.local),p.organizationId,p.session?.user.id);
  // After submitting, open that authorization's confirmation.
- const [focus]=useState(()=>typeof window==='undefined'?null:new URLSearchParams(window.location.search).get('authorization'));
- const focused=focus&&!selectedId?messages.find(n=>n.data.type==='authorization_submitted'&&n.data.authorizationId===focus):undefined;
+ const [focus]=useState(()=>{const params=new URLSearchParams(typeof window==='undefined'?'':window.location.search);return {message:params.get('message'),authorization:params.get('authorization')}});
+ const focused=!selectedId?inboxFocus(messages,focus.message,focus.authorization):undefined;
  const selected=messages.find(n=>n.id===selectedId);
  const parsed=selected?authorizationNoticeSchema.safeParse(selected.data):null,update=selected?approvalUpdateNoticeSchema.safeParse(selected.data):null;
  const canReview=p.approvalMode!=='preview'&&p.memberships.some(m=>m.organizationId===p.organizationId&&['reviewer','approver','admin','auditor'].includes(m.role));
