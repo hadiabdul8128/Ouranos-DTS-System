@@ -3,19 +3,16 @@ import "./workspace-header.css";
 import {MeetingsLink} from '@/components/meetings/meetings-link';
 import {InboxLink} from '@/components/inbox/inbox-link';
 import {useRouter} from 'next/navigation';
-import {workspaceIntent} from '@/packages/domain/workspace-intent';
+import {WorkspaceSearch} from '@/components/search/workspace-search';
 import Link from 'next/link';
 import { ServiceCloud } from '@/components/service-cloud';
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { ArrowRight, ArrowUpRight, LogOut, Settings } from "lucide-react";
 import { SyncIndicator, usePlatform } from "@/components/platform/provider";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { CalendarDays } from "lucide-react";
 import { UpcomingPanel, useUpcoming } from "@/components/planner/upcoming-panel";
-import { TypingAnimation } from "@/components/ui/typing-animation";
 
 // Each example routes somewhere real through workspaceIntent.
 // Other systems service members use alongside Ouranos. Shown as links for now; they don't open anything yet.
@@ -29,14 +26,10 @@ const SYSTEMS=[
   {name:"Army 365",detail:"Email and Teams"},
   {name:"Military OneSource",detail:"Support, 24/7"},
 ];
-const EXAMPLES=["Plan a trip to Fort Liberty","Book a flight to San Diego","File my travel voucher","Start a TDY to Norfolk","How do I file a voucher?","Schedule a meeting","Start a video call"];
 
 export default function Workspace() {
   const router=useRouter();
   const platform = usePlatform();
-  const [request, setRequest] = useState("");
-  const [message, setMessage] = useState("");
-  const [opening, setOpening] = useState(false);
   const upcoming = useUpcoming();
   useEffect(() => {
     const context = (document as Document & {modelContext?: {registerTool: (tool: unknown, options: {signal: AbortSignal}) => Promise<void> | void}}).modelContext;
@@ -57,24 +50,12 @@ export default function Workspace() {
     } catch {}
     return () => lifecycle.abort();
   }, [router]);
-  function submit(event: React.FormEvent) {
-    event.preventDefault();
-    const text = request.trim();
-    if (!text) return;
-    const destination=workspaceIntent(text);
-    if(destination){setOpening(true);router.push(destination)}
-    else setMessage("Try a trip, a flight, a voucher, or a meeting.");
-  }
   return <main className="quiet-page prompt-page">
     <header className="quiet-header home-header"><Link href="/dashboard" className="quiet-brand">Ouranos</Link><nav className="inbox-header-actions" aria-label="Workspace"><Sheet><SheetTrigger className="home-upcoming-button" aria-label={`Upcoming${upcoming.soon?`, ${upcoming.soon} this week`:""}`}><CalendarDays size={16}/> <span className="home-upcoming-label">Upcoming</span>{upcoming.soon>0&&<span>{upcoming.soon}</span>}</SheetTrigger><SheetContent side="right" className="home-upcoming-sheet"><SheetTitle className="sr-only">Upcoming</SheetTitle><UpcomingPanel/></SheetContent></Sheet><MeetingsLink/><InboxLink/><Link href="/dashboard/platform" className="exit-link" aria-label="Settings" title="Settings"><Settings size={16} aria-hidden="true"/></Link><button onClick={() => void platform.signOut()} className="exit-link" aria-label="Sign out"><LogOut size={16} aria-hidden="true"/></button></nav></header>
     <section className="intent-stage" aria-labelledby="intent-heading">
       <ServiceCloud />
       <h1 id="intent-heading">What do you want to do?</h1>
-      <form className="intent-input" onSubmit={submit}>
-        <span className="intent-field">{!request&&<span aria-hidden="true"><TypingAnimation className="intent-examples" words={EXAMPLES} delay={900}/></span>}<span id="intent-examples-help" className="sr-only">For example: {EXAMPLES.join("; ")}.</span><Input aria-label="What do you want to do?" aria-describedby="intent-examples-help" placeholder="" value={request} onChange={event => {setRequest(event.target.value); setMessage("");}} autoComplete="off" maxLength={500} disabled={opening}/></span>
-        <Button type="submit" aria-label="Continue with your request" className="intent-submit" disabled={!request.trim() || opening}><ArrowRight size={20}/></Button>
-      </form>
-      <p className={`intent-hint ${message ? "has-message" : ""}`} role="status">{opening ? "Opening your workspace…" : message || ''}</p>
+      <WorkspaceSearch onNavigate={href=>router.push(href)}/>
       <div className="home-links"><Link href="/dashboard/travel" className="back-link">Travel system <ArrowRight size={16} aria-hidden="true"/></Link><Link href="/dashboard/help" className="back-link">Help <ArrowRight size={16} aria-hidden="true"/></Link></div>
       <nav className="home-systems" aria-labelledby="home-systems-title">
         <h2 id="home-systems-title">Other systems</h2>
