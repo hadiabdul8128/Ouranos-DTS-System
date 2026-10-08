@@ -43,6 +43,8 @@ export function AppleSpotlight({shortcuts=[],searchResults=[],isOpen=true,handle
  const filterId=`spotlight-${useId().replace(/[^a-zA-Z0-9]/g,'')}`;
  const reduced=Boolean(useReducedMotion());
  const expanded=showResults&&focused&&Boolean(searchValue);
+ const shortcutsVisible=hovered&&!searchValue&&shortcuts.length>0;
+ const shortcutWidth=shortcuts.length*64+Math.max(0,shortcuts.length-1)*16;
  useEffect(()=>{
   function shortcut(event:KeyboardEvent){if(isOpen&&(event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='k'){event.preventDefault();input.current?.focus();setFocused(true)}}
   window.addEventListener('keydown',shortcut);
@@ -54,7 +56,7 @@ export function AppleSpotlight({shortcuts=[],searchResults=[],isOpen=true,handle
   <SVGFilter id={filterId}/>
   <LayoutGroup id={filterId}>
    <div className="spotlight-row" onMouseEnter={()=>{if(!hovered)shortcutsReady.current=reduced;setHovered(true)}} onMouseLeave={()=>{setHovered(false);setHoveredShortcut(null)}} onFocusCapture={()=>{if(!hovered)shortcutsReady.current=reduced;setHovered(true)}} onBlurCapture={event=>{if(!event.currentTarget.contains(event.relatedTarget)){setFocused(false);setHovered(false);setHoveredShortcut(null)}}} onClick={event=>event.stopPropagation()}>
-    <motion.div layout className="spotlight-search-shell" transition={reduced?{duration:0}:{layout:{type:'spring',bounce:.2,duration:.5}}}><Command className="workspace-search" data-open={expanded} shouldFilter={false} label="What do you want to do?" onKeyDownCapture={event=>{if(!showResults&&event.key==='Enter'&&!event.nativeEvent.isComposing){event.preventDefault();event.stopPropagation();const value=searchValue.trim();if(!value||opening)return;const href=resolveRequest?.(value);if(href)navigate(href);else setMessage('Try a trip, a flight, a voucher, or a meeting.')}}} onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();setFocused(false);setHovered(false);input.current?.blur();if(!inline)handleClose?.()}}}>
+    <div className="spotlight-search-shell"><Command className="workspace-search" data-open={expanded} shouldFilter={false} label="What do you want to do?" onKeyDownCapture={event=>{if(!showResults&&event.key==='Enter'&&!event.nativeEvent.isComposing){event.preventDefault();event.stopPropagation();const value=searchValue.trim();if(!value||opening)return;const href=resolveRequest?.(value);if(href)navigate(href);else setMessage('Try a trip, a flight, a voucher, or a meeting.')}}} onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();setFocused(false);setHovered(false);input.current?.blur();if(!inline)handleClose?.()}}}>
 
       <div className="workspace-search-field">
        <motion.div layoutId="search-icon" className="spotlight-search-icon"><Search size={27} strokeWidth={1.4} aria-hidden="true"/></motion.div>
@@ -69,8 +71,8 @@ export function AppleSpotlight({shortcuts=[],searchResults=[],isOpen=true,handle
        <Command.Empty className="workspace-search-empty">No matching workflow. Try travel, meetings, inbox, or help.</Command.Empty>
        <AnimatePresence initial={false}>{expanded&&searchResults.map((result,index)=><motion.div key={result.link} onMouseEnter={()=>setHoveredResult(result.label)} initial={reduced?false:{opacity:0,y:4}} animate={{opacity:1,y:0}} exit={{opacity:0}} transition={{delay:reduced?0:index*.04,duration:reduced?0:.2,ease:'easeOut'}}><SearchResultCard result={result} disabled={opening} onSelect={()=>navigate(result.link)}/></motion.div>)}</AnimatePresence>
       </Command.List>}
-    </Command></motion.div>
-    <div className="spotlight-shortcuts" inert={Boolean(searchValue)} aria-hidden={Boolean(searchValue)}><AnimatePresence>{hovered&&!searchValue&&shortcuts.map((shortcut,index)=><motion.div key={shortcut.link} className="spotlight-shortcut-shell" layout onAnimationComplete={()=>{shortcutsReady.current=true}} onMouseEnter={()=>setHoveredShortcut(shortcut.label)} onFocus={()=>setHoveredShortcut(shortcut.label)} initial={reduced?false:{scale:.7,x:-52*(index+1),opacity:0}} animate={{scale:1,x:0,opacity:1}} exit={{scale:reduced?1:.7,x:reduced?0:16*(shortcuts.length-index-1),opacity:0}} transition={reduced?{duration:0}:{duration:.6,type:'spring',bounce:.2,delay:index*.04}} style={{filter:reduced?undefined:`url(#${filterId})`}}><ShortcutButton shortcut={shortcut} onNavigate={link=>{if(shortcutsReady.current)navigate(link);else input.current?.focus()}}/></motion.div>)}</AnimatePresence></div>
+    </Command></div>
+    <motion.div className="spotlight-shortcuts" initial={false} animate={{width:shortcutsVisible?shortcutWidth:0,marginLeft:shortcutsVisible?16:0}} transition={{duration:reduced?0:.55,ease:[.22,1,.36,1]}} inert={Boolean(searchValue)} aria-hidden={Boolean(searchValue)}><AnimatePresence>{hovered&&!searchValue&&shortcuts.map((shortcut,index)=><motion.div key={shortcut.link} className="spotlight-shortcut-shell" layout onAnimationComplete={()=>{shortcutsReady.current=true}} onMouseEnter={()=>setHoveredShortcut(shortcut.label)} onFocus={()=>setHoveredShortcut(shortcut.label)} initial={reduced?false:{scale:.7,x:-52*(index+1),opacity:0}} animate={{scale:1,x:0,opacity:1}} exit={{scale:reduced?1:.8,x:0,opacity:0}} transition={reduced?{duration:0}:{duration:.4,ease:[.22,1,.36,1],delay:index*.035}} style={{filter:reduced?undefined:`url(#${filterId})`}}><ShortcutButton shortcut={shortcut} onNavigate={link=>{if(shortcutsReady.current)navigate(link);else input.current?.focus()}}/></motion.div>)}</AnimatePresence></motion.div>
    </div>
   </LayoutGroup>
   <p className="intent-hint" role="status">{opening?'Opening your workspace…':message}</p>

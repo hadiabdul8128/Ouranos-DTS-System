@@ -93,8 +93,7 @@
 /* The input contracts while shortcut circles emerge on the same baseline. */
 .spotlight-inline { padding-bottom: 38px; }
 .spotlight-row { position: relative; }
-.spotlight-shortcuts { display: flex; align-items: center; gap: 16px; flex: 0 0 auto; }
-.spotlight-shortcuts:empty { display: none; }
-.spotlight-row { gap: 16px; }
+.spotlight-shortcuts { display: flex; align-items: center; gap: 16px; flex: 0 0 auto; overflow: clip; }
+.spotlight-row { gap: 0; }
 .apple-spotlight > .intent-hint { position: absolute; left: 0; bottom: 8px; margin: 0; pointer-events: none; }
 @media (max-width: 600px) { .spotlight-shortcuts { display: none; } }
