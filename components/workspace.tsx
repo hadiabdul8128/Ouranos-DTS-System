@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { ServiceCloud } from '@/components/service-cloud';
 
 import { useEffect } from "react";
-import { ArrowRight, ArrowUpRight, LogOut, Settings } from "lucide-react";
+import { CircleHelp, ArrowRight, ArrowUpRight, LogOut, Settings } from "lucide-react";
 import { SyncIndicator, usePlatform } from "@/components/platform/provider";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { CalendarDays } from "lucide-react";
@@ -51,12 +51,11 @@ export default function Workspace() {
     return () => lifecycle.abort();
   }, [router]);
   return <main className="quiet-page prompt-page">
-    <header className="quiet-header home-header"><Link href="/dashboard" className="quiet-brand">Ouranos</Link><nav className="inbox-header-actions" aria-label="Workspace"><Sheet><SheetTrigger className="home-upcoming-button" aria-label={`Upcoming${upcoming.soon?`, ${upcoming.soon} this week`:""}`}><CalendarDays size={16}/> <span className="home-upcoming-label">Upcoming</span>{upcoming.soon>0&&<span>{upcoming.soon}</span>}</SheetTrigger><SheetContent side="right" className="home-upcoming-sheet"><SheetTitle className="sr-only">Upcoming</SheetTitle><UpcomingPanel/></SheetContent></Sheet><MeetingsLink/><InboxLink/><Link href="/dashboard/platform" className="exit-link" aria-label="Settings" title="Settings"><Settings size={16} aria-hidden="true"/></Link><button onClick={() => void platform.signOut()} className="exit-link" aria-label="Sign out"><LogOut size={16} aria-hidden="true"/></button></nav></header>
+    <header className="quiet-header home-header"><Link href="/dashboard" className="quiet-brand">Ouranos</Link><nav className="inbox-header-actions" aria-label="Workspace"><Sheet><SheetTrigger className="home-upcoming-button" aria-label={`Upcoming${upcoming.soon?`, ${upcoming.soon} this week`:""}`}><CalendarDays size={16}/> <span className="home-upcoming-label">Upcoming</span>{upcoming.soon>0&&<span>{upcoming.soon}</span>}</SheetTrigger><SheetContent side="right" className="home-upcoming-sheet"><SheetTitle className="sr-only">Upcoming</SheetTitle><UpcomingPanel/></SheetContent></Sheet><MeetingsLink/><InboxLink/><Link href="/dashboard/help" className="home-help-link" aria-label="Help" title="Help"><CircleHelp size={16} aria-hidden="true"/><span>Help</span></Link><Link href="/dashboard/platform" className="exit-link" aria-label="Settings" title="Settings"><Settings size={16} aria-hidden="true"/></Link><button onClick={() => void platform.signOut()} className="exit-link" aria-label="Sign out"><LogOut size={16} aria-hidden="true"/></button></nav></header>
     <section className="intent-stage" aria-labelledby="intent-heading">
       <ServiceCloud />
       <h1 id="intent-heading">What do you want to do?</h1>
       <WorkspaceSearch onNavigate={href=>router.push(href)}/>
-      <div className="home-links"><Link href="/dashboard/travel" className="back-link">Travel system <ArrowRight size={16} aria-hidden="true"/></Link><Link href="/dashboard/help" className="back-link">Help <ArrowRight size={16} aria-hidden="true"/></Link></div>
       <nav className="home-systems" aria-labelledby="home-systems-title">
         <h2 id="home-systems-title">Other systems</h2>
         <ul>{SYSTEMS.map(system=><li key={system.name}><a href="#" className="home-system" aria-disabled="true" onClick={event=>event.preventDefault()}><strong>{system.name}</strong><span>{system.detail}</span><ArrowUpRight size={15} aria-hidden="true"/></a></li>)}</ul>
